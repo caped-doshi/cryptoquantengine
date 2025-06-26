@@ -12,7 +12,7 @@
 
 # include "utils/config/config_reader.hpp"
 
-TEST_CASE("ConfigReader - File Handling", "[config][file]") {
+TEST_CASE("[ConfigReader] - File Handling", "[config][file]") {
     const std::string test_file = "test_config.tmp";
 
     SECTION("Successfully opens valid file") {
@@ -31,7 +31,7 @@ TEST_CASE("ConfigReader - File Handling", "[config][file]") {
     }
 }
 
-TEST_CASE("ConfigReader - Value Parsing", "[config][parsing]") {
+TEST_CASE("[ConfigReader] - Value Parsing", "[config][parsing]") {
     const std::string test_file = "test_config.tmp";
     {
         std::ofstream out(test_file);
@@ -73,7 +73,7 @@ TEST_CASE("ConfigReader - Value Parsing", "[config][parsing]") {
     std::filesystem::remove(test_file);
 }
 
-TEST_CASE("ConfigReader - Edge Cases", "[config][edge]") {
+TEST_CASE("[ConfigReader] - Edge Cases", "[config][edge]") {
     SECTION("Handles empty file") {
         const std::string empty_file = "empty_config.tmp";
         {

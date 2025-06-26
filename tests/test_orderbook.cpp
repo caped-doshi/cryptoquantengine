@@ -13,7 +13,7 @@
 # include "core/types/book_side.h"
 # include "core/market_data/l2_update.h"
 
-TEST_CASE("OrderBook - Initial State", "[orderbook][init]") {
+TEST_CASE("[OrderBook] - Initial State", "[orderbook][init]") {
     OrderBook book;
     
     REQUIRE(book.is_empty());
@@ -22,7 +22,7 @@ TEST_CASE("OrderBook - Initial State", "[orderbook][init]") {
     REQUIRE(book.mid_price() == 0.0);
 }
 
-TEST_CASE("OrderBook - L2 Update Processing", "[orderbook][updates]") {
+TEST_CASE("[OrderBook] - L2 Update Processing", "[orderbook][updates]") {
     OrderBook book;
 
     SECTION("Snapshot updates initialize book") {
@@ -53,7 +53,7 @@ TEST_CASE("OrderBook - L2 Update Processing", "[orderbook][updates]") {
     }
 }
 
-TEST_CASE("OrderBook - Price Level Priority", "[orderbook][priority]") {
+TEST_CASE("[OrderBook] - Price Level Priority", "[orderbook][priority]") {
     OrderBook book;
 
     // snapshots
@@ -93,7 +93,7 @@ TEST_CASE("OrderBook - Price Level Priority", "[orderbook][priority]") {
     }
 }
 
-TEST_CASE("OrderBook - Edge Cases", "[orderbook][edge]") {
+TEST_CASE("[OrderBook] - Edge Cases", "[orderbook][edge]") {
     OrderBook book;
 
     SECTION("Zero price handling") {

@@ -15,7 +15,7 @@
 # include "core/types/update_type.h"
 # include "core/market_data/l2_update.h"
 
-TEST_CASE("L2StreamReader - Construction", "[l2][reader]") {
+TEST_CASE("[L2StreamReader] - Construction", "[l2][reader]") {
     SECTION("Valid tick and lot sizes") {
         REQUIRE_NOTHROW(L2StreamReader(0.01, 1.0));
     }
@@ -29,7 +29,7 @@ TEST_CASE("L2StreamReader - Construction", "[l2][reader]") {
     }
 }
 
-TEST_CASE("L2StreamReader - CSV Parsing", "[l2][csv]") {
+TEST_CASE("[L2StreamReader] - CSV Parsing", "[l2][csv]") {
     const std::string test_file = "test_l2_data.csv";
     {
         std::ofstream out(test_file);
