@@ -1,0 +1,19 @@
+# C++
+build/
+*.o
+*.a
+*.so
+*.out
+*.exe
+
+# IDE
+.vscode/
+.idea/
+*.user
+.vs/
+
+# Data/logs
+data/
+*.log
+*.csv
+*.bin
