@@ -1,3 +1,11 @@
+/*
+ * File: tests/test_trade_stream_reader.cpp
+ * Description: Unit tests for hftengine/core/data/readers/trade_stream_reader.cpp.
+ * Author: Arvind Rathnashyam
+ * Date: 2025-06-25
+ * License: Proprietary
+ */
+
 # include <catch2/catch_test_macros.hpp>
 # include <filesystem>
 # include <fstream>
@@ -7,7 +15,7 @@
 # include "core/market_data/trade.h"
 
 
-TEST_CASE("TradeStreamReader - Construction", "[trade][reader]") {
+TEST_CASE("[TradeStreamReader] - Construction", "[trade][reader]") {
     SECTION("Valid tick and lot sizes") {
         REQUIRE_NOTHROW(TradeStreamReader(0.01, 1.0));
     }
@@ -21,7 +29,7 @@ TEST_CASE("TradeStreamReader - Construction", "[trade][reader]") {
     }
 }
 
-TEST_CASE("TradeStreamReader - CSV Parsing", "[trade][csv]") {
+TEST_CASE("[TradeStreamReader] - CSV Parsing", "[trade][csv]") {
     const std::string test_file = "test_trade_data.csv";
     {
         std::ofstream out(test_file);
