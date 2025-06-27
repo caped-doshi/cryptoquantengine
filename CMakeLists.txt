@@ -10,7 +10,6 @@ add_executable(hftengine
   hftengine/main.cpp
   hftengine/core/orderbook/orderbook.cpp
   hftengine/utils/config/config_reader.cpp
-  hftengine/core/trading/backtest_asset.cpp
 )
 
 # THEN set properties
