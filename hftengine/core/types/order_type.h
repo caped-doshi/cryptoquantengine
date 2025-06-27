@@ -11,6 +11,5 @@
 enum class OrderType
 {
     LIMIT,
-    MARKET,
-    GTX
+    MARKET
 };
