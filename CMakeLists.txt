@@ -23,7 +23,7 @@ target_include_directories(hftengine PRIVATE
 # Compiler flags (AFTER target is defined)
 target_compile_options(hftengine PRIVATE
   $<$<CONFIG:Release>:-O3>
-  $<$<CONFIG:Debug>:-O3 -g -Wall -Wextra>
+  $<$<CONFIG:Debug>:-O3 -Wall -Wextra -Wpedantic>
 )
 
 # Catch2 test setup
@@ -57,14 +57,14 @@ target_include_directories(test_config_reader PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/hftengine
 )
 
-# 3. L2StreamReader Tests
-add_executable(test_l2_stream_reader
-  tests/test_l2_stream_reader.cpp
-  hftengine/core/data/readers/l2_stream_reader.cpp
+# 3. BookStreamReader Tests
+add_executable(test_book_stream_reader
+  tests/test_book_stream_reader.cpp
+  hftengine/core/data/readers/book_stream_reader.cpp
   hftengine/core/orderbook/orderbook.cpp
 )
 
-target_include_directories(test_l2_stream_reader PRIVATE
+target_include_directories(test_book_stream_reader PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/hftengine
 )
 
@@ -84,34 +84,48 @@ add_executable(test_market_data_feed
   tests/test_market_data_feed.cpp
   hftengine/core/data/readers/market_data_feed.cpp
   hftengine/core/data/readers/trade_stream_reader.cpp
-  hftengine/core/data/readers/l2_stream_reader.cpp
+  hftengine/core/data/readers/book_stream_reader.cpp
 )
 
 target_include_directories(test_market_data_feed PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/hftengine
 )
 
+# 6. Execution Engine Tests
+add_executable(test_execution_engine
+  tests/test_execution_engine.cpp
+  hftengine/core/execution_engine/execution_engine.cpp
+  hftengine/core/orderbook/orderbook.cpp
+)
+
+target_include_directories(test_execution_engine PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/hftengine
+)
+
 # Link  test executables to Catch2
 target_link_libraries(test_orderbook PRIVATE Catch2::Catch2WithMain)
 target_link_libraries(test_config_reader PRIVATE Catch2::Catch2WithMain)
-target_link_libraries(test_l2_stream_reader PRIVATE Catch2::Catch2WithMain)
+target_link_libraries(test_book_stream_reader PRIVATE Catch2::Catch2WithMain)
 target_link_libraries(test_trade_stream_reader PRIVATE Catch2::Catch2WithMain)
 target_link_libraries(test_market_data_feed PRIVATE Catch2::Catch2WithMain)
+target_link_libraries(test_execution_engine PRIVATE Catch2::Catch2WithMain)
 
 # Discover tests for both executables
 include(CTest)
 include(Catch)
 catch_discover_tests(test_orderbook)
 catch_discover_tests(test_config_reader)
-catch_discover_tests(test_l2_stream_reader)
+catch_discover_tests(test_book_stream_reader)
 catch_discover_tests(test_trade_stream_reader)
 catch_discover_tests(test_market_data_feed)
+catch_discover_tests(test_execution_engine)
 
 # Optional: Add a global test target
 add_custom_target(run_all_tests DEPENDS
   test_orderbook
   test_config_reader
-  test_l2_stream_reader
+  test_book_stream_reader
   test_trade_stream_reader
   test_market_data_feed
+  test_execution_engine
 )

@@ -1,6 +1,6 @@
 /*
- * File: hft_bt_engine/core/market_data/L2Update.h
- * Description: Class defining an L2 update.
+ * File: hft_bt_engine/core/market_data/BookUpdate.h
+ * Description: Class defining a book update.
  * Author: Arvind Rathnashyam
  * Date: 2025-06-24
  * License: Proprietary
@@ -14,7 +14,7 @@
 #include "../types/update_type.h"
 #include "../types/book_side.h"
 
-struct L2Update {
+struct BookUpdate {
     /*
     std::string exchange_;       
     std::string exchangeId_;   

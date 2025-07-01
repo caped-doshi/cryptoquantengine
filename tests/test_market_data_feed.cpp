@@ -11,9 +11,9 @@
 # include <fstream>
 
 # include "core/data/readers/market_data_feed.hpp"
-# include "core/data/readers/l2_stream_reader.hpp"
+# include "core/data/readers/book_stream_reader.hpp"
 # include "core/data/readers/trade_stream_reader.hpp"
-# include "core/market_data/l2_update.h"
+# include "core/market_data/book_update.h"
 # include "core/market_data/trade.h"
 
  // Helper: Create temporary CSV files for testing
@@ -25,73 +25,73 @@ namespace TestHelpers {
             << "300,310,2,sell,50001.0,0.5\n"; // Trade 2
     }
 
-    void create_l2_csv(const std::string& filename) {
+    void create_book_update_csv(const std::string& filename) {
         std::ofstream f(filename);
         f << "timestamp,is_snapshot,side,price,amount\n"
-            << "200,false,bid,50000.0,2.0\n"   // L2 Update 1
-            << "400,false,ask,50001.0,1.5\n"  // L2 Update 2
-            << "500,false,ask,50001.0,2.5\n";  // L2 Update 3
+            << "200,false,bid,50000.0,2.0\n"   // Book Update 1
+            << "400,false,ask,50001.0,1.5\n"  // Book Update 2
+            << "500,false,ask,50001.0,2.5\n";  // Book Update 3
     }
 }
 
 TEST_CASE("[MarketDataFeed] - initializes with empty state", "[feed][empty]") {
-    L2StreamReader l2_reader(1.0, 1.0);
+    BookStreamReader book_reader(1.0, 1.0);
     TradeStreamReader trade_reader(1.0, 1.0);
-    MarketDataFeed feed(l2_reader, trade_reader);
+    MarketDataFeed feed(book_reader, trade_reader);
 
     EventType type;
-    L2Update l2;
+    BookUpdate book_update;
     Trade trade;
 
-    REQUIRE_FALSE(feed.next_event(type, l2, trade));  // No data loaded yet
+    REQUIRE_FALSE(feed.next_event(type, book_update, trade));  // No data loaded yet
 }
 
 TEST_CASE("[MarketDataFeed] - processes events in timestamp order", "[feed][order]") {
     // Setup test files
     const std::string trade_file = "test_trades.csv";
-    const std::string l2_file = "test_l2.csv";
+    const std::string book_update_file = "test_book_update.csv";
     TestHelpers::create_trade_csv(trade_file);
-    TestHelpers::create_l2_csv(l2_file);
+    TestHelpers::create_book_update_csv(book_update_file);
 
     // Initialize readers and feed
-    L2StreamReader l2_reader(1.0, 1.0);
+    BookStreamReader book_reader(1.0, 1.0);
     TradeStreamReader trade_reader(1.0, 1.0);
-    l2_reader.open(l2_file);
+    book_reader.open(book_update_file);
     trade_reader.open(trade_file);
-    MarketDataFeed feed(l2_reader, trade_reader);
+    MarketDataFeed feed(book_reader, trade_reader);
 
     // Expected sequence: Trade@100, L2@200, Trade@300, L2@400
     SECTION("Correct event order") {
         EventType type;
-        L2Update l2;
+        BookUpdate book_update;
         Trade trade;
 
-        REQUIRE(feed.next_event(type, l2, trade));
+        REQUIRE(feed.next_event(type, book_update, trade));
         REQUIRE(type == EventType::Trade);
         REQUIRE(trade.timestamp_ == 100);
 
-        REQUIRE(feed.next_event(type, l2, trade));
-        REQUIRE(type == EventType::L2Update);
-        REQUIRE(l2.timestamp_ == 200);
+        REQUIRE(feed.next_event(type, book_update, trade));
+        REQUIRE(type == EventType::BookUpdate);
+        REQUIRE(book_update.timestamp_ == 200);
 
-        REQUIRE(feed.next_event(type, l2, trade));
+        REQUIRE(feed.next_event(type, book_update, trade));
         REQUIRE(type == EventType::Trade);
         REQUIRE(trade.timestamp_ == 300);
 
-        REQUIRE(feed.next_event(type, l2, trade));
-        REQUIRE(type == EventType::L2Update);
-        REQUIRE(l2.timestamp_ == 400);
+        REQUIRE(feed.next_event(type, book_update, trade));
+        REQUIRE(type == EventType::BookUpdate);
+        REQUIRE(book_update.timestamp_ == 400);
 
-        REQUIRE(feed.next_event(type, l2, trade));
-        REQUIRE(type == EventType::L2Update);
-        REQUIRE(l2.timestamp_ == 500);
+        REQUIRE(feed.next_event(type, book_update, trade));
+        REQUIRE(type == EventType::BookUpdate);
+        REQUIRE(book_update.timestamp_ == 500);
 
-        REQUIRE_FALSE(feed.next_event(type, l2, trade));  // EOF
+        REQUIRE_FALSE(feed.next_event(type, book_update, trade));  // EOF
     }
 
     // Cleanup
     std::filesystem::remove(trade_file);
-    std::filesystem::remove(l2_file);
+    std::filesystem::remove(book_update_file);
 }
 
 TEST_CASE("[MarketDataFeed] - handles files with headers only") {
@@ -103,11 +103,11 @@ TEST_CASE("[MarketDataFeed] - handles files with headers only") {
         f << "timestamp,is_snapshot,side,price,amount\n";  // L2 header only
     }
 
-    L2StreamReader l2_reader(1.0, 1.0);
+    BookStreamReader book_reader(1.0, 1.0);
     TradeStreamReader trade_reader(1.0, 1.0);
 
     SECTION("MarketDataFeed handles header-only file") {
-        l2_reader.open(header_only_file);
+        book_reader.open(header_only_file);
 
         // Create similar header-only trade file
         const std::string trade_header_file = "trade_header.csv";
@@ -117,12 +117,12 @@ TEST_CASE("[MarketDataFeed] - handles files with headers only") {
         }
         trade_reader.open(trade_header_file);
 
-        MarketDataFeed feed(l2_reader, trade_reader);
+        MarketDataFeed feed(book_reader, trade_reader);
         EventType type;
-        L2Update l2;
+        BookUpdate book_update;
         Trade trade;
 
-        REQUIRE_FALSE(feed.next_event(type, l2, trade));  // No events
+        REQUIRE_FALSE(feed.next_event(type, book_update, trade)); // No events
 
         std::filesystem::remove(trade_header_file);
     }

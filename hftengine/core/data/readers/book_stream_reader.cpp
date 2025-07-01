@@ -1,5 +1,5 @@
 /*
- * File: hft_bt_engine/core/data/readers/L2_stream_reader.cpp
+ * File: hft_bt_engine/core/data/readers/book_stream_reader.cpp
  * Description: Class for parsing and reading csv files with tardis incremental l2 book data.
  * Author: Arvind Rathnashyam
  * Date: 2025-06-24
@@ -13,14 +13,14 @@
 # include <cmath>
 # include <cstdint>
 
-# include "l2_stream_reader.hpp"
-# include "../../market_data/l2_update.h"
+# include "book_stream_reader.hpp"
+# include "../../market_data/book_update.h"
 # include "../../types/usings.h"
 # include "../../types/book_side.h"
 # include "../../../../external/csv/csv.h"
 
- // l2_stream_reader.cpp
-struct L2StreamReader::CSVReaderImpl {
+ // book_stream_reader.cpp
+struct BookStreamReader::CSVReaderImpl {
     io::CSVReader<5> reader;
     std::unordered_map<std::string, size_t> column_map;
 
@@ -28,16 +28,16 @@ struct L2StreamReader::CSVReaderImpl {
         : reader(filename) {}  // Initialize CSVReader here
 };
 
-L2StreamReader::~L2StreamReader() = default;
+BookStreamReader::~BookStreamReader() = default;
 
-L2StreamReader::L2StreamReader(double tick_size, double lot_size)
+BookStreamReader::BookStreamReader(double tick_size, double lot_size)
     : tick_size_(tick_size), lot_size_(lot_size)
 {
     if (tick_size <= 0.0) throw std::invalid_argument("Tick size must be positive");
     if (lot_size <= 0.0) throw std::invalid_argument("Lot size must be positive");
 }
 
-void L2StreamReader::open(const std::string& filename) {
+void BookStreamReader::open(const std::string& filename) {
     csv_reader_ = std::make_unique<CSVReaderImpl>(filename);  // Now works
 
     // Column header processing
@@ -54,7 +54,7 @@ void L2StreamReader::open(const std::string& filename) {
         }
     }
 }
-bool L2StreamReader::parse_next(L2Update& update) {
+bool BookStreamReader::parse_next(BookUpdate& update) {
     if (!csv_reader_) {
         return false;
     }
@@ -99,10 +99,10 @@ bool L2StreamReader::parse_next(L2Update& update) {
     return false;
 }
 
-PriceTick L2StreamReader::to_tick(double price) const {
+PriceTick BookStreamReader::to_tick(double price) const {
     return static_cast<PriceTick>(std::round(price / tick_size_));
 }
 
-QuantityLot L2StreamReader::to_lots(double qty) const {
+QuantityLot BookStreamReader::to_lots(double qty) const {
     return static_cast<QuantityLot>(std::round(qty / lot_size_));
 }
