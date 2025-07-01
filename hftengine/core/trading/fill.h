@@ -22,7 +22,5 @@ struct Fill {
     TradeSide side_;
     Price price_;
     Quantity quantity_;
-
-    double fee;
     bool is_maker;
 };

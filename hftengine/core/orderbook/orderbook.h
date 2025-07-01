@@ -14,7 +14,7 @@
 # include "../types/trade_side.h"
 # include "../types/book_side.h"
 # include "../types/update_type.h"
-# include "../market_data/l2_update.h"
+# include "../market_data/book_update.h"
 # include "../market_data/trade.h"
 
 #pragma once
@@ -33,20 +33,22 @@ public:
     OrderBook();
 
     // Apply incoming L2 book update (price-level based)
-    void apply_l2_update(const L2Update& update);
+    void apply_book_update(const BookUpdate& update);
 
     // Apply trade message to simulate fills
     void apply_trade(const Trade& trade);
-
-    // Check and simulate fills based on current book + trades
-    std::vector<OrderId> check_fills();  // returns filled order IDs
 
     // Book queries
     Price best_bid() const;
     Price best_ask() const;
     Price mid_price() const;
 
-    Quantity depth_at(BookSide side, double price) const;
+    Quantity depth_at(BookSide side, Price price) const;
+    Quantity depth_at_level(BookSide side, int level) const;
+    Price price_at_level(BookSide side, int level) const;
+
+    int bid_levels() const;
+    int ask_levels() const;
 
     // Clear book (e.g., on snapshot)
     void clear();

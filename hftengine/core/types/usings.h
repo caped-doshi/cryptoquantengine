@@ -13,7 +13,7 @@
 # include <vector>
 
  // Forward declarations
-struct L2Update;
+struct BookUpdate;
 struct Trade;
 struct Order;
 
@@ -23,4 +23,4 @@ using Timestamp = std::uint64_t;
 using OrderId = std::uint64_t;
 using Price = double;
 using Quantity = double;
-using MarketEvent = std::variant<L2Update, Trade>;
+using MarketEvent = std::variant<BookUpdate, Trade>;

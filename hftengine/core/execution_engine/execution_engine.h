@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <deque>
+#include <memory>
 #include <unordered_map>
 #include <vector>
 
@@ -22,27 +24,36 @@
 class ExecutionEngine {
   public:
     ExecutionEngine();
-    bool submit_buy_order(int asset_id, const Timestamp &timestamp,
-                          const OrderId &orderId, const Price &price,
-                          const Quantity &quantity, const TimeInForce &tif,
-                          const OrderType &orderType);
-    bool submit_sell_order(int asset_id, const Timestamp &timestamp,
-                           const OrderId &orderId, const Price &price,
-                           const Quantity &quantity, const TimeInForce &tif,
-                           const OrderType &orderType);
+
     bool clear_inactive_orders(int asset_id);
     bool cancel_order(const OrderId &orderId);
-    std::vector<Order> orders(int asset_id) const;
 
+    void execute_market_order(int asset_id, TradeSide side,
+                              std::shared_ptr<Order> order);
+    bool execute_fok_order(int asset_id, TradeSide side,
+                           std::shared_ptr<Order> order);
+    bool execute_ioc_order(int asset_id, TradeSide side,
+                           std::shared_ptr<Order> order);
+    bool place_gtx_order(int asset_id, std::shared_ptr<Order> order);
+
+    void handle_book_update(int asset_id, const BookUpdate &book_update);
     void handle_trade(int asset_id, const Trade &trade);
-    void handle_l2update(int asset_id, const L2Update &l2_update);
 
     std::vector<Fill> match_orders(int asset_id) const;
+
+    const std::vector<Order> &orders(int asset_id) const;
+    const std::vector<Fill> &fills() const;
+
+    void clear_fills();
+    double f(const double x);
 
   private:
     OrderBook orderbook_;
     std::vector<Fill> fills_;
 
-    std::unordered_map<OrderId, Order> bid_orders_;
-    std::unordered_map<OrderId, Order> ask_orders_;
+    // one order per price level on each side
+    std::map<Price, std::shared_ptr<Order>, std::greater<>> bid_orders_;
+    std::map<Price, std::shared_ptr<Order>> ask_orders_;
+
+    std::unordered_map<OrderId, std::shared_ptr<Order>> orders_;
 };

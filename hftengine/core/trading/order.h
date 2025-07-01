@@ -21,6 +21,8 @@ struct Order {
     BookSide side_;
     Price price_;
     Quantity quantity_;
+    Quantity filled_quantity_;
     TimeInForce tif_;
     OrderType orderType_;
+    Quantity queueEst_;
 };
