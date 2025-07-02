@@ -10,24 +10,10 @@
 # include <filesystem>
 # include <fstream>
 
-# include "core/data/readers/trade_stream_reader.hpp"
+# include "core/data/readers/trade_stream_reader.h"
 # include "core/types/trade_side.h"
 # include "core/market_data/trade.h"
 
-
-TEST_CASE("[TradeStreamReader] - Construction", "[trade][reader]") {
-    SECTION("Valid tick and lot sizes") {
-        REQUIRE_NOTHROW(TradeStreamReader(0.01, 1.0));
-    }
-
-    SECTION("Invalid tick size") {
-        REQUIRE_THROWS_AS(TradeStreamReader(0.0, 1.0), std::invalid_argument);
-    }
-
-    SECTION("Invalid lot size") {
-        REQUIRE_THROWS_AS(TradeStreamReader(0.01, 0.0), std::invalid_argument);
-    }
-}
 
 TEST_CASE("[TradeStreamReader] - CSV Parsing", "[trade][csv]") {
     const std::string test_file = "test_trade_data.csv";
@@ -38,7 +24,7 @@ TEST_CASE("[TradeStreamReader] - CSV Parsing", "[trade][csv]") {
         out << "1740009604840000,1740009604859720,47311613,sell,2.7346,76.8\n";
     }
 
-    TradeStreamReader reader(0.0001, 0.1);
+    TradeStreamReader reader;
     reader.open(test_file);
 
     SECTION("Parses valid bid snapshot correctly") {
