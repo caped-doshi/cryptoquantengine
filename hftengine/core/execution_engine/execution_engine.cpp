@@ -48,17 +48,17 @@ ExecutionEngine::ExecutionEngine() {}
 void ExecutionEngine::execute_market_order(int asset_id, TradeSide side,
                                            std::shared_ptr<Order> order) {
     int level = 0;
-    int levels = (side == TradeSide::Buy) ? orderbook_.ask_levels()
-                                          : orderbook_.bid_levels();
+    int levels = (side == TradeSide::Buy) ? orderbooks_[asset_id].ask_levels()
+                                          : orderbooks_[asset_id].bid_levels();
     while (order->filled_quantity_ < order->quantity_ && level < levels) {
         Quantity level_depth =
             (side == TradeSide::Buy)
-                ? orderbook_.depth_at_level(BookSide::Ask, level)
-                : orderbook_.depth_at_level(BookSide::Bid, level);
+                ? orderbooks_[asset_id].depth_at_level(BookSide::Ask, level)
+                : orderbooks_[asset_id].depth_at_level(BookSide::Bid, level);
         Price level_price =
             (side == TradeSide::Buy)
-                ? orderbook_.price_at_level(BookSide::Ask, level)
-                : orderbook_.price_at_level(BookSide::Bid, level);
+                ? orderbooks_[asset_id].price_at_level(BookSide::Ask, level)
+                : orderbooks_[asset_id].price_at_level(BookSide::Bid, level);
         if (level_depth > (order->quantity_ - order->filled_quantity_)) {
             Fill fill = {.asset_id_ = asset_id,
                          .timestamp_ = order->timestamp_,
@@ -113,31 +113,31 @@ void ExecutionEngine::execute_market_order(int asset_id, TradeSide side,
 bool ExecutionEngine::execute_fok_order(int asset_id, TradeSide side,
                                         std::shared_ptr<Order> order) {
     int level = -1;
-    int levels = (side == TradeSide::Buy) ? orderbook_.ask_levels()
-                                          : orderbook_.bid_levels();
+    int levels = (side == TradeSide::Buy) ? orderbooks_[asset_id].ask_levels()
+                                          : orderbooks_[asset_id].bid_levels();
     Quantity available_qty;
     while (++level < levels && available_qty < order->quantity_) {
         Price level_price =
             (side == TradeSide::Buy)
-                ? orderbook_.price_at_level(BookSide::Ask, level)
-                : orderbook_.price_at_level(BookSide::Bid, level);
+                ? orderbooks_[asset_id].price_at_level(BookSide::Ask, level)
+                : orderbooks_[asset_id].price_at_level(BookSide::Bid, level);
         if (side == TradeSide::Buy && level_price > order->price_) break;
         if (side == TradeSide::Sell && level_price < order->price_) break;
         available_qty += (side == TradeSide::Buy)
-                             ? orderbook_.depth_at_level(BookSide::Ask, level)
-                             : orderbook_.depth_at_level(BookSide::Bid, level);
+                             ? orderbooks_[asset_id].depth_at_level(BookSide::Ask, level)
+                             : orderbooks_[asset_id].depth_at_level(BookSide::Bid, level);
     }
     if (available_qty < order->quantity_) return false;
     level = -1;
     while (++level < levels && order->filled_quantity_ < order->quantity_) {
         Quantity level_depth =
             (side == TradeSide::Buy)
-                ? orderbook_.depth_at_level(BookSide::Ask, level)
-                : orderbook_.depth_at_level(BookSide::Bid, level);
+                ? orderbooks_[asset_id].depth_at_level(BookSide::Ask, level)
+                : orderbooks_[asset_id].depth_at_level(BookSide::Bid, level);
         Price level_price =
             (side == TradeSide::Buy)
-                ? orderbook_.price_at_level(BookSide::Ask, level)
-                : orderbook_.price_at_level(BookSide::Bid, level);
+                ? orderbooks_[asset_id].price_at_level(BookSide::Ask, level)
+                : orderbooks_[asset_id].price_at_level(BookSide::Bid, level);
         if (side == TradeSide::Buy && level_price > order->price_) break;
         if (side == TradeSide::Sell && level_price < order->price_) break;
         if (level_depth > (order->quantity_ - order->filled_quantity_)) {
@@ -194,19 +194,19 @@ bool ExecutionEngine::execute_fok_order(int asset_id, TradeSide side,
 bool ExecutionEngine::execute_ioc_order(int asset_id, TradeSide side,
                                         std::shared_ptr<Order> order) {
     int level = 0;
-    int levels = (side == TradeSide::Buy) ? orderbook_.ask_levels()
-                                          : orderbook_.bid_levels();
+    int levels = (side == TradeSide::Buy) ? orderbooks_[asset_id].ask_levels()
+                                          : orderbooks_[asset_id].bid_levels();
     while (level < levels && order->filled_quantity_ < order->quantity_) {
         Price level_price =
             (side == TradeSide::Buy)
-                ? orderbook_.price_at_level(BookSide::Ask, level)
-                : orderbook_.price_at_level(BookSide::Bid, level);
+                ? orderbooks_[asset_id].price_at_level(BookSide::Ask, level)
+                : orderbooks_[asset_id].price_at_level(BookSide::Bid, level);
         if (side == TradeSide::Buy && level_price > order->price_) break;
         if (side == TradeSide::Sell && level_price < order->price_) break;
         Quantity level_depth =
             (side == TradeSide::Buy)
-                ? orderbook_.depth_at_level(BookSide::Ask, level)
-                : orderbook_.depth_at_level(BookSide::Bid, level);
+                ? orderbooks_[asset_id].depth_at_level(BookSide::Ask, level)
+                : orderbooks_[asset_id].depth_at_level(BookSide::Bid, level);
         if (level_depth > (order->quantity_ - order->filled_quantity_)) {
             Fill fill = {.asset_id_ = asset_id,
                          .timestamp_ = order->timestamp_,
@@ -264,8 +264,8 @@ bool ExecutionEngine::execute_ioc_order(int asset_id, TradeSide side,
  */
 bool ExecutionEngine::place_gtx_order(int asset_id,
                                       std::shared_ptr<Order> order) {
-    Price best_ask = orderbook_.best_ask();
-    Price best_bid = orderbook_.best_bid();
+    Price best_ask = orderbooks_[asset_id].best_ask();
+    Price best_bid = orderbooks_[asset_id].best_bid();
     if ((order->side_ == BookSide::Bid &&
          best_ask > 0.0 &&
          order->price_ >= best_ask) ||
@@ -273,12 +273,13 @@ bool ExecutionEngine::place_gtx_order(int asset_id,
          order->price_ <= best_bid))
         return false;
 
-    order->queueEst_ = orderbook_.depth_at(order->side_, order->price_);
+    order->queueEst_ = orderbooks_[asset_id].depth_at(order->side_, order->price_);
     if (order->side_ == BookSide::Bid)
         bid_orders_[order->price_] = order;
     else
         ask_orders_[order->price_] = order;
     orders_[order->orderId_] = order;
+    active_orders_[asset_id].push_back(order);
     return true;
 }
 
@@ -309,7 +310,7 @@ bool ExecutionEngine::place_gtx_order(int asset_id,
 void ExecutionEngine::handle_book_update(int asset_id,
                                          const BookUpdate &book_update) {
     // update queue position estimations
-    Quantity Q_n = orderbook_.depth_at(book_update.side_, book_update.price_);
+    Quantity Q_n = orderbooks_[asset_id].depth_at(book_update.side_, book_update.price_);
     Quantity deltaQ_n = book_update.quantity_ - Q_n;
     if (deltaQ_n < 0) {
         if (book_update.side_ == BookSide::Bid) {
@@ -341,7 +342,7 @@ void ExecutionEngine::handle_book_update(int asset_id,
         }
     }
     // update orderbook
-    orderbook_.apply_book_update(book_update);
+    orderbooks_[asset_id].apply_book_update(book_update);
 }
 
 /**
@@ -393,6 +394,17 @@ void ExecutionEngine::handle_trade(int asset_id, const Trade &trade) {
                                  .quantity_ = fill_qty,
                                  .is_maker = true});
     }
+}
+
+std::vector<Order> ExecutionEngine::orders(int asset_id) const {
+    std::vector<Order> result;
+    auto it = active_orders_.find(asset_id);
+    if (it != active_orders_.end()) {
+        for (const auto &ptr : it->second) {
+            result.push_back(*ptr); 
+        }
+    }
+    return result;
 }
 
 /**
