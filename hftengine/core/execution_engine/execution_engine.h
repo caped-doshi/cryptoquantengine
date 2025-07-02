@@ -41,19 +41,20 @@ class ExecutionEngine {
 
     std::vector<Fill> match_orders(int asset_id) const;
 
-    const std::vector<Order> &orders(int asset_id) const;
+    std::vector<Order> orders(int asset_id) const;
     const std::vector<Fill> &fills() const;
 
     void clear_fills();
     double f(const double x);
 
   private:
-    OrderBook orderbook_;
+    std::map<int, OrderBook> orderbooks_;
     std::vector<Fill> fills_;
 
     // one order per price level on each side
     std::map<Price, std::shared_ptr<Order>, std::greater<>> bid_orders_;
     std::map<Price, std::shared_ptr<Order>> ask_orders_;
 
+    std::unordered_map<int, std::vector<std::shared_ptr<Order>>> active_orders_;
     std::unordered_map<OrderId, std::shared_ptr<Order>> orders_;
 };

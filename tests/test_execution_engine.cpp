@@ -18,6 +18,122 @@
 #include "core/types/update_type.h"
 #include "core/types/usings.h"
 
+TEST_CASE("[ExecutionEngine] - multi-asset handling",
+          "[execution-engine][multi-asset]") {
+    ExecutionEngine engine;
+
+    int asset1 = 0;
+    int asset2 = 1;
+
+    // Add book updates for two assets
+    engine.handle_book_update(
+        asset1, BookUpdate{.timestamp_ = 0,
+                           .localTimestamp_ = 10,
+                           .update_type_ = UpdateType::Incremental,
+                           .side_ = BookSide::Ask,
+                           .price_ = 101.0,
+                           .quantity_ = 10.0});
+    engine.handle_book_update(
+        asset1, BookUpdate{.timestamp_ = 10,
+                           .localTimestamp_ = 20,
+                           .update_type_ = UpdateType::Incremental,
+                           .side_ = BookSide::Bid,
+                           .price_ = 99.0,
+                           .quantity_ = 10.0});
+    engine.handle_book_update(
+        asset2, BookUpdate{.timestamp_ = 20,
+                           .localTimestamp_ = 30,
+                           .update_type_ = UpdateType::Incremental,
+                           .side_ = BookSide::Ask,
+                           .price_ = 202.0,
+                           .quantity_ = 20.0});
+    engine.handle_book_update(
+        asset2, BookUpdate{.timestamp_ = 30,
+                           .localTimestamp_ = 40,
+                           .update_type_ = UpdateType::Incremental,
+                           .side_ = BookSide::Bid,
+                           .price_ = 198.0,
+                           .quantity_ = 20.0});
+
+    SECTION("Submit market buy order for asset 1") {
+        auto buy_order =
+            std::make_shared<Order>(Order{.timestamp_ = 100,
+                                          .orderId_ = 1,
+                                          .side_ = BookSide::Bid,
+                                          .price_ = 0.0,
+                                          .quantity_ = 5.0,
+                                          .filled_quantity_ = 0.0,
+                                          .tif_ = TimeInForce::GTX,
+                                          .orderType_ = OrderType::LIMIT,
+                                          .queueEst_ = 0.0});
+
+        engine.execute_market_order(asset1, TradeSide::Buy, buy_order);
+
+        auto fills = engine.fills();
+        REQUIRE(fills.size() == 1);
+        REQUIRE(fills[0].asset_id_ == asset1);
+        REQUIRE(fills[0].price_ == 101.0);
+        REQUIRE(fills[0].quantity_ == 5.0);
+    }
+
+    SECTION("Submit market sell order for asset 2") {
+        engine.clear_fills();
+
+        auto sell_order =
+            std::make_shared<Order>(Order{.timestamp_ = 200,
+                                          .orderId_ = 2,
+                                          .side_ = BookSide::Ask,
+                                          .price_ = 0.0,
+                                          .quantity_ = 10.0,
+                                          .filled_quantity_ = 0.0,
+                                          .tif_ = TimeInForce::GTX,
+                                          .orderType_ = OrderType::LIMIT,
+                                          .queueEst_ = 0.0});
+
+        engine.execute_market_order(asset2, TradeSide::Sell, sell_order);
+
+        auto fills = engine.fills();
+        REQUIRE(fills.size() == 1);
+        REQUIRE(fills[0].asset_id_ == asset2);
+        REQUIRE(fills[0].price_ == 198.0);
+        REQUIRE(fills[0].quantity_ == 10.0);
+    }
+
+    SECTION("Ensure asset1 orders do not affect asset2") {
+        auto order1 =
+            std::make_shared<Order>(Order{.timestamp_ = 300,
+                                          .orderId_ = 3,
+                                          .side_ = BookSide::Bid,
+                                          .price_ = 100.0,
+                                          .quantity_ = 3.0,
+                                          .filled_quantity_ = 0.0,
+                                          .tif_ = TimeInForce::GTX,
+                                          .orderType_ = OrderType::LIMIT,
+                                          .queueEst_ = 0.0});
+
+        auto order2 =
+            std::make_shared<Order>(Order{.timestamp_ = 301,
+                                          .orderId_ = 4,
+                                          .side_ = BookSide::Bid,
+                                          .price_ = 200.0,
+                                          .quantity_ = 4.0,
+                                          .filled_quantity_ = 0.0,
+                                          .tif_ = TimeInForce::GTX,
+                                          .orderType_ = OrderType::LIMIT,
+                                          .queueEst_ = 0.0});
+
+        engine.place_gtx_order(asset1, order1);
+        engine.place_gtx_order(asset2, order2);
+
+        const auto &all_orders1 = engine.orders(asset1);
+        const auto &all_orders2 = engine.orders(asset2);
+
+        REQUIRE(all_orders1.size() == 1);
+        REQUIRE(all_orders2.size() == 1);
+        REQUIRE(all_orders1[0].orderId_ != all_orders2[0].orderId_);
+    }
+}
+
 TEST_CASE("[ExecutionEngine] - executes market buy and sell orders",
           "[execution-engine][market]") {
     ExecutionEngine engine;
@@ -538,7 +654,6 @@ TEST_CASE("[ExecutionEngine] - processes trades", "[execution-engine][trade]") {
         REQUIRE(sell_order->filled_quantity_ == 2.0);
         REQUIRE(sell_order->queueEst_ == 0.0);
         REQUIRE(engine.fills().size() == 1);
-
     }
     SECTION("Does not fill if trade timestamp is before order") {
         ExecutionEngine engine;
@@ -574,7 +689,7 @@ TEST_CASE("[ExecutionEngine] - processes trades", "[execution-engine][trade]") {
                                           .tif_ = TimeInForce::GTX,
                                           .orderType_ = OrderType::LIMIT,
                                           .queueEst_ = 0.0});
-        engine.place_gtx_order(0, buy_order);
+        engine.place_gtx_order(0, sell_order);
         engine.handle_trade(0, Trade{.timestamp_ = 40,
                                      .local_timestamp_ = 21,
                                      .side_ = TradeSide::Buy,

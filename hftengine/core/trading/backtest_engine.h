@@ -11,6 +11,7 @@
 #include <cstdint>
 #include <unordered_map>
 #include <vector>
+#include <memory>
 
 #include "../data/readers/market_data_feed.hpp"
 #include "../execution_engine/execution_engine.h"
@@ -20,9 +21,12 @@
 #include "../types/time_in_force.h"
 #include "../types/usings.h"
 #include "backtest_asset.h"
+#include "depth.h"
 
 class BacktestEngine {
   public:
+    BacktestEngine();
+
     bool elapse(std::uint64_t microseconds);
     bool submit_buy_order(int asset_id, const OrderId &orderId,
                           const Price &price, const Quantity &quantity,
@@ -33,16 +37,17 @@ class BacktestEngine {
     bool cancel_order(int asset_id, const OrderId &orderId);
     bool clear_inactive_orders(int asset_id);
     std::vector<Order> orders(int asset_id);
-    double position(int asset_id);
+    Quantity position(int asset_id);
+    Depth depth(int asset_id);
 
   private:
-    BacktestAsset asset_;
-    Timestamp current_time_us_;
+    Timestamp current_time_us_; // microseconds
     ExecutionEngine execution_engine_;
     MarketDataFeed market_data_feed_;
+    std::unordered_map<int, BacktestAsset> assets_;
 
     // Per-asset state
-    std::unordered_map<int, double> balance_;
+    double balance;
     std::unordered_map<int, int> num_trades_;
     std::unordered_map<int, double> trading_volume_;
     std::unordered_map<int, double> trading_value_;
