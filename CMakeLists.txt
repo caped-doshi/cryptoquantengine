@@ -5,7 +5,7 @@ project(hftengine LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Define executable FIRST
+# Define executable
 add_executable(hftengine
   hftengine/main.cpp
   hftengine/core/orderbook/orderbook.cpp
@@ -17,10 +17,10 @@ add_executable(hftengine
 # THEN set properties
 target_include_directories(hftengine PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/hftengine
-  ${CMAKE_CURRENT_SOURCE_DIR}/external  # If using third-party libs
+  ${CMAKE_CURRENT_SOURCE_DIR}/external 
 )
 
-# Compiler flags (AFTER target is defined)
+# Compiler flags
 target_compile_options(hftengine PRIVATE
   $<$<CONFIG:Release>:-O3>
   $<$<CONFIG:Debug>:-O3 -Wall -Wextra -Wpedantic>
@@ -102,13 +102,16 @@ target_include_directories(test_execution_engine PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/hftengine
 )
 
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+
 # Link  test executables to Catch2
-target_link_libraries(test_orderbook PRIVATE Catch2::Catch2WithMain)
-target_link_libraries(test_config_reader PRIVATE Catch2::Catch2WithMain)
-target_link_libraries(test_book_stream_reader PRIVATE Catch2::Catch2WithMain)
-target_link_libraries(test_trade_stream_reader PRIVATE Catch2::Catch2WithMain)
-target_link_libraries(test_market_data_feed PRIVATE Catch2::Catch2WithMain)
-target_link_libraries(test_execution_engine PRIVATE Catch2::Catch2WithMain)
+target_link_libraries(test_orderbook PRIVATE Catch2::Catch2WithMain Threads::Threads)
+target_link_libraries(test_config_reader PRIVATE Catch2::Catch2WithMain Threads::Threads)
+target_link_libraries(test_book_stream_reader PRIVATE Catch2::Catch2WithMain Threads::Threads)
+target_link_libraries(test_trade_stream_reader PRIVATE Catch2::Catch2WithMain Threads::Threads)
+target_link_libraries(test_market_data_feed PRIVATE Catch2::Catch2WithMain Threads::Threads)
+target_link_libraries(test_execution_engine PRIVATE Catch2::Catch2WithMain Threads::Threads)
 
 # Discover tests for both executables
 include(CTest)

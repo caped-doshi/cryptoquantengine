@@ -10,35 +10,21 @@
 # include <filesystem>
 # include <fstream>
 
-# include "core/data/readers/book_stream_reader.hpp"
+# include "core/data/readers/book_stream_reader.h"
 # include "core/types/book_side.h"
 # include "core/types/update_type.h"
 # include "core/market_data/book_update.h"
-
-TEST_CASE("[BookStreamReader] - Construction", "[book][reader]") {
-    SECTION("Valid tick and lot sizes") {
-        REQUIRE_NOTHROW(BookStreamReader(0.01, 1.0));
-    }
-    
-    SECTION("Invalid tick size") {
-        REQUIRE_THROWS_AS(BookStreamReader(0.0, 1.0), std::invalid_argument);
-    }
-    
-    SECTION("Invalid lot size") {
-        REQUIRE_THROWS_AS(BookStreamReader(0.01, 0.0), std::invalid_argument);
-    }
-}
 
 TEST_CASE("[BookStreamReader] - CSV Parsing", "[book][csv]") {
     const std::string test_file = "test_book_update_data.csv";
     {
         std::ofstream out(test_file);
-        out << "timestamp,is_snapshot,side,price,amount\n";
-        out << "123456789,true,bid,100.50,200.0\n";
-        out << "123456790,false,ask,101.00,150.0\n";
+        out << "timestamp,local_timestamp,is_snapshot,side,price,amount\n";
+        out << "123456789,123456791,true,bid,100.50,200.0\n";
+        out << "123456790,123456792,false,ask,101.00,150.0\n";
     }
 
-    BookStreamReader reader(0.01, 1.0);
+    BookStreamReader reader;
     reader.open(test_file);
 
     SECTION("Parses valid bid snapshot correctly") {

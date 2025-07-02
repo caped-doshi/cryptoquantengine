@@ -6,51 +6,95 @@
  * License: Proprietary
  */
 
-# include <string>
-# include <vector>
-# include <unordered_map>
-# include <memory>
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
-# include "market_data_feed.hpp"
-# include "../../market_data/trade.h"
-# include "../../market_data/book_update.h"
-# include "../../types/usings.h"
-# include "../../orderbook/orderbook.h"
-# include "../../types/event_type.h"
-# include "book_stream_reader.hpp"
-# include "trade_stream_reader.hpp"
+#include "../../market_data/book_update.h"
+#include "../../market_data/trade.h"
+#include "../../orderbook/orderbook.h"
+#include "../../types/event_type.h"
+#include "../../types/usings.h"
+#include "book_stream_reader.h"
+#include "market_data_feed.h"
+#include "trade_stream_reader.h"
 
+MarketDataFeed::MarketDataFeed(
+    const std::unordered_map<int, std::string> &book_files,
+    const std::unordered_map<int, std::string> &trade_files) {
+    for (const auto &[asset_id, book_file] : book_files) {
+        StreamState state;
+        state.book_reader = std::make_unique<BookStreamReader>();
+        state.book_reader->open(book_file);
 
-MarketDataFeed::MarketDataFeed(BookStreamReader& book_stream, TradeStreamReader& trade_stream)
-    : book_stream_(book_stream), trade_stream_(trade_stream) {}
+        auto trade_it = trade_files.find(asset_id);
+        if (trade_it != trade_files.end()) {
+            state.trade_reader = std::make_unique<TradeStreamReader>();
+            state.trade_reader->open(trade_it->second);
+        }
 
-bool MarketDataFeed::next_event(EventType& event_type, BookUpdate& book_update, Trade& trade) {
-    if (last_event_ == EventType::Trade) {
-        trade_ok = trade_stream_.parse_next(trade);
+        asset_streams_[asset_id] = std::move(state);
     }
-    else if (last_event_ == EventType::BookUpdate) {
-        book_ok = book_stream_.parse_next(book_update);
+}
+
+bool MarketDataFeed::next_event(int &asset_id, EventType &event_type,
+                                BookUpdate &book_update, Trade &trade) {
+    bool found = false;
+    Timestamp min_time = std::numeric_limits<Timestamp>::max();
+
+    for (auto &[id, stream] : asset_streams_) {
+        // Ensure both streams are preloaded
+        if (!stream.next_book_update.has_value()) stream.advance_book();
+        if (!stream.next_trade.has_value()) stream.advance_trade();
+
+        if (stream.next_book_update.has_value() &&
+            stream.next_book_update->timestamp_ < min_time) {
+            min_time = stream.next_book_update->timestamp_;
+            asset_id = id;
+            event_type = EventType::BookUpdate;
+            found = true;
+        }
+
+        if (stream.next_trade.has_value() &&
+            stream.next_trade->timestamp_ < min_time) {
+            min_time = stream.next_trade->timestamp_;
+            asset_id = id;
+            event_type = EventType::Trade;
+            found = true;
+        }
     }
-    else {
-        trade_ok = trade_stream_.parse_next(trade);
-        book_ok = book_stream_.parse_next(book_update);
+
+    if (!found) return false;
+
+    auto &stream = asset_streams_.at(asset_id);
+    if (event_type == EventType::BookUpdate) {
+        book_update = *stream.next_book_update;
+        stream.advance_book();
+    } else {
+        trade = *stream.next_trade;
+        stream.advance_trade();
     }
-    if (trade_ok && book_ok) {
-        (trade.timestamp_ < book_update.timestamp_)
-            ? event_type = EventType::Trade
-            : event_type = EventType::BookUpdate;
-        last_event_ = event_type;
+
+    return true;
+}
+
+bool MarketDataFeed::StreamState::advance_book() {
+    BookUpdate update;
+    if (book_reader->parse_next(update)) {
+        next_book_update = update;
         return true;
     }
-    else if (trade_ok) {
-        event_type = EventType::Trade;
-        last_event_ = event_type;
+    next_book_update.reset();
+    return false;
+}
+
+bool MarketDataFeed::StreamState::advance_trade() {
+    Trade t;
+    if (trade_reader->parse_next(t)) {
+        next_trade = t;
         return true;
     }
-    else if (book_ok) {
-        event_type = EventType::BookUpdate;
-        last_event_ = event_type;
-        return true;
-    }
+    next_trade.reset();
     return false;
 }
