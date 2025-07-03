@@ -64,6 +64,30 @@ TEST_CASE("[MarketDataFeed] - initializes with empty input",
     REQUIRE_FALSE(feed.next_event(asset_id, type, book_update, trade));
 }
 
+TEST_CASE("[MarketDataFeed] - add_stream single asset",
+          "[MarketDataFeed][add_stream]") {
+    const std::string book_file = "test_book.csv";
+    const std::string trade_file = "test_trade.csv";
+    TestHelpers::create_book_update_csv(book_file);
+    TestHelpers::create_trade_csv(trade_file);
+
+    MarketDataFeed feed;
+    feed.add_stream(1, book_file, trade_file);
+
+    EventType event_type;
+    BookUpdate book_update;
+    Trade trade;
+    int asset_id;
+
+    REQUIRE(feed.next_event(asset_id, event_type, book_update, trade));
+    REQUIRE(asset_id == 1);
+    REQUIRE(event_type == EventType::Trade);
+    REQUIRE(trade.timestamp_ == 100);
+
+    std::filesystem::remove(book_file);
+    std::filesystem::remove(trade_file);
+}
+
 TEST_CASE("[MarketDataFeed] - processes multi-asset events in timestamp order",
           "[multi-asset][order]") {
     const std::string book_file = "book_asset0.csv";

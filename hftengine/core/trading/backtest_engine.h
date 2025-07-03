@@ -9,9 +9,9 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 #include <unordered_map>
 #include <vector>
-#include <memory>
 
 #include "../data/readers/market_data_feed.h"
 #include "../execution_engine/execution_engine.h"
@@ -25,9 +25,8 @@
 
 class BacktestEngine {
   public:
-    explicit BacktestEngine(std::map<int, std::string> book_files,
-                   std::map<int, std::string> trade_files,
-                   std::map<int, AssetConfig> asset_configs);
+    explicit BacktestEngine(
+        const std::unordered_map<int, AssetConfig> &asset_configs);
 
     bool elapse(std::uint64_t microseconds);
     bool submit_buy_order(int asset_id, const OrderId &orderId,

@@ -20,6 +20,8 @@
 #include "market_data_feed.h"
 #include "trade_stream_reader.h"
 
+MarketDataFeed::MarketDataFeed() {}
+
 /**
  * @brief Constructs a MarketDataFeed for multiple assets from CSV files.
  *
@@ -54,6 +56,34 @@ MarketDataFeed::MarketDataFeed(
 
         asset_streams_[asset_id] = std::move(state);
     }
+}
+
+/**
+ * @brief Adds a new asset data stream to the MarketDataFeed.
+ *
+ * This method initializes and registers a new stream for the given asset ID
+ * using the provided Level 2 book update file and trade file. The function
+ * creates new `BookStreamReader` and `TradeStreamReader` instances, opens the
+ * corresponding CSV files, and stores the stream state internally for later
+ * event processing.
+ *
+ * @param asset_id The unique identifier of the asset.
+ * @param book_file Path to the CSV file containing Level 2 book update data.
+ * @param trade_file Path to the CSV file containing trade data.
+ *
+ * @note This method assumes that the given file paths are valid and readable.
+ *       It will replace any existing stream associated with the same asset ID.
+ */
+void MarketDataFeed::add_stream(int asset_id, const std::string &book_file,
+                                const std::string &trade_file) {
+    StreamState stream;
+    stream.book_reader = std::make_unique<BookStreamReader>();
+    stream.book_reader->open(book_file);
+
+    stream.trade_reader = std::make_unique<TradeStreamReader>();
+    stream.trade_reader->open(trade_file);
+
+    asset_streams_[asset_id] = std::move(stream);
 }
 
 /**

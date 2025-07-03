@@ -12,17 +12,14 @@
 # include <string>
 
 struct AssetConfig {
-    std::string l2update_file;
-    std::string trade_file;
+    std::string book_update_file_;
+    std::string trade_file_;
 
-    double tick_size;
-    double lot_size;
-    double contract_multiplier;
-    bool is_inverse;
+    double tick_size_;
+    double lot_size_;
+    double contract_multiplier_;
+    bool is_inverse_;
 
-    double maker_fee;
-    double taker_fee;
-
-    bool allow_partial_fills;
-    double power_queue_model_exponent;
+    double maker_fee_;
+    double taker_fee_;
 };

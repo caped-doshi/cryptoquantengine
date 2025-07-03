@@ -25,8 +25,12 @@
 
 class MarketDataFeed {
   public:
+    MarketDataFeed();
     MarketDataFeed(const std::unordered_map<int, std::string> &book_files,
                    const std::unordered_map<int, std::string> &trade_files);
+    void add_stream(int asset_id, const std::string &book_file,
+                    const std::string &trade_file);
+
     bool next_event(int &asset_id, EventType &event_type,
                     BookUpdate &book_update, Trade &trade);
     std::optional<Timestamp> peek_timestamp();
