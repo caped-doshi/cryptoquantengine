@@ -13,6 +13,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <cstdint>
 
 #include "../../market_data/book_update.h"
 #include "../../market_data/trade.h"
@@ -28,6 +29,7 @@ class MarketDataFeed {
                    const std::unordered_map<int, std::string> &trade_files);
     bool next_event(int &asset_id, EventType &event_type,
                     BookUpdate &book_update, Trade &trade);
+    std::optional<Timestamp> peek_timestamp();
 
   private:
     struct StreamState {

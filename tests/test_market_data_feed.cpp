@@ -7,13 +7,13 @@
  */
 
 #include <catch2/catch_test_macros.hpp>
+#include <cstdint>
 #include <filesystem>
 #include <fstream>
 #include <set>
 #include <tuple>
 #include <unordered_map>
 #include <vector>
-#include <cstdint>
 
 #include "core/data/readers/book_stream_reader.h"
 #include "core/data/readers/market_data_feed.h"
@@ -187,7 +187,7 @@ TEST_CASE("[MarketDataFeed] - multi-asset event sequencing",
         REQUIRE(std::get<2>(observed_events[i]) >=
                 std::get<2>(observed_events[i - 1]));
     }
-    
+
     // Check that we have events from both assets
     std::set<int> assets;
     for (auto &[asset_id, type, ts] : observed_events) {
@@ -201,4 +201,59 @@ TEST_CASE("[MarketDataFeed] - multi-asset event sequencing",
     std::filesystem::remove(btc_book_file);
     std::filesystem::remove(eth_trade_file);
     std::filesystem::remove(eth_book_file);
+}
+
+TEST_CASE("[MarketDataFeed] - peek timestamp", "[feed][peek]") {
+    // Create test files for 2 assets
+    const std::string trade_file_1 = "btc_trades.csv";
+    const std::string book_file_1 = "btc_book.csv";
+    const std::string trade_file_2 = "eth_trades.csv";
+    const std::string book_file_2 = "eth_book.csv";
+
+    TestHelpers::create_trade_csv(trade_file_1);
+    TestHelpers::create_book_update_csv(book_file_1);
+    TestHelpers::create_trade_csv_2(trade_file_2);
+    TestHelpers::create_book_update_csv_2(book_file_2);
+
+    std::unordered_map<int, std::string> trade_files = {{0, trade_file_1},
+                                                        {1, trade_file_2}};
+    std::unordered_map<int, std::string> book_files = {{0, book_file_1},
+                                                       {1, book_file_2}};
+
+    MarketDataFeed feed(book_files, trade_files);
+
+    SECTION("initial peek behavior") {
+        auto ts_opt = feed.peek_timestamp();
+        REQUIRE(ts_opt.has_value());
+        REQUIRE(ts_opt.value() == 100); // Earliest is trade at 100 for asset 0
+    }
+    SECTION("peek does not affect the next_event") {
+        auto ts_opt = feed.peek_timestamp();
+        // Advance one event (trade at 100)
+        int asset_id;
+        EventType type;
+        BookUpdate book_update;
+        Trade trade;
+        REQUIRE(feed.next_event(asset_id, type, book_update, trade));
+        // ensure the timestamp is not affected by the peak
+        REQUIRE(type == EventType::Trade);
+        REQUIRE(trade.timestamp_ == 100);
+    }
+    SECTION("peak after next_event") {
+        auto ts_opt = feed.peek_timestamp();
+        int asset_id;
+        EventType type;
+        BookUpdate book_update;
+        Trade trade;
+        feed.next_event(asset_id, type, book_update, trade);
+        // Now earliest should be trade at 150 for asset 1
+        ts_opt = feed.peek_timestamp();
+        REQUIRE(ts_opt.has_value());
+        REQUIRE(ts_opt.value() == 150);
+    }
+    // Cleanup
+    std::filesystem::remove(trade_file_1);
+    std::filesystem::remove(book_file_1);
+    std::filesystem::remove(trade_file_2);
+    std::filesystem::remove(book_file_2);
 }

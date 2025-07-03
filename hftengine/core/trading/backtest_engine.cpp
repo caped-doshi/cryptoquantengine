@@ -1,7 +1,7 @@
 /*
  * File: hftengine/core/execution_engine/backtest_engine.h
  * Description: Class structure for execution engine to take orders, fill
-	            orders. 
+                    orders.
  * Author: Arvind Rathnashyam
  * Date: 2025-06-26
  * License: Proprietary
@@ -22,4 +22,3 @@
 Quantity BacktestEngine::position(int asset_id) { return position_[asset_id]; }
 
 Depth BacktestEngine::depth(int asset_id) { return Depth{0, 0, 0, 0}; }
-
