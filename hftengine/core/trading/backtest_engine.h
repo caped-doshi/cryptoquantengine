@@ -25,7 +25,9 @@
 
 class BacktestEngine {
   public:
-    BacktestEngine();
+    explicit BacktestEngine(std::map<int, std::string> book_files,
+                   std::map<int, std::string> trade_files,
+                   std::map<int, AssetConfig> asset_configs);
 
     bool elapse(std::uint64_t microseconds);
     bool submit_buy_order(int asset_id, const OrderId &orderId,
