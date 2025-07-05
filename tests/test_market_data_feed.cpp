@@ -1,6 +1,6 @@
 /*
  * File: tests/test_market_data_feed.cpp
- * Description: Unit tests for hftengine/core/data/readers/market_data_feed.cpp.
+ * Description: Unit tests for hftengine/core/data/market_data_feed.cpp.
  * Author: Arvind Rathnashyam
  * Date: 2025-06-25
  * License: Proprietary
@@ -16,7 +16,7 @@
 #include <vector>
 
 #include "core/data/readers/book_stream_reader.h"
-#include "core/data/readers/market_data_feed.h"
+#include "core/data/market_data_feed.h"
 #include "core/data/readers/trade_stream_reader.h"
 #include "core/market_data/book_update.h"
 #include "core/market_data/trade.h"
@@ -64,6 +64,30 @@ TEST_CASE("[MarketDataFeed] - initializes with empty input",
     REQUIRE_FALSE(feed.next_event(asset_id, type, book_update, trade));
 }
 
+TEST_CASE("[MarketDataFeed] - add_stream single asset",
+          "[MarketDataFeed][add_stream]") {
+    const std::string book_file = "test_book.csv";
+    const std::string trade_file = "test_trade.csv";
+    TestHelpers::create_book_update_csv(book_file);
+    TestHelpers::create_trade_csv(trade_file);
+
+    MarketDataFeed feed;
+    feed.add_stream(1, book_file, trade_file);
+
+    EventType event_type;
+    BookUpdate book_update;
+    Trade trade;
+    int asset_id;
+
+    REQUIRE(feed.next_event(asset_id, event_type, book_update, trade));
+    REQUIRE(asset_id == 1);
+    REQUIRE(event_type == EventType::Trade);
+    REQUIRE(trade.exch_timestamp_ == 100);
+
+    std::filesystem::remove(book_file);
+    std::filesystem::remove(trade_file);
+}
+
 TEST_CASE("[MarketDataFeed] - processes multi-asset events in timestamp order",
           "[multi-asset][order]") {
     const std::string book_file = "book_asset0.csv";
@@ -85,27 +109,27 @@ TEST_CASE("[MarketDataFeed] - processes multi-asset events in timestamp order",
         REQUIRE(feed.next_event(asset_id, type, book_update, trade));
         REQUIRE(asset_id == 0);
         REQUIRE(type == EventType::Trade);
-        REQUIRE(trade.timestamp_ == 100);
+        REQUIRE(trade.exch_timestamp_ == 100);
 
         REQUIRE(feed.next_event(asset_id, type, book_update, trade));
         REQUIRE(asset_id == 0);
         REQUIRE(type == EventType::BookUpdate);
-        REQUIRE(book_update.timestamp_ == 200);
+        REQUIRE(book_update.exch_timestamp_ == 200);
 
         REQUIRE(feed.next_event(asset_id, type, book_update, trade));
         REQUIRE(asset_id == 0);
         REQUIRE(type == EventType::Trade);
-        REQUIRE(trade.timestamp_ == 300);
+        REQUIRE(trade.exch_timestamp_ == 300);
 
         REQUIRE(feed.next_event(asset_id, type, book_update, trade));
         REQUIRE(asset_id == 0);
         REQUIRE(type == EventType::BookUpdate);
-        REQUIRE(book_update.timestamp_ == 400);
+        REQUIRE(book_update.exch_timestamp_ == 400);
 
         REQUIRE(feed.next_event(asset_id, type, book_update, trade));
         REQUIRE(asset_id == 0);
         REQUIRE(type == EventType::BookUpdate);
-        REQUIRE(book_update.timestamp_ == 500);
+        REQUIRE(book_update.exch_timestamp_ == 500);
 
         REQUIRE_FALSE(feed.next_event(asset_id, type, book_update, trade));
     }
@@ -171,8 +195,8 @@ TEST_CASE("[MarketDataFeed] - multi-asset event sequencing",
     // Collect all events
     while (feed.next_event(asset_id, event_type, book_update, trade)) {
         Timestamp ts;
-        (event_type == EventType::Trade) ? ts = trade.timestamp_
-                                         : ts = book_update.timestamp_;
+        (event_type == EventType::Trade) ? ts = trade.exch_timestamp_
+                                         : ts = book_update.exch_timestamp_;
         observed_events.emplace_back(asset_id, event_type, ts);
     }
     REQUIRE(std::get<1>(observed_events[0]) == EventType::Trade);
@@ -237,7 +261,7 @@ TEST_CASE("[MarketDataFeed] - peek timestamp", "[feed][peek]") {
         REQUIRE(feed.next_event(asset_id, type, book_update, trade));
         // ensure the timestamp is not affected by the peak
         REQUIRE(type == EventType::Trade);
-        REQUIRE(trade.timestamp_ == 100);
+        REQUIRE(trade.exch_timestamp_ == 100);
     }
     SECTION("peak after next_event") {
         auto ts_opt = feed.peek_timestamp();

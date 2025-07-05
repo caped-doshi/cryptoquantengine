@@ -17,7 +17,8 @@
 
 struct Fill {
     int asset_id_;
-    Timestamp timestamp_;
+    Timestamp exch_timestamp_;  // processed on exchange first, 
+    Timestamp local_timestamp_; // received by local via wss
     OrderId orderId_;
     TradeSide side_;
     Price price_;

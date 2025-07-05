@@ -9,50 +9,68 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 #include <unordered_map>
 #include <vector>
-#include <memory>
 
-#include "../data/readers/market_data_feed.h"
+#include "../data/market_data_feed.h"
 #include "../execution_engine/execution_engine.h"
 #include "../orderbook/orderbook.h"
 #include "../trading/order.h"
+#include "../trading/fill.h"
+#include "../types/action_type.h"
 #include "../types/order_type.h"
 #include "../types/time_in_force.h"
 #include "../types/usings.h"
 #include "backtest_asset.h"
 #include "depth.h"
+#include "orderId_generator.h"
 
 class BacktestEngine {
   public:
-    explicit BacktestEngine(std::map<int, std::string> book_files,
-                   std::map<int, std::string> trade_files,
-                   std::map<int, AssetConfig> asset_configs);
+    explicit BacktestEngine(
+        const std::unordered_map<int, AssetConfig> &asset_configs);
 
     bool elapse(std::uint64_t microseconds);
-    bool submit_buy_order(int asset_id, const OrderId &orderId,
-                          const Price &price, const Quantity &quantity,
-                          const TimeInForce &tif, const OrderType &orderType);
-    bool submit_sell_order(int asset_id, const OrderId &orderId,
-                           const Price &price, const Quantity &quantity,
-                           const TimeInForce &tif, const OrderType &orderType);
+    OrderId submit_buy_order(int asset_id, const Price &price,
+                             const Quantity &quantity, const TimeInForce &tif,
+                             const OrderType &orderType);
+    OrderId submit_sell_order(int asset_id, const Price &price,
+                              const Quantity &quantity, const TimeInForce &tif,
+                              const OrderType &orderType);
     bool cancel_order(int asset_id, const OrderId &orderId);
     bool clear_inactive_orders(int asset_id);
+    void process_filled_orders();
+    void process_fill(int asset_id, const Fill& fill);
     std::vector<Order> orders(int asset_id);
     Quantity position(int asset_id);
     Depth depth(int asset_id);
+    Timestamp current_time();
 
   private:
     Timestamp current_time_us_; // microseconds
     ExecutionEngine execution_engine_;
     MarketDataFeed market_data_feed_;
+    OrderIdGenerator orderId_gen_;
+    std::unordered_map<int, OrderBook> local_orderbooks_;
     std::unordered_map<int, BacktestAsset> assets_;
 
-    // Per-asset state
     double balance;
     std::unordered_map<int, int> num_trades_;
     std::unordered_map<int, double> trading_volume_;
     std::unordered_map<int, double> trading_value_;
     std::unordered_map<int, double> realized_pnl_;
     std::unordered_map<int, double> position_;
+
+    struct DelayedAction {
+        ActionType type_;
+        int asset_id_;
+        std::optional<Order> order_;
+        std::optional<OrderId> orderId_;
+        std::optional<Fill> fill_;
+        std::optional<BookUpdate> book_update_;
+        Timestamp execute_time_;
+    };
+
+    std::multimap<Timestamp, DelayedAction> delayed_actions_;
 };

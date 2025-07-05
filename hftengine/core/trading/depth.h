@@ -14,8 +14,8 @@
  * @brief Represents the best bid and ask prices and their quantities.
  */
 struct Depth {
-    Price best_bid = 0.0;
-    Quantity bid_qty = 0.0;
-    Price best_ask = 0.0;
-    Quantity ask_qty = 0.0;
+    Price best_bid_ = 0.0;
+    Quantity bid_qty_ = 0.0;
+    Price best_ask_ = 0.0;
+    Quantity ask_qty_ = 0.0;
 };

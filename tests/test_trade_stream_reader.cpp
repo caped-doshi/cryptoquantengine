@@ -31,7 +31,7 @@ TEST_CASE("[TradeStreamReader] - CSV Parsing", "[trade][csv]") {
         Trade trade;
 
         REQUIRE(reader.parse_next(trade));
-        REQUIRE(trade.timestamp_ == 1740009604700000);
+        REQUIRE(trade.exch_timestamp_ == 1740009604700000);
         REQUIRE(trade.local_timestamp_ == 1740009604703670);
         REQUIRE(trade.orderId_ == 47311612);
         REQUIRE(trade.side_ == TradeSide::Buy);
@@ -44,7 +44,7 @@ TEST_CASE("[TradeStreamReader] - CSV Parsing", "[trade][csv]") {
         reader.parse_next(trade); // each section gets fresh start
 
         REQUIRE(reader.parse_next(trade));
-        REQUIRE(trade.timestamp_ == 1740009604840000);
+        REQUIRE(trade.exch_timestamp_ == 1740009604840000);
         REQUIRE(trade.local_timestamp_ == 1740009604859720);
         REQUIRE(trade.orderId_ == 47311613);
         REQUIRE(trade.side_ == TradeSide::Sell);

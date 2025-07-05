@@ -4,8 +4,10 @@
  * parameters, data sources, and execution                 models used in the
  * backtest engine. Author: Arvind Rathnashyam Date: 2025-06-26 License:
  * Date: 2025-06-26
- * License: Proprietary 
+ * License: Proprietary
  */
+
+#pragma once
 
 #include <cstdint>
 #include <vector>
@@ -15,11 +17,11 @@
 #include "asset_config.h"
 
 class BacktestAsset {
-public:
-  explicit BacktestAsset(const AssetConfig &cfg) : cfg_(cfg) {}
+  public:
+    explicit BacktestAsset(const AssetConfig &config) : config_(config) {}
 
-  const AssetConfig &config() const { return cfg_; }
+    const AssetConfig &config() const { return config_; }
 
-private:
-  AssetConfig cfg_;
+  private:
+    AssetConfig config_;
 };

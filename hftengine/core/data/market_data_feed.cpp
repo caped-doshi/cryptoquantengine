@@ -1,5 +1,5 @@
 /*
- * File: hftengine/core/data/readers/market_data_feed.cpp
+ * File: hftengine/core/data/market_data_feed.cpp
  * Description: Class to stream trade and book_update data chronologically.
  * Author: Arvind Rathnashyam
  * Date: 2025-06-26
@@ -11,14 +11,26 @@
 #include <unordered_map>
 #include <vector>
 
-#include "../../market_data/book_update.h"
-#include "../../market_data/trade.h"
-#include "../../orderbook/orderbook.h"
-#include "../../types/event_type.h"
-#include "../../types/usings.h"
-#include "book_stream_reader.h"
+#include "../market_data/book_update.h"
+#include "../market_data/trade.h"
+#include "../orderbook/orderbook.h"
+#include "../types/event_type.h"
+#include "../types/usings.h"
 #include "market_data_feed.h"
-#include "trade_stream_reader.h"
+#include "readers/book_stream_reader.h"
+#include "readers/trade_stream_reader.h"
+
+/**
+ * @brief Default constructor for MarketDataFeed.
+ *
+ * Initializes an empty market data feed with no registered asset streams.
+ * This constructor can be used when streams are intended to be added manually
+ * later via `add_stream`.
+ *
+ * @note This constructor does not load any data sources. Call `add_stream` to
+ *       register asset-specific book and trade readers.
+ */
+MarketDataFeed::MarketDataFeed() {}
 
 /**
  * @brief Constructs a MarketDataFeed for multiple assets from CSV files.
@@ -57,6 +69,34 @@ MarketDataFeed::MarketDataFeed(
 }
 
 /**
+ * @brief Adds a new asset data stream to the MarketDataFeed.
+ *
+ * This method initializes and registers a new stream for the given asset ID
+ * using the provided Level 2 book update file and trade file. The function
+ * creates new `BookStreamReader` and `TradeStreamReader` instances, opens the
+ * corresponding CSV files, and stores the stream state internally for later
+ * event processing.
+ *
+ * @param asset_id The unique identifier of the asset.
+ * @param book_file Path to the CSV file containing Level 2 book update data.
+ * @param trade_file Path to the CSV file containing trade data.
+ *
+ * @note This method assumes that the given file paths are valid and readable.
+ *       It will replace any existing stream associated with the same asset ID.
+ */
+void MarketDataFeed::add_stream(int asset_id, const std::string &book_file,
+                                const std::string &trade_file) {
+    StreamState stream;
+    stream.book_reader = std::make_unique<BookStreamReader>();
+    stream.book_reader->open(book_file);
+
+    stream.trade_reader = std::make_unique<TradeStreamReader>();
+    stream.trade_reader->open(trade_file);
+
+    asset_streams_[asset_id] = std::move(stream);
+}
+
+/**
  * @brief Retrieves the next market data event (either book update or trade)
  * across all assets.
  *
@@ -86,16 +126,16 @@ bool MarketDataFeed::next_event(int &asset_id, EventType &event_type,
         if (!stream.next_trade.has_value()) stream.advance_trade();
 
         if (stream.next_book_update.has_value() &&
-            stream.next_book_update->timestamp_ < min_time) {
-            min_time = stream.next_book_update->timestamp_;
+            stream.next_book_update->exch_timestamp_ < min_time) {
+            min_time = stream.next_book_update->exch_timestamp_;
             asset_id = id;
             event_type = EventType::BookUpdate;
             found = true;
         }
 
         if (stream.next_trade.has_value() &&
-            stream.next_trade->timestamp_ < min_time) {
-            min_time = stream.next_trade->timestamp_;
+            stream.next_trade->exch_timestamp_ < min_time) {
+            min_time = stream.next_trade->exch_timestamp_;
             asset_id = id;
             event_type = EventType::Trade;
             found = true;
@@ -136,14 +176,14 @@ std::optional<Timestamp> MarketDataFeed::peek_timestamp() {
         if (!stream.next_trade.has_value()) stream.advance_trade();
 
         if (stream.next_book_update.has_value()) {
-            Timestamp ts = stream.next_book_update->timestamp_;
+            Timestamp ts = stream.next_book_update->exch_timestamp_;
             if (!earliest.has_value() || ts < *earliest) {
                 earliest = ts;
             }
         }
 
         if (stream.next_trade.has_value()) {
-            Timestamp ts = stream.next_trade->timestamp_;
+            Timestamp ts = stream.next_trade->exch_timestamp_;
             if (!earliest.has_value() || ts < *earliest) {
                 earliest = ts;
             }

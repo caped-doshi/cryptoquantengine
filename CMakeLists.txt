@@ -12,6 +12,9 @@ add_executable(hftengine
   hftengine/utils/config/config_reader.cpp
   hftengine/core/execution_engine/execution_engine.cpp
   hftengine/core/trading/backtest_engine.cpp
+  hftengine/core/data/market_data_feed.cpp
+  hftengine/core/data/readers/book_stream_reader.cpp
+  hftengine/core/data/readers/trade_stream_reader.cpp
 )
 
 # THEN set properties
@@ -25,6 +28,9 @@ target_compile_options(hftengine PRIVATE
   $<$<CONFIG:Release>:-O3>
   $<$<CONFIG:Debug>:-O3 -Wall -Wextra -Wpedantic>
 )
+
+# Link pthreads to main executable (required for std::thread on Linux)
+target_link_libraries(hftengine PRIVATE Threads::Threads)
 
 # Catch2 test setup
 include(FetchContent)
@@ -82,7 +88,7 @@ target_include_directories(test_trade_stream_reader PRIVATE
 # 5. MarketDataFeed Tests
 add_executable(test_market_data_feed
   tests/test_market_data_feed.cpp
-  hftengine/core/data/readers/market_data_feed.cpp
+  hftengine/core/data/market_data_feed.cpp
   hftengine/core/data/readers/trade_stream_reader.cpp
   hftengine/core/data/readers/book_stream_reader.cpp
 )
@@ -102,6 +108,21 @@ target_include_directories(test_execution_engine PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/hftengine
 )
 
+# 7. Backtest Engine Tests
+add_executable(test_backtest_engine
+  tests/test_backtest_engine.cpp
+  hftengine/core/trading/backtest_engine.cpp
+  hftengine/core/execution_engine/execution_engine.cpp
+  hftengine/core/orderbook/orderbook.cpp
+  hftengine/core/data/market_data_feed.cpp
+  hftengine/core/data/readers/trade_stream_reader.cpp
+  hftengine/core/data/readers/book_stream_reader.cpp
+)
+
+target_include_directories(test_backtest_engine PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/hftengine
+)
+
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
@@ -112,6 +133,7 @@ target_link_libraries(test_book_stream_reader PRIVATE Catch2::Catch2WithMain Thr
 target_link_libraries(test_trade_stream_reader PRIVATE Catch2::Catch2WithMain Threads::Threads)
 target_link_libraries(test_market_data_feed PRIVATE Catch2::Catch2WithMain Threads::Threads)
 target_link_libraries(test_execution_engine PRIVATE Catch2::Catch2WithMain Threads::Threads)
+target_link_libraries(test_backtest_engine PRIVATE Catch2::Catch2WithMain Threads::Threads)
 
 # Discover tests for both executables
 include(CTest)
@@ -122,6 +144,7 @@ catch_discover_tests(test_book_stream_reader)
 catch_discover_tests(test_trade_stream_reader)
 catch_discover_tests(test_market_data_feed)
 catch_discover_tests(test_execution_engine)
+catch_discover_tests(test_backtest_engine)
 
 # Optional: Add a global test target
 add_custom_target(run_all_tests DEPENDS
@@ -131,4 +154,5 @@ add_custom_target(run_all_tests DEPENDS
   test_trade_stream_reader
   test_market_data_feed
   test_execution_engine
+  test_backtest_engine
 )

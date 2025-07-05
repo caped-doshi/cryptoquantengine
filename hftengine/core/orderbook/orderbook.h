@@ -35,9 +35,6 @@ public:
     // Apply incoming L2 book update (price-level based)
     void apply_book_update(const BookUpdate& update);
 
-    // Apply trade message to simulate fills
-    void apply_trade(const Trade& trade);
-
     // Book queries
     Price best_bid() const;
     Price best_ask() const;
