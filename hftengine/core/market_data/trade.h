@@ -13,8 +13,8 @@
 # include "../types/trade_side.h"
 
 struct Trade {
-	Timestamp timestamp_;
-	Timestamp local_timestamp_;
+	Timestamp exch_timestamp_;    // arrives at exchange first
+	Timestamp local_timestamp_;   // then sent to local with latency
 	TradeSide side_;
 	Price price_;
 	Quantity quantity_;

@@ -34,6 +34,7 @@ void create_book_update_csv(const std::string &filename) {
     std::ofstream f(filename);
     f << "timestamp,local_timestamp,is_snapshot,side,price,amount\n"
       << "200,210,false,bid,50000.0,2.0\n"
+      << "300,310,false,bid,50000.5,2.0\n"
       << "400,410,false,ask,50001.0,1.5\n"
       << "500,510,false,ask,50001.0,2.5\n";
 }
@@ -71,4 +72,48 @@ TEST_CASE("[BacktestEngine] - initializes correctly with valid input",
     // Cleanup
     std::filesystem::remove(book_file);
     std::filesystem::remove(trade_file);
+}
+
+TEST_CASE("[BacktestEngine] - elapse", "[backtest-engine][elapse]") {
+    const std::string book_file = "test_book.csv";
+    const std::string trade_file = "test_trade.csv";
+    TestHelpers::create_book_update_csv(book_file);
+    TestHelpers::create_trade_csv(trade_file);
+
+    int asset_id = 1;
+    Depth depth;
+
+    std::unordered_map<int, AssetConfig> asset_configs = {
+        {asset_id, AssetConfig{.book_update_file_ = book_file,
+                               .trade_file_ = trade_file,
+                               .tick_size_ = 0.001,
+                               .lot_size_ = 0.00001,
+                               .contract_multiplier_ = 1.0,
+                               .is_inverse_ = false,
+                               .maker_fee_ = 0.0,
+                               .taker_fee_ = 0.00045}}};
+    SECTION("Current timestamp elapses correctly") {
+        BacktestEngine hbt(asset_configs);
+        REQUIRE(hbt.elapse(100) == true);
+        REQUIRE(hbt.current_time() == 100);
+        REQUIRE(hbt.elapse(100) == true);
+        REQUIRE(hbt.current_time() == 200);
+    }
+    SECTION("local orderbook updated with latency") {
+        BacktestEngine hbt(asset_configs);
+        REQUIRE(hbt.elapse(500) == true);
+        REQUIRE(hbt.current_time() == 500);
+
+        depth = hbt.depth(asset_id);
+        REQUIRE(depth.best_ask_ == 50001.0);
+        REQUIRE(depth.best_bid_ == 50000.5);
+        REQUIRE(depth.ask_qty_ == 1.5);
+        REQUIRE(depth.bid_qty_ == 2.0);
+
+        REQUIRE(hbt.elapse(50) == true);
+        REQUIRE(hbt.current_time() == 550);
+
+        depth = hbt.depth(asset_id);
+        REQUIRE(depth.ask_qty_ == 2.5);
+    }
 }

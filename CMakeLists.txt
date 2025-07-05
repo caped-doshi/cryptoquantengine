@@ -12,7 +12,7 @@ add_executable(hftengine
   hftengine/utils/config/config_reader.cpp
   hftengine/core/execution_engine/execution_engine.cpp
   hftengine/core/trading/backtest_engine.cpp
-  hftengine/core/data/readers/market_data_feed.cpp
+  hftengine/core/data/market_data_feed.cpp
   hftengine/core/data/readers/book_stream_reader.cpp
   hftengine/core/data/readers/trade_stream_reader.cpp
 )
@@ -88,7 +88,7 @@ target_include_directories(test_trade_stream_reader PRIVATE
 # 5. MarketDataFeed Tests
 add_executable(test_market_data_feed
   tests/test_market_data_feed.cpp
-  hftengine/core/data/readers/market_data_feed.cpp
+  hftengine/core/data/market_data_feed.cpp
   hftengine/core/data/readers/trade_stream_reader.cpp
   hftengine/core/data/readers/book_stream_reader.cpp
 )
@@ -114,7 +114,7 @@ add_executable(test_backtest_engine
   hftengine/core/trading/backtest_engine.cpp
   hftengine/core/execution_engine/execution_engine.cpp
   hftengine/core/orderbook/orderbook.cpp
-  hftengine/core/data/readers/market_data_feed.cpp
+  hftengine/core/data/market_data_feed.cpp
   hftengine/core/data/readers/trade_stream_reader.cpp
   hftengine/core/data/readers/book_stream_reader.cpp
 )

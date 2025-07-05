@@ -48,7 +48,7 @@ bool TradeStreamReader::parse_next(Trade &trade) {
 
     try {
         // Temporary variables for parsing
-        Timestamp timestamp = 1;
+        Timestamp exch_timestamp = 1;
         Timestamp local_timestamp = 1;
         OrderId orderId = 1;
         std::string side_str;
@@ -56,8 +56,8 @@ bool TradeStreamReader::parse_next(Trade &trade) {
         double quantity = 0;
 
         // Read the next row
-        if (!csv_reader_->reader.read_row(timestamp, local_timestamp, orderId,
-                                          side_str, price, quantity)) {
+        if (!csv_reader_->reader.read_row(exch_timestamp, local_timestamp,
+                                          orderId, side_str, price, quantity)) {
             return false; // EOF or read error
         }
 
@@ -68,7 +68,7 @@ bool TradeStreamReader::parse_next(Trade &trade) {
         }
 
         // Convert and populate the update
-        trade.timestamp_ = timestamp;
+        trade.exch_timestamp_ = exch_timestamp;
         trade.local_timestamp_ = local_timestamp;
         trade.orderId_ = orderId;
         trade.side_ = (side_str == "buy") ? TradeSide::Buy : TradeSide::Sell;

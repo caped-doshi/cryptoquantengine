@@ -70,8 +70,8 @@ bool BookStreamReader::parse_next(BookUpdate &update) {
         }
 
         // Convert and populate the update
-        update.timestamp_ = static_cast<Timestamp>(timestamp);
-        update.localTimestamp_ = static_cast<Timestamp>(local_timestamp);
+        update.exch_timestamp_ = static_cast<Timestamp>(timestamp);
+        update.local_timestamp_ = static_cast<Timestamp>(local_timestamp);
         update.update_type_ = (update_type_str == "true")
                                   ? UpdateType::Snapshot
                                   : UpdateType::Incremental;

@@ -1,5 +1,5 @@
 /*
- * File: hftengine/core/data/readers/market_data_feed.cpp
+ * File: hftengine/core/data/market_data_feed.cpp
  * Description: Class to stream trade and book_update data chronologically.
  * Author: Arvind Rathnashyam
  * Date: 2025-06-26
@@ -11,15 +11,25 @@
 #include <unordered_map>
 #include <vector>
 
-#include "../../market_data/book_update.h"
-#include "../../market_data/trade.h"
-#include "../../orderbook/orderbook.h"
-#include "../../types/event_type.h"
-#include "../../types/usings.h"
-#include "book_stream_reader.h"
+#include "../market_data/book_update.h"
+#include "../market_data/trade.h"
+#include "../orderbook/orderbook.h"
+#include "../types/event_type.h"
+#include "../types/usings.h"
 #include "market_data_feed.h"
-#include "trade_stream_reader.h"
+#include "readers/book_stream_reader.h"
+#include "readers/trade_stream_reader.h"
 
+/**
+ * @brief Default constructor for MarketDataFeed.
+ *
+ * Initializes an empty market data feed with no registered asset streams.
+ * This constructor can be used when streams are intended to be added manually
+ * later via `add_stream`.
+ *
+ * @note This constructor does not load any data sources. Call `add_stream` to
+ *       register asset-specific book and trade readers.
+ */
 MarketDataFeed::MarketDataFeed() {}
 
 /**
@@ -116,16 +126,16 @@ bool MarketDataFeed::next_event(int &asset_id, EventType &event_type,
         if (!stream.next_trade.has_value()) stream.advance_trade();
 
         if (stream.next_book_update.has_value() &&
-            stream.next_book_update->timestamp_ < min_time) {
-            min_time = stream.next_book_update->timestamp_;
+            stream.next_book_update->exch_timestamp_ < min_time) {
+            min_time = stream.next_book_update->exch_timestamp_;
             asset_id = id;
             event_type = EventType::BookUpdate;
             found = true;
         }
 
         if (stream.next_trade.has_value() &&
-            stream.next_trade->timestamp_ < min_time) {
-            min_time = stream.next_trade->timestamp_;
+            stream.next_trade->exch_timestamp_ < min_time) {
+            min_time = stream.next_trade->exch_timestamp_;
             asset_id = id;
             event_type = EventType::Trade;
             found = true;
@@ -166,14 +176,14 @@ std::optional<Timestamp> MarketDataFeed::peek_timestamp() {
         if (!stream.next_trade.has_value()) stream.advance_trade();
 
         if (stream.next_book_update.has_value()) {
-            Timestamp ts = stream.next_book_update->timestamp_;
+            Timestamp ts = stream.next_book_update->exch_timestamp_;
             if (!earliest.has_value() || ts < *earliest) {
                 earliest = ts;
             }
         }
 
         if (stream.next_trade.has_value()) {
-            Timestamp ts = stream.next_trade->timestamp_;
+            Timestamp ts = stream.next_trade->exch_timestamp_;
             if (!earliest.has_value() || ts < *earliest) {
                 earliest = ts;
             }

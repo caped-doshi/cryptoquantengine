@@ -16,7 +16,8 @@
 #include "../types/usings.h"
 
 struct Order {
-    Timestamp timestamp_;
+    Timestamp local_timestamp_;
+    Timestamp exch_timestamp_;
     OrderId orderId_;
     BookSide side_;
     Price price_;

@@ -20,13 +20,17 @@
 #include "../types/order_type.h"
 #include "../types/time_in_force.h"
 #include "../types/usings.h"
+#include "../trading/depth.h"
 
 class ExecutionEngine {
   public:
     ExecutionEngine();
 
+    void add_asset(int asset_id);
+
     bool clear_inactive_orders(int asset_id);
-    bool cancel_order(const OrderId &orderId);
+    bool cancel_order(int asset_id, const OrderId &orderId);
+    bool order_exists(const OrderId &orderId) const;
 
     void execute_market_order(int asset_id, TradeSide side,
                               std::shared_ptr<Order> order);
@@ -36,11 +40,12 @@ class ExecutionEngine {
                            std::shared_ptr<Order> order);
     bool place_gtx_order(int asset_id, std::shared_ptr<Order> order);
 
+    bool submit_order(int asset_id, TradeSide side, const Order &order);
+
     void handle_book_update(int asset_id, const BookUpdate &book_update);
     void handle_trade(int asset_id, const Trade &trade);
 
-    std::vector<Fill> match_orders(int asset_id) const;
-
+    Depth depth(int asset_id) const;
     std::vector<Order> orders(int asset_id) const;
     const std::vector<Fill> &fills() const;
 
@@ -48,12 +53,14 @@ class ExecutionEngine {
     double f(const double x);
 
   private:
-    std::map<int, OrderBook> orderbooks_;
+    std::unordered_map<int, OrderBook> orderbooks_;
     std::vector<Fill> fills_;
 
-    // one order per price level on each side
-    std::map<Price, std::shared_ptr<Order>, std::greater<>> bid_orders_;
-    std::map<Price, std::shared_ptr<Order>> ask_orders_;
+    struct GtxBook {
+        std::map<Price, std::shared_ptr<Order>, std::greater<>> bid_orders_;
+        std::map<Price, std::shared_ptr<Order>> ask_orders_;
+    };
+    std::unordered_map<int, GtxBook> gtx_books_;
 
     std::unordered_map<int, std::vector<std::shared_ptr<Order>>> active_orders_;
     std::unordered_map<OrderId, std::shared_ptr<Order>> orders_;
