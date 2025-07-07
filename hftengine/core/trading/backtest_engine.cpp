@@ -183,6 +183,9 @@ OrderId BacktestEngine::submit_buy_order(int asset_id, const Price &price,
                                          const Quantity &quantity,
                                          const TimeInForce &tif,
                                          const OrderType &orderType) {
+    if (quantity <= 0.0) throw std::invalid_argument("Insufficient quantity");
+    if (orderType == OrderType::LIMIT && price <= 0.0)
+        throw std::invalid_argument("Invalid price for limit order");
     Order buy_order{.local_timestamp_ = current_time_us_,
                     .exch_timestamp_ =
                         current_time_us_ + order_entry_latency_us,
@@ -221,6 +224,9 @@ OrderId BacktestEngine::submit_sell_order(int asset_id, const Price &price,
                                           const Quantity &quantity,
                                           const TimeInForce &tif,
                                           const OrderType &orderType) {
+    if (quantity <= 0.0) throw std::invalid_argument("Insufficient quantity");
+    if (orderType == OrderType::LIMIT && price <= 0.0)
+        throw std::invalid_argument("Invalid price for limit order");
     Order sell_order{.local_timestamp_ = current_time_us_,
                      .exch_timestamp_ =
                          current_time_us_ + order_entry_latency_us,
