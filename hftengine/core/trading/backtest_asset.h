@@ -18,6 +18,7 @@
 
 class BacktestAsset {
   public:
+    BacktestAsset() = default;
     explicit BacktestAsset(const AssetConfig &config) : config_(config) {}
 
     const AssetConfig &config() const { return config_; }

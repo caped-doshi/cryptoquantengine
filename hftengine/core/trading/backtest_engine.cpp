@@ -13,6 +13,7 @@
  **/
 
 #include <cstdint>
+#include <iostream>
 #include <map>
 #include <optional>
 #include <unordered_map>
@@ -45,7 +46,7 @@
  */
 BacktestEngine::BacktestEngine(
     const std::unordered_map<int, AssetConfig> &asset_configs)
-    : current_time_us_(0), balance(0.0) {
+    : current_time_us_(0), cash_balance(0.0) {
 
     for (const auto &[asset_id, config] : asset_configs) {
         // Initialize BacktestAsset
@@ -60,7 +61,7 @@ BacktestEngine::BacktestEngine(
         trading_volume_[asset_id] = 0.0;
         trading_value_[asset_id] = 0.0;
         realized_pnl_[asset_id] = 0.0;
-        position_[asset_id] = 0.0;
+        local_position_[asset_id] = 0.0;
     }
 }
 
@@ -92,39 +93,47 @@ bool BacktestEngine::elapse(std::uint64_t microseconds) {
     while (current_time_us_ < next_interval_us) {
         auto next_event_us_opt = market_data_feed_.peek_timestamp();
         Timestamp next_event_us = std::numeric_limits<Timestamp>::max();
-        if (next_event_us_opt.has_value())
-            next_event_us = *next_event_us_opt;
+        if (next_event_us_opt.has_value()) next_event_us = *next_event_us_opt;
         // Get all delayed actions scheduled between now next market event
-        auto begin = delayed_actions_.lower_bound(current_time_us_);
-        auto end = delayed_actions_.upper_bound(
-            std::min(next_event_us, next_interval_us));
+        auto it = delayed_actions_.lower_bound(current_time_us_);
+        Timestamp interval_end_us = std::min(next_event_us, next_interval_us);
 
-        for (auto it = begin; it != end; it++) {
+        while (it != delayed_actions_.end() && it->first < interval_end_us) {
             const DelayedAction &action = it->second;
             switch (action.type_) {
+            // exchange events
             case ActionType::SubmitBuy:
-                execution_engine_.submit_order(action.asset_id_, TradeSide::Buy,
-                                               *action.order_);
+                execution_engine_.execute_order(action.asset_id_,
+                                                TradeSide::Buy, *action.order_);
                 break;
             case ActionType::SubmitSell:
-                execution_engine_.submit_order(action.asset_id_,
-                                               TradeSide::Sell, *action.order_);
+                execution_engine_.execute_order(
+                    action.asset_id_, TradeSide::Sell, *action.order_);
                 break;
             case ActionType::Cancel:
-                execution_engine_.cancel_order(action.asset_id_,
-                                               *action.orderId_);
+                execution_engine_.cancel_order(
+                    action.asset_id_, *action.orderId_, current_time_us_);
                 break;
-            case ActionType::ProcessFill:
-                process_fill(action.asset_id_, *action.fill_);
+            // local events
+            case ActionType::LocalProcessFill:
+                process_fill_local(action.asset_id_, *action.fill_);
                 break;
             case ActionType::LocalBookUpdate:
-                local_orderbooks_[action.asset_id_].apply_book_update(
-                    *action.book_update_);
+                process_book_update_local(action.asset_id_,
+                                          *action.book_update_);
+                break;
+            case ActionType::LocalOrderUpdate:
+                process_order_update_local(*action.order_update_type_,
+                                           *action.orderId_, *action.order_);
                 break;
             default:
                 throw std::invalid_argument(
                     "Unknown ActionType in DelayedAction");
             }
+            // process any fills or order updates in the exchange events
+            process_exchange_fills();
+            process_exchange_order_updates();
+            ++it;
         }
         // process another event before interval ends
         if (next_event_us < next_interval_us) {
@@ -132,6 +141,8 @@ bool BacktestEngine::elapse(std::uint64_t microseconds) {
                                          trade);
             if (event_type == EventType::Trade) {
                 execution_engine_.handle_trade(asset_id, trade);
+                process_exchange_fills();
+                process_exchange_order_updates();
             } else if (event_type == EventType::BookUpdate) {
                 execution_engine_.handle_book_update(asset_id, book_update);
                 // update local books with feed latency
@@ -149,7 +160,6 @@ bool BacktestEngine::elapse(std::uint64_t microseconds) {
         } else {
             current_time_us_ = next_interval_us;
         }
-        process_filled_orders();
     }
     current_time_us_ = next_interval_us;
     return true;
@@ -158,13 +168,9 @@ bool BacktestEngine::elapse(std::uint64_t microseconds) {
 /**
  * @brief Submits a buy order to the backtest engine with simulated latency.
  *
- * This function creates a buy-side order with the specified price, quantity,
- * time-in-force (TIF), and order type. The order is assigned a unique order ID
- * and scheduled for execution via a delayed action at the current backtest
- * timestamp.
- *
- * The actual execution of the order will occur when the `elapse()` method
- * processes the delayed action queue.
+ * A buy order is submitted by the local system. This method processes
+ * the buy order and adds order entry latency before sending to the
+ * execution engine (exchange) to process.
  *
  * @param asset_id The ID of the asset for which the order is submitted.
  * @param price The price at which the buy order is placed.
@@ -177,9 +183,9 @@ OrderId BacktestEngine::submit_buy_order(int asset_id, const Price &price,
                                          const Quantity &quantity,
                                          const TimeInForce &tif,
                                          const OrderType &orderType) {
-    // latency model here
     Order buy_order{.local_timestamp_ = current_time_us_,
-                    .exch_timestamp_ = current_time_us_ + 10,
+                    .exch_timestamp_ =
+                        current_time_us_ + order_entry_latency_us,
                     .orderId_ = orderId_gen_.nextId(),
                     .side_ = BookSide::Bid,
                     .price_ = price,
@@ -194,20 +200,15 @@ OrderId BacktestEngine::submit_buy_order(int asset_id, const Price &price,
                        .asset_id_ = asset_id,
                        .order_ = buy_order,
                        .execute_time_ = buy_order.exch_timestamp_}});
-
     return buy_order.orderId_;
 }
 
 /**
  * @brief Submits a sell order to the backtest engine with simulated latency.
  *
- * This function creates a sell-side order with the specified price, quantity,
- * time-in-force (TIF), and order type. The order is assigned a unique order ID
- * and scheduled for execution via a delayed action at the current backtest
- * timestamp.
- *
- * The actual execution of the order will occur when the `elapse()` method
- * processes the delayed action queue.
+ * Sell order is submitted from the local system. This method recieves the
+ * order and adds order entry latency before letting the order be
+ * processed by the execution engine (exchange).
  *
  * @param asset_id The ID of the asset for which the order is submitted.
  * @param price The price at which the sell order is placed.
@@ -220,9 +221,9 @@ OrderId BacktestEngine::submit_sell_order(int asset_id, const Price &price,
                                           const Quantity &quantity,
                                           const TimeInForce &tif,
                                           const OrderType &orderType) {
-    // latency model here
     Order sell_order{.local_timestamp_ = current_time_us_,
-                     .exch_timestamp_ = current_time_us_ + 10,
+                     .exch_timestamp_ =
+                         current_time_us_ + order_entry_latency_us,
                      .orderId_ = orderId_gen_.nextId(),
                      .side_ = BookSide::Ask,
                      .price_ = price,
@@ -231,6 +232,8 @@ OrderId BacktestEngine::submit_sell_order(int asset_id, const Price &price,
                      .tif_ = tif,
                      .orderType_ = orderType,
                      .queueEst_ = 0.0};
+    std::cout << "[BacktestEngine] - " << current_time_us_ << " - sell order ("
+              << sell_order.orderId_ << ") submitted to exchange\n ";
     delayed_actions_.insert(
         {sell_order.exch_timestamp_,
          DelayedAction{.type_ = ActionType::SubmitSell,
@@ -239,6 +242,74 @@ OrderId BacktestEngine::submit_sell_order(int asset_id, const Price &price,
                        .execute_time_ = sell_order.exch_timestamp_}});
 
     return sell_order.orderId_;
+}
+
+/**
+ * @brief Submits a cancel request to the backtest engine with latency.
+ *
+ * Local originated, received by the exchange with order entry latency.
+ */
+void BacktestEngine::cancel_order(int asset_id, const OrderId &orderId) {
+    delayed_actions_.insert(
+        {current_time_us_ + order_response_latency_us,
+         DelayedAction{.type_ = ActionType::Cancel,
+                       .asset_id_ = asset_id,
+                       .orderId_ = orderId,
+                       .execute_time_ =
+                           current_time_us_ + order_response_latency_us}});
+}
+
+/**
+ * @brief Order response latency for order updates to local.
+ *
+ * Order changes are executed on the exchange (execution engine),
+ * they are then reflected in the local (backtest engine) orders
+ * after order response latency.
+ */
+void BacktestEngine::process_exchange_order_updates() {
+    std::vector<OrderUpdate> order_updates = execution_engine_.order_updates();
+    for (const auto &order_update : order_updates) {
+        delayed_actions_.insert(
+            {order_update.local_timestamp_,
+             DelayedAction{.type_ = ActionType::LocalOrderUpdate,
+                           .asset_id_ = order_update.asset_id_,
+                           .order_ = *order_update.order_,
+                           .orderId_ = order_update.orderId_,
+                           .order_update_type_ = order_update.event_type_,
+                           .execute_time_ = order_update.local_timestamp_}});
+    }
+    execution_engine_.clear_order_updates();
+}
+
+/**
+ * @brief Order update is reflected in the local orders.
+ *
+ * Order updates that were processed in the exchange have not reached the
+ * local system and are updated in this method after order response latency.
+ */
+void BacktestEngine::process_order_update_local(OrderEventType event_type,
+                                                OrderId orderId, Order order) {
+    if (event_type == OrderEventType::Acknowledged) {
+        local_active_orders_[orderId] = order;
+        std::cout << "[BacktestEngine] - processed ACKNOWLEDGE local order ("
+                  << orderId << ") update\n";
+    } else if (event_type == OrderEventType::Cancelled) {
+        auto it = local_active_orders_.find(orderId);
+        if (it != local_active_orders_.end()) local_active_orders_.erase(it);
+    } else if (event_type == OrderEventType::Fill) {
+        if (order.filled_quantity_ == order.quantity_) {
+            auto it = local_active_orders_.find(orderId);
+            if (it != local_active_orders_.end())
+                local_active_orders_.erase(it);
+        } else {
+            local_active_orders_[orderId] = order;
+        }
+    } else if (event_type == OrderEventType::Rejected) {
+        std::cout << "[BacktestEngine] - local order update REJECTED\n";
+    } else {
+        throw std::invalid_argument(
+            "Unknown OrderEventType in local order update");
+    }
 }
 
 /**
@@ -257,12 +328,12 @@ OrderId BacktestEngine::submit_sell_order(int asset_id, const Price &price,
  * @note This method should be called regularly, such as during each elapse
  * step, to ensure fills are processed and reflected in portfolio state or PnL.
  */
-void BacktestEngine::process_filled_orders() {
+void BacktestEngine::process_exchange_fills() {
     std::vector<Fill> fills = execution_engine_.fills();
     for (const auto &fill : fills) {
         delayed_actions_.insert(
             {fill.local_timestamp_,
-             DelayedAction{.type_ = ActionType::ProcessFill,
+             DelayedAction{.type_ = ActionType::LocalProcessFill,
                            .asset_id_ = fill.asset_id_,
                            .fill_ = fill,
                            .execute_time_ = fill.local_timestamp_}});
@@ -275,7 +346,7 @@ void BacktestEngine::process_filled_orders() {
  *
  * This method processes a single `Fill` and updates position, trading volume,
  * trading value, and realized PnL for the given asset. It is typically called
- * from delayed fill actions (e.g. in `elapse()` or `process_filled_orders()`).
+ * from delayed fill actions (e.g. in `elapse()` or `process_exchange_fills()`).
  *
  * - Position is increased for a buy and decreased for a sell.
  * - Trading volume is incremented by the fill quantity.
@@ -289,15 +360,36 @@ void BacktestEngine::process_filled_orders() {
  * @note Assumes `fill.price_` is in quote currency. For inverse contracts,
  *       additional logic may be needed.
  */
-void BacktestEngine::process_fill(int asset_id, const Fill &fill) {
-    position_[asset_id] +=
+void BacktestEngine::process_fill_local(int asset_id, const Fill &fill) {
+    std::cout << "[BacktestEngine] - process fill local\n";
+    Quantity signed_qty =
         (fill.side_ == TradeSide::Buy) ? fill.quantity_ : -fill.quantity_;
+    local_position_[asset_id] += signed_qty;
     trading_volume_[asset_id] += fill.quantity_;
     trading_value_[asset_id] += fill.quantity_ * fill.price_;
-    realized_pnl_[asset_id] += (fill.side_ == TradeSide::Sell)
-                                   ? fill.quantity_ * fill.price_
-                                   : -fill.quantity_ * fill.price_;
+    double fee_rate = (fill.is_maker) ? assets_[asset_id].config().maker_fee_
+                                      : assets_[asset_id].config().taker_fee_;
+    double fee = fill.quantity_ * fill.price_ * fee_rate;
+    cash_balance += -signed_qty * fill.price_ - fee;
 }
+
+void BacktestEngine::process_book_update_local(int asset_id,
+                                               const BookUpdate &book_update) {
+    local_orderbooks_[asset_id].apply_book_update(book_update);
+}
+
+std::vector<Order> BacktestEngine::orders(int asset_id) {
+    std::cout << "[BacktestEngine] - " << current_time_us_
+              << " - retrieving local active orders\n";
+    std::vector<Order> active_orders;
+    active_orders.reserve(local_active_orders_.size());
+    for (const auto &[id, order] : local_active_orders_) {
+        active_orders.emplace_back(order);
+    }
+    return active_orders;
+}
+
+double BacktestEngine::cash() { return cash_balance; }
 
 /**
  * @brief Returns the current position for the specified asset.
@@ -309,7 +401,9 @@ void BacktestEngine::process_fill(int asset_id, const Fill &fill) {
  * @param asset_id The identifier of the asset.
  * @return The current position as a double.
  */
-Quantity BacktestEngine::position(int asset_id) { return position_[asset_id]; }
+Quantity BacktestEngine::position(int asset_id) {
+    return local_position_[asset_id];
+}
 
 Depth BacktestEngine::depth(int asset_id) {
     Price best_ask =
