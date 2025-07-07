@@ -9,4 +9,4 @@
 
 #pragma once
 
-enum class ActionType { SubmitBuy, SubmitSell, Cancel, ProcessFill, LocalBookUpdate};
+enum class ActionType { SubmitBuy, SubmitSell, Cancel, LocalProcessFill, LocalBookUpdate, LocalOrderUpdate};

@@ -26,17 +26,20 @@ namespace TestHelpers {
 void create_trade_csv(const std::string &filename) {
     std::ofstream f(filename);
     f << "timestamp,local_timestamp,id,side,price,amount\n"
-      << "100,110,1,buy,50000.0,1.0\n"
-      << "300,310,2,sell,50001.0,0.5\n";
+      << "10000,11000,1,buy,50000.0,1.0\n"
+      << "11000,12000,2,buy,50000.5,1.0\n"
+      << "13000,14000,3,sell,50001.0,0.5\n"
+      << "14000,15000,4,sell,50001.0,1.5\n";
 }
 
 void create_book_update_csv(const std::string &filename) {
     std::ofstream f(filename);
     f << "timestamp,local_timestamp,is_snapshot,side,price,amount\n"
-      << "200,210,false,bid,50000.0,2.0\n"
-      << "300,310,false,bid,50000.5,2.0\n"
-      << "400,410,false,ask,50001.0,1.5\n"
-      << "500,510,false,ask,50001.0,2.5\n";
+      << "1000,2000,false,ask,50001.0,1.5\n"
+      << "20000,21000,false,bid,50000.0,2.0\n"
+      << "30000,31000,false,bid,50000.5,2.0\n"
+      << "40000,41000,false,ask,50001.0,1.5\n"
+      << "50000,51000,false,ask,50001.0,2.5\n";
 }
 } // namespace TestHelpers
 
@@ -101,8 +104,8 @@ TEST_CASE("[BacktestEngine] - elapse", "[backtest-engine][elapse]") {
     }
     SECTION("local orderbook updated with latency") {
         BacktestEngine hbt(asset_configs);
-        REQUIRE(hbt.elapse(500) == true);
-        REQUIRE(hbt.current_time() == 500);
+        REQUIRE(hbt.elapse(50000) == true);
+        REQUIRE(hbt.current_time() == 50000);
 
         depth = hbt.depth(asset_id);
         REQUIRE(depth.best_ask_ == 50001.0);
@@ -110,10 +113,94 @@ TEST_CASE("[BacktestEngine] - elapse", "[backtest-engine][elapse]") {
         REQUIRE(depth.ask_qty_ == 1.5);
         REQUIRE(depth.bid_qty_ == 2.0);
 
-        REQUIRE(hbt.elapse(50) == true);
-        REQUIRE(hbt.current_time() == 550);
+        REQUIRE(hbt.elapse(2000) == true);
+        REQUIRE(hbt.current_time() == 52000);
 
         depth = hbt.depth(asset_id);
         REQUIRE(depth.ask_qty_ == 2.5);
     }
+    SECTION("Market order executed in correct schedule") {
+        BacktestEngine hbt(asset_configs);
+        REQUIRE(hbt.elapse(29500));
+        REQUIRE(hbt.current_time() == 29500);
+
+        depth = hbt.depth(asset_id);
+        REQUIRE(depth.best_bid_ == 50000.0);
+        REQUIRE(depth.bid_qty_ == 2.0);
+        // Submit a buy order that will be delayed and scheduled
+        OrderId order_id = hbt.submit_sell_order(
+            asset_id, 0.0, 1.0, TimeInForce::GTC, OrderType::MARKET);
+
+        // Initially, no fills processed yet
+        REQUIRE(hbt.position(asset_id) == 0.0);
+
+        REQUIRE(
+            hbt.elapse(5000)); // Enough to trigger the trade and delayed action
+        REQUIRE(hbt.current_time() == 34500);
+
+        // Now the order should be filled
+        REQUIRE(hbt.position(asset_id) == -1.0);
+        REQUIRE(hbt.cash() ==
+                Catch::Approx(50000.5 * (1 - 0.00045)).margin(1e-8));
+    }
+    SECTION("Limit order executed in correct schedule") {
+        BacktestEngine hbt(asset_configs);
+        REQUIRE(hbt.elapse(5000));
+        REQUIRE(hbt.current_time() == 5000);
+
+        depth = hbt.depth(asset_id);
+        REQUIRE(depth.best_ask_ == 50001.0);
+
+        OrderId order_id = hbt.submit_sell_order(
+            asset_id, 50000.5, 1.0, TimeInForce::GTX, OrderType::LIMIT);
+
+        REQUIRE(hbt.elapse(6500));
+        REQUIRE(hbt.current_time() == 11500);
+        REQUIRE(hbt.position(asset_id) == 0.0);
+
+        REQUIRE(hbt.elapse(5000));
+        REQUIRE(hbt.current_time() == 16500);
+        REQUIRE(hbt.position(asset_id) == -1.0);
+    }
+
+    SECTION("Complex multi-limit order execution with partial fills and "
+            "cancellations") {
+        BacktestEngine hbt(asset_configs);
+
+        // Initial market state setup
+        REQUIRE(hbt.elapse(5000)); // Advance to t=5000
+        REQUIRE(hbt.current_time() == 5000);
+
+        // Submit 3 sell limit orders at different prices
+        OrderId order1 = hbt.submit_sell_order(
+            asset_id, 50000.5, 1.0, TimeInForce::GTX, OrderType::LIMIT);
+        OrderId order2 = hbt.submit_sell_order(
+            asset_id, 50001.0, 2.0, TimeInForce::GTX, OrderType::LIMIT);
+
+        // Verify initial state
+        REQUIRE(hbt.elapse(3000));
+        REQUIRE(hbt.current_time() == 8000);
+        REQUIRE(hbt.position(asset_id) == 0.0);
+        REQUIRE(hbt.orders(asset_id).size() == 2);
+
+        // Partial fill: Best bid moves to 50000.5, fills 1.0 of order1
+        REQUIRE(hbt.elapse(10000)); // Advance to t=15000
+        REQUIRE(hbt.current_time() == 18000);
+        REQUIRE(hbt.position(asset_id) == -1.0); // Partially filled
+        REQUIRE(hbt.orders(asset_id).size() ==
+                1); // order1 fully filled and removed
+
+        // Cancel order2 (50000.75) before it's filled
+        hbt.cancel_order(asset_id, order2);
+        REQUIRE(hbt.elapse(2000));
+        REQUIRE(hbt.current_time() == 20000);
+        REQUIRE(hbt.orders(asset_id).size() == 0); 
+
+        // Verify cash balance after fills (assume maker fee 0.0000)
+        double expected_cash = 50000.5;
+        REQUIRE(hbt.cash() == Catch::Approx(expected_cash).margin(1e-8));
+    }
+    
+    std::filesystem::remove(book_file);
+    std::filesystem::remove(trade_file);
 }

@@ -17,6 +17,7 @@
 #include <vector>
 
 #include "../trading/fill.h"
+#include "../trading/order_update.h"
 #include "../types/book_side.h"
 #include "../types/order_type.h"
 #include "../types/time_in_force.h"
@@ -62,7 +63,8 @@ bool ExecutionEngine::clear_inactive_orders(int asset_id) { return true; }
  * @return true if the order was found and successfully cancelled; false
  * otherwise.
  */
-bool ExecutionEngine::cancel_order(int asset_id, const OrderId &orderId) {
+bool ExecutionEngine::cancel_order(int asset_id, const OrderId &orderId,
+                                   const Timestamp &current_timestamp) {
     auto it = orders_.find(orderId);
     if (it == orders_.end()) return false;
 
@@ -80,7 +82,6 @@ bool ExecutionEngine::cancel_order(int asset_id, const OrderId &orderId) {
             gtx_books_[asset_id].ask_orders_.erase(ask_it);
         }
     }
-
     // Remove from active_orders_ vector for this asset
     auto &active_vec = active_orders_[asset_id];
     active_vec.erase(std::remove_if(active_vec.begin(), active_vec.end(),
@@ -88,10 +89,16 @@ bool ExecutionEngine::cancel_order(int asset_id, const OrderId &orderId) {
                                         return o->orderId_ == orderId;
                                     }),
                      active_vec.end());
-
     // Remove from global orders map
     orders_.erase(it);
-
+    Timestamp local_timestamp = current_timestamp + order_response_latency_us;
+    order_updates_.emplace_back(
+        OrderUpdate{.exch_timestamp_ = current_timestamp,
+                    .local_timestamp_ = local_timestamp,
+                    .asset_id_ = asset_id,
+                    .orderId_ = orderId,
+                    .event_type_ = OrderEventType::Cancelled,
+                    .order_ = std::nullopt});
     return true;
 }
 
@@ -147,28 +154,45 @@ void ExecutionEngine::execute_market_order(int asset_id, TradeSide side,
                 ? orderbooks_[asset_id].price_at_level(BookSide::Ask, level)
                 : orderbooks_[asset_id].price_at_level(BookSide::Bid, level);
         if (level_depth > (order->quantity_ - order->filled_quantity_)) {
-            Fill fill = {.asset_id_ = asset_id,
-                         .exch_timestamp_ = order->exch_timestamp_,
-                         .local_timestamp_ = order->exch_timestamp_ + 1,
-                         .orderId_ = order->orderId_,
-                         .side_ = side,
-                         .price_ = level_price,
-                         .quantity_ =
-                             order->quantity_ - order->filled_quantity_,
-                         .is_maker = false};
+            fills_.emplace_back(
+                Fill{.asset_id_ = asset_id,
+                     .exch_timestamp_ = order->exch_timestamp_,
+                     .local_timestamp_ =
+                         order->exch_timestamp_ + order_response_latency_us,
+                     .orderId_ = order->orderId_,
+                     .side_ = side,
+                     .price_ = level_price,
+                     .quantity_ = order->quantity_ - order->filled_quantity_,
+                     .is_maker = false});
             order->filled_quantity_ = order->quantity_;
-            fills_.emplace_back(fill);
+            order_updates_.emplace_back(
+                OrderUpdate{.exch_timestamp_ = order->exch_timestamp_,
+                            .local_timestamp_ = order->exch_timestamp_ +
+                                                order_response_latency_us,
+                            .asset_id_ = asset_id,
+                            .orderId_ = order->orderId_,
+                            .event_type_ = OrderEventType::Fill,
+                            .order_ = *order});
         } else {
-            Fill fill = {.asset_id_ = asset_id,
-                         .exch_timestamp_ = order->exch_timestamp_,
-                         .local_timestamp_ = order->exch_timestamp_ + 1,
-                         .orderId_ = order->orderId_,
-                         .side_ = side,
-                         .price_ = level_price,
-                         .quantity_ = level_depth,
-                         .is_maker = false};
+            fills_.emplace_back(
+                Fill{.asset_id_ = asset_id,
+                     .exch_timestamp_ = order->exch_timestamp_,
+                     .local_timestamp_ =
+                         order->exch_timestamp_ + order_response_latency_us,
+                     .orderId_ = order->orderId_,
+                     .side_ = side,
+                     .price_ = level_price,
+                     .quantity_ = level_depth,
+                     .is_maker = false});
             order->filled_quantity_ += level_depth;
-            fills_.emplace_back(fill);
+            order_updates_.emplace_back(
+                OrderUpdate{.exch_timestamp_ = order->exch_timestamp_,
+                            .local_timestamp_ = order->exch_timestamp_ +
+                                                order_response_latency_us,
+                            .asset_id_ = asset_id,
+                            .orderId_ = order->orderId_,
+                            .event_type_ = OrderEventType::Fill,
+                            .order_ = *order});
         }
         level++;
     }
@@ -231,28 +255,45 @@ bool ExecutionEngine::execute_fok_order(int asset_id, TradeSide side,
         if (side == TradeSide::Buy && level_price > order->price_) break;
         if (side == TradeSide::Sell && level_price < order->price_) break;
         if (level_depth > (order->quantity_ - order->filled_quantity_)) {
-            Fill fill = {.asset_id_ = asset_id,
-                         .exch_timestamp_ = order->exch_timestamp_,
-                         .local_timestamp_ = order->exch_timestamp_ + 1,
-                         .orderId_ = order->orderId_,
-                         .side_ = TradeSide::Buy,
-                         .price_ = level_price,
-                         .quantity_ =
-                             order->quantity_ - order->filled_quantity_,
-                         .is_maker = false};
+            fills_.emplace_back(
+                Fill{.asset_id_ = asset_id,
+                     .exch_timestamp_ = order->exch_timestamp_,
+                     .local_timestamp_ =
+                         order->exch_timestamp_ + order_response_latency_us,
+                     .orderId_ = order->orderId_,
+                     .side_ = TradeSide::Buy,
+                     .price_ = level_price,
+                     .quantity_ = order->quantity_ - order->filled_quantity_,
+                     .is_maker = false});
             order->filled_quantity_ = order->quantity_;
-            fills_.emplace_back(fill);
+            order_updates_.emplace_back(
+                OrderUpdate{.exch_timestamp_ = order->exch_timestamp_,
+                            .local_timestamp_ = order->exch_timestamp_ +
+                                                order_response_latency_us,
+                            .asset_id_ = asset_id,
+                            .orderId_ = order->orderId_,
+                            .event_type_ = OrderEventType::Fill,
+                            .order_ = *order});
         } else {
-            Fill fill = {.asset_id_ = asset_id,
-                         .exch_timestamp_ = order->exch_timestamp_,
-                         .local_timestamp_ = order->exch_timestamp_ + 1,
-                         .orderId_ = order->orderId_,
-                         .side_ = TradeSide::Buy,
-                         .price_ = level_price,
-                         .quantity_ = level_depth,
-                         .is_maker = false};
+            fills_.emplace_back(
+                Fill{.asset_id_ = asset_id,
+                     .exch_timestamp_ = order->exch_timestamp_,
+                     .local_timestamp_ =
+                         order->exch_timestamp_ + order_response_latency_us,
+                     .orderId_ = order->orderId_,
+                     .side_ = TradeSide::Buy,
+                     .price_ = level_price,
+                     .quantity_ = level_depth,
+                     .is_maker = false});
             order->filled_quantity_ += level_depth;
-            fills_.emplace_back(fill);
+            order_updates_.emplace_back(
+                OrderUpdate{.exch_timestamp_ = order->exch_timestamp_,
+                            .local_timestamp_ = order->exch_timestamp_ +
+                                                order_response_latency_us,
+                            .asset_id_ = asset_id,
+                            .orderId_ = order->orderId_,
+                            .event_type_ = OrderEventType::Fill,
+                            .order_ = *order});
         }
     }
     return true;
@@ -302,26 +343,45 @@ bool ExecutionEngine::execute_ioc_order(int asset_id, TradeSide side,
         if (level_depth > (order->quantity_ - order->filled_quantity_)) {
             Fill fill = {.asset_id_ = asset_id,
                          .exch_timestamp_ = order->exch_timestamp_,
-                         .local_timestamp_ = order->exch_timestamp_ + 1,
+                         .local_timestamp_ =
+                             order->exch_timestamp_ + order_response_latency_us,
                          .orderId_ = order->orderId_,
                          .side_ = side,
                          .price_ = level_price,
                          .quantity_ =
                              order->quantity_ - order->filled_quantity_,
                          .is_maker = false};
+            fills_.emplace_back(fill);
             order->filled_quantity_ = order->quantity_;
-            fills_.emplace_back(fill);
+            order_updates_.emplace_back(
+                OrderUpdate{.exch_timestamp_ = order->exch_timestamp_,
+                            .local_timestamp_ = order->exch_timestamp_ +
+                                                order_response_latency_us,
+                            .asset_id_ = asset_id,
+                            .orderId_ = order->orderId_,
+                            .event_type_ = OrderEventType::Fill,
+                            .order_ = *order});
+
         } else {
-            Fill fill = {.asset_id_ = asset_id,
-                         .exch_timestamp_ = order->exch_timestamp_,
-                         .local_timestamp_ = order->exch_timestamp_ + 1,
-                         .orderId_ = order->orderId_,
-                         .side_ = side,
-                         .price_ = level_price,
-                         .quantity_ = level_depth,
-                         .is_maker = false};
             order->filled_quantity_ += level_depth;
-            fills_.emplace_back(fill);
+            fills_.emplace_back(
+                Fill{.asset_id_ = asset_id,
+                     .exch_timestamp_ = order->exch_timestamp_,
+                     .local_timestamp_ =
+                         order->exch_timestamp_ + order_response_latency_us,
+                     .orderId_ = order->orderId_,
+                     .side_ = side,
+                     .price_ = level_price,
+                     .quantity_ = level_depth,
+                     .is_maker = false});
+            order_updates_.emplace_back(
+                OrderUpdate{.exch_timestamp_ = order->exch_timestamp_,
+                            .local_timestamp_ = order->exch_timestamp_ +
+                                                order_response_latency_us,
+                            .asset_id_ = asset_id,
+                            .orderId_ = order->orderId_,
+                            .event_type_ = OrderEventType::Fill,
+                            .order_ = *order});
         }
         level++;
     }
@@ -363,8 +423,10 @@ bool ExecutionEngine::place_gtx_order(int asset_id,
     if ((order->side_ == BookSide::Bid && best_ask > 0.0 &&
          order->price_ >= best_ask) ||
         (order->side_ == BookSide::Ask && best_bid > 0.0 &&
-         order->price_ <= best_bid))
+         order->price_ <= best_bid)) {
+        std::cout << "[ExecutionEngine] - gtx order failed\n";
         return false;
+    }
 
     order->queueEst_ =
         orderbooks_[asset_id].depth_at(order->side_, order->price_);
@@ -374,6 +436,14 @@ bool ExecutionEngine::place_gtx_order(int asset_id,
         gtx_books_[asset_id].ask_orders_[order->price_] = order;
     orders_[order->orderId_] = order;
     active_orders_[asset_id].push_back(order);
+    order_updates_.emplace_back(OrderUpdate{
+        .exch_timestamp_ = order->exch_timestamp_,
+        .local_timestamp_ = order->exch_timestamp_ + order_response_latency_us,
+        .asset_id_ = asset_id,
+        .orderId_ = order->orderId_,
+        .event_type_ = OrderEventType::Acknowledged});
+    std::cout << "[ExecutionEngine] - gtx order (" << order->orderId_
+              << ") placed, now " << orders_.size() << " orders\n";
     return true;
 }
 
@@ -391,10 +461,11 @@ bool ExecutionEngine::place_gtx_order(int asset_id,
  *
  * @throws std::invalid_argument if the TimeInForce value is unsupported.
  */
-bool ExecutionEngine::submit_order(int asset_id, TradeSide side,
-                                   const Order &order) {
+bool ExecutionEngine::execute_order(int asset_id, TradeSide side,
+                                    const Order &order) {
     auto order_ptr = std::make_shared<Order>(order);
     if (order.orderType_ == OrderType::MARKET) {
+        std::cout << "[ExecutionEngine] - execute market order\n";
         execute_market_order(asset_id, side, order_ptr);
     } else if (order.orderType_ == OrderType::LIMIT) {
         switch (order.tif_) {
@@ -405,6 +476,7 @@ bool ExecutionEngine::submit_order(int asset_id, TradeSide side,
             return execute_ioc_order(asset_id, side, order_ptr);
             break;
         case TimeInForce::GTX:
+            std::cout << "[ExecutionEngine] - execute limit gtx order\n";
             return place_gtx_order(asset_id, order_ptr);
             break;
         default:
@@ -511,62 +583,58 @@ void ExecutionEngine::handle_trade(int asset_id, const Trade &trade) {
                    : gtx_books_[asset_id].ask_orders_.end();
     if (it == end) return;
     auto order = it->second;
+
     if (order->exch_timestamp_ >= trade.exch_timestamp_) return;
+    std::cout << "[ExecutionEngine] - order found at trade price and time\n";
 
     if (order->queueEst_ == 0.0 && order->filled_quantity_ < order->quantity_) {
         Quantity fill_qty = std::min(
             trade.quantity_, order->quantity_ - order->filled_quantity_);
+        std::cout << "[ExecutionEngine] - fill signaled for " << fill_qty
+                  << " quantity\n";
         order->filled_quantity_ += fill_qty;
-        fills_.emplace_back(Fill{.asset_id_ = asset_id,
-                                 .exch_timestamp_ = trade.exch_timestamp_,
-                                 .local_timestamp_ = trade.exch_timestamp_ + 1,
-                                 .orderId_ = order->orderId_,
-                                 .side_ = (order->side_ == BookSide::Bid)
-                                              ? TradeSide::Buy
-                                              : TradeSide::Sell,
-                                 .price_ = trade.price_,
-                                 .quantity_ = fill_qty,
-                                 .is_maker = true});
+        order_updates_.emplace_back(
+            OrderUpdate{.exch_timestamp_ = trade.exch_timestamp_,
+                        .local_timestamp_ =
+                            trade.exch_timestamp_ + order_response_latency_us,
+                        .asset_id_ = asset_id,
+                        .orderId_ = order->orderId_,
+                        .event_type_ = OrderEventType::Fill,
+                        .order_ = *order});
+        fills_.emplace_back(
+            Fill{.asset_id_ = asset_id,
+                 .exch_timestamp_ = trade.exch_timestamp_,
+                 .local_timestamp_ =
+                     trade.exch_timestamp_ + order_response_latency_us,
+                 .orderId_ = order->orderId_,
+                 .side_ = (order->side_ == BookSide::Bid) ? TradeSide::Buy
+                                                          : TradeSide::Sell,
+                 .price_ = trade.price_,
+                 .quantity_ = fill_qty,
+                 .is_maker = true});
+        std::cout << "[ExecutionEngine] - " << fills_.size() << " fills\n";
     }
-}
-
-std::vector<Order> ExecutionEngine::orders(int asset_id) const {
-    std::vector<Order> result;
-    auto it = active_orders_.find(asset_id);
-    if (it != active_orders_.end()) {
-        for (const auto &ptr : it->second) {
-            result.push_back(*ptr);
-        }
-    }
-    return result;
 }
 
 /**
- * @brief Returns the best bid and ask prices along with their respective
- * quantities for a given asset.
+ * @brief Returns a read-only reference to the list of order updates.
  *
- * This function retrieves Level 1 order book information for the specified
- * asset ID. It returns a `Depth` struct containing:
- * - Best bid price and quantity at the top of the bid book
- * - Best ask price and quantity at the top of the ask book
+ * Provides access to all order updates that have occured during
+ * execution on the exchange.
  *
- * @param asset_id The integer identifier of the asset whose depth is being
- * queried.
- * @return Depth A struct containing best bid/ask prices and corresponding
- * sizes.
+ * @return A const reference to the vector of OrderUpdate objects.
  */
-Depth ExecutionEngine::depth(int asset_id) const {
-    Price best_ask = orderbooks_.at(asset_id).price_at_level(BookSide::Ask, 0);
-    Price best_bid = orderbooks_.at(asset_id).price_at_level(BookSide::Bid, 0);
-    Quantity ask_0_size =
-        orderbooks_.at(asset_id).depth_at_level(BookSide::Ask, 0);
-    Quantity bid_0_size =
-        orderbooks_.at(asset_id).depth_at_level(BookSide::Bid, 0);
-    return Depth{.best_bid_ = best_bid,
-                 .bid_qty_ = bid_0_size,
-                 .best_ask_ = best_ask,
-                 .ask_qty_ = ask_0_size};
+const std::vector<OrderUpdate> &ExecutionEngine::order_updates() const {
+    return order_updates_;
 }
+
+/**
+ * @brief Clears all recorded order updates from the execution engine.
+ *
+ * This method empties the internal 'order_updates_' vector, removing
+ * all previously recorded trad updates.
+ */
+void ExecutionEngine::clear_order_updates() { order_updates_.clear(); }
 
 /**
  * @brief Returns a read-only reference to the list of generated fills.
