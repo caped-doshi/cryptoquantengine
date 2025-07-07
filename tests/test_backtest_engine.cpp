@@ -167,11 +167,9 @@ TEST_CASE("[BacktestEngine] - elapse", "[backtest-engine][elapse]") {
             "cancellations") {
         BacktestEngine hbt(asset_configs);
 
-        // Initial market state setup
-        REQUIRE(hbt.elapse(5000)); // Advance to t=5000
+        REQUIRE(hbt.elapse(5000));
         REQUIRE(hbt.current_time() == 5000);
 
-        // Submit 3 sell limit orders at different prices
         OrderId order1 = hbt.submit_sell_order(
             asset_id, 50000.5, 1.0, TimeInForce::GTX, OrderType::LIMIT);
         OrderId order2 = hbt.submit_sell_order(
@@ -194,13 +192,62 @@ TEST_CASE("[BacktestEngine] - elapse", "[backtest-engine][elapse]") {
         hbt.cancel_order(asset_id, order2);
         REQUIRE(hbt.elapse(2000));
         REQUIRE(hbt.current_time() == 20000);
-        REQUIRE(hbt.orders(asset_id).size() == 0); 
+        REQUIRE(hbt.orders(asset_id).size() == 0);
 
         // Verify cash balance after fills (assume maker fee 0.0000)
         double expected_cash = 50000.5;
         REQUIRE(hbt.cash() == Catch::Approx(expected_cash).margin(1e-8));
     }
-    
+    SECTION("Handles partial fills correctly") {
+        BacktestEngine hbt(asset_configs);
+        hbt.elapse(5000);
+
+        // Submit order larger than available liquidity
+        OrderId big_order = hbt.submit_sell_order(
+            asset_id, 50000.5, 5.0, TimeInForce::GTX, OrderType::LIMIT);
+
+        hbt.elapse(7001);
+
+        // Should partially fill available quantity (2.0)
+        REQUIRE(hbt.position(asset_id) == -1.0);
+        REQUIRE(hbt.orders(asset_id).size() == 1); // Remainder still active
+        REQUIRE(hbt.orders(asset_id)[0].filled_quantity_ == 1.0);
+    }
     std::filesystem::remove(book_file);
     std::filesystem::remove(trade_file);
+}
+
+TEST_CASE("[BacktestEngine] - rejects invalid orders",
+          "[backtest-engine][invalid]") {
+    const std::string book_file = "test_book.csv";
+    const std::string trade_file = "test_trade.csv";
+    TestHelpers::create_book_update_csv(book_file);
+    TestHelpers::create_trade_csv(trade_file);
+
+    int asset_id = 1;
+    Depth depth;
+
+    std::unordered_map<int, AssetConfig> asset_configs = {
+        {asset_id, AssetConfig{.book_update_file_ = book_file,
+                               .trade_file_ = trade_file,
+                               .tick_size_ = 0.001,
+                               .lot_size_ = 0.00001,
+                               .contract_multiplier_ = 1.0,
+                               .is_inverse_ = false,
+                               .maker_fee_ = 0.0,
+                               .taker_fee_ = 0.00045}}};
+
+    BacktestEngine hbt(asset_configs);
+
+    // Invalid price (0 or negative)
+    REQUIRE_THROWS_AS(hbt.submit_buy_order(asset_id, 0.0, 1.0, TimeInForce::GTX,
+                                           OrderType::LIMIT),
+                      std::invalid_argument);
+    REQUIRE_THROWS_AS(hbt.submit_sell_order(asset_id, -1.0, 1.0,
+                                            TimeInForce::GTX, OrderType::LIMIT),
+                      std::invalid_argument);
+    // Invalid quantity
+    REQUIRE_THROWS_AS(hbt.submit_buy_order(asset_id, 50000.0, 0.0,
+                                           TimeInForce::GTX, OrderType::LIMIT),
+                      std::invalid_argument);
 }
