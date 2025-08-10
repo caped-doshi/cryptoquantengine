@@ -24,4 +24,5 @@ using OrderId = std::uint64_t;
 using Price = double;
 using Quantity = double;
 using Position = double;
+using Microseconds = std::uint64_t;
 using MarketEvent = std::variant<BookUpdate, Trade>;

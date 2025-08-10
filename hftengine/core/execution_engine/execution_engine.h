@@ -59,7 +59,6 @@ class ExecutionEngine {
   private:
     std::uint64_t order_entry_latency_us = 1000;
     std::uint64_t order_response_latency_us = 1000;
-    std::uint64_t market_feed_latency_us = 1500;
 
     std::unordered_map<int, OrderBook> orderbooks_;
 
