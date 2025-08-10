@@ -45,14 +45,17 @@ class BacktestEngine {
     // local state access methods
     std::vector<Order> orders(int asset_id);
     double cash();
+    double equity();
     Quantity position(int asset_id);
     Depth depth(int asset_id);
     Timestamp current_time();
 
+    const Microseconds order_entry_latency() const;
+    const Microseconds order_response_latency() const;
+
   private:
-    std::uint64_t order_entry_latency_us = 1000;
-    std::uint64_t order_response_latency_us = 1000;
-    std::uint64_t market_feed_latency_us = 1500;
+    Microseconds order_entry_latency_us = 1000;
+    Microseconds order_response_latency_us = 1000;
 
     // exchange origin methods
     bool clear_inactive_orders(int asset_id);

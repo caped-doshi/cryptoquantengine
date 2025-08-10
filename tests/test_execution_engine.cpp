@@ -1,8 +1,10 @@
 /*
  * File: tests/test_execution_engine.cpp
  * Description: Unit tests for
- * hftengine/core/execution_engine/execution_engine.cpp. Author: Arvind
- * Rathnashyam Date: 2025-06-27 License: Proprietary
+ * hftengine/core/execution_engine/execution_engine.cpp. 
+ * Author: Arvind Rathnashyam
+ * Date: 2025-06-27 
+ * License: Proprietary
  */
 
 #include <catch2/catch_approx.hpp>

@@ -77,6 +77,41 @@ TEST_CASE("[BacktestEngine] - initializes correctly with valid input",
     std::filesystem::remove(trade_file);
 }
 
+TEST_CASE("[BacktestEngine] - rejects invalid orders",
+          "[backtest-engine][invalid]") {
+    const std::string book_file = "test_book.csv";
+    const std::string trade_file = "test_trade.csv";
+    TestHelpers::create_book_update_csv(book_file);
+    TestHelpers::create_trade_csv(trade_file);
+
+    int asset_id = 1;
+    Depth depth;
+
+    std::unordered_map<int, AssetConfig> asset_configs = {
+        {asset_id, AssetConfig{.book_update_file_ = book_file,
+                               .trade_file_ = trade_file,
+                               .tick_size_ = 0.001,
+                               .lot_size_ = 0.00001,
+                               .contract_multiplier_ = 1.0,
+                               .is_inverse_ = false,
+                               .maker_fee_ = 0.0,
+                               .taker_fee_ = 0.00045}}};
+
+    BacktestEngine hbt(asset_configs);
+
+    // Invalid price (0 or negative)
+    REQUIRE_THROWS_AS(hbt.submit_buy_order(asset_id, 0.0, 1.0, TimeInForce::GTX,
+                                           OrderType::LIMIT),
+                      std::invalid_argument);
+    REQUIRE_THROWS_AS(hbt.submit_sell_order(asset_id, -1.0, 1.0,
+                                            TimeInForce::GTX, OrderType::LIMIT),
+                      std::invalid_argument);
+    // Invalid quantity
+    REQUIRE_THROWS_AS(hbt.submit_buy_order(asset_id, 50000.0, 0.0,
+                                           TimeInForce::GTX, OrderType::LIMIT),
+                      std::invalid_argument);
+}
+
 TEST_CASE("[BacktestEngine] - elapse", "[backtest-engine][elapse]") {
     const std::string book_file = "test_book.csv";
     const std::string trade_file = "test_trade.csv";
@@ -215,39 +250,4 @@ TEST_CASE("[BacktestEngine] - elapse", "[backtest-engine][elapse]") {
     }
     std::filesystem::remove(book_file);
     std::filesystem::remove(trade_file);
-}
-
-TEST_CASE("[BacktestEngine] - rejects invalid orders",
-          "[backtest-engine][invalid]") {
-    const std::string book_file = "test_book.csv";
-    const std::string trade_file = "test_trade.csv";
-    TestHelpers::create_book_update_csv(book_file);
-    TestHelpers::create_trade_csv(trade_file);
-
-    int asset_id = 1;
-    Depth depth;
-
-    std::unordered_map<int, AssetConfig> asset_configs = {
-        {asset_id, AssetConfig{.book_update_file_ = book_file,
-                               .trade_file_ = trade_file,
-                               .tick_size_ = 0.001,
-                               .lot_size_ = 0.00001,
-                               .contract_multiplier_ = 1.0,
-                               .is_inverse_ = false,
-                               .maker_fee_ = 0.0,
-                               .taker_fee_ = 0.00045}}};
-
-    BacktestEngine hbt(asset_configs);
-
-    // Invalid price (0 or negative)
-    REQUIRE_THROWS_AS(hbt.submit_buy_order(asset_id, 0.0, 1.0, TimeInForce::GTX,
-                                           OrderType::LIMIT),
-                      std::invalid_argument);
-    REQUIRE_THROWS_AS(hbt.submit_sell_order(asset_id, -1.0, 1.0,
-                                            TimeInForce::GTX, OrderType::LIMIT),
-                      std::invalid_argument);
-    // Invalid quantity
-    REQUIRE_THROWS_AS(hbt.submit_buy_order(asset_id, 50000.0, 0.0,
-                                           TimeInForce::GTX, OrderType::LIMIT),
-                      std::invalid_argument);
 }

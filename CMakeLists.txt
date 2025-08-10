@@ -15,6 +15,7 @@ add_executable(hftengine
   hftengine/core/data/market_data_feed.cpp
   hftengine/core/data/readers/book_stream_reader.cpp
   hftengine/core/data/readers/trade_stream_reader.cpp
+  hftengine/core/recorder/recorder.cpp
 )
 
 # THEN set properties
@@ -123,6 +124,25 @@ target_include_directories(test_backtest_engine PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/hftengine
 )
 
+# 8. Stat util tests
+add_executable(test_stat_utils
+  tests/test_stat_utils.cpp
+)
+
+target_include_directories(test_stat_utils PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/hftengine
+)
+
+# 9. Recorder Tests
+add_executable(test_recorder
+  tests/test_recorder.cpp
+  hftengine/core/recorder/recorder.cpp
+)
+
+target_include_directories(test_recorder PRIVATE
+  ${CMAKE_CURRENT_SOURDE_DIR}/hftengine
+)
+
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
@@ -134,6 +154,8 @@ target_link_libraries(test_trade_stream_reader PRIVATE Catch2::Catch2WithMain Th
 target_link_libraries(test_market_data_feed PRIVATE Catch2::Catch2WithMain Threads::Threads)
 target_link_libraries(test_execution_engine PRIVATE Catch2::Catch2WithMain Threads::Threads)
 target_link_libraries(test_backtest_engine PRIVATE Catch2::Catch2WithMain Threads::Threads)
+target_link_libraries(test_stat_utils PRIVATE Catch2::Catch2WithMain Threads::Threads)
+target_link_libraries(test_recorder PRIVATE Catch2::Catch2WithMain Threads::Threads)
 
 # Discover tests for both executables
 include(CTest)
@@ -145,6 +167,8 @@ catch_discover_tests(test_trade_stream_reader)
 catch_discover_tests(test_market_data_feed)
 catch_discover_tests(test_execution_engine)
 catch_discover_tests(test_backtest_engine)
+catch_discover_tests(test_stat_utils)
+catch_discover_tests(test_recorder)
 
 # Optional: Add a global test target
 add_custom_target(run_all_tests DEPENDS
@@ -155,4 +179,6 @@ add_custom_target(run_all_tests DEPENDS
   test_market_data_feed
   test_execution_engine
   test_backtest_engine
+  test_stat_utils
+  test_recorder
 )

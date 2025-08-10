@@ -397,6 +397,13 @@ std::vector<Order> BacktestEngine::orders(int asset_id) {
 
 double BacktestEngine::cash() { return cash_balance; }
 
+double BacktestEngine::equity() { double value = cash_balance;
+    for (auto &[asset_id, pos] : local_position_) {
+        value += pos * local_orderbooks_[asset_id].mid_price();
+    }
+    return value;
+}
+
 /**
  * @brief Returns the current position for the specified asset.
  *
@@ -436,3 +443,7 @@ Depth BacktestEngine::depth(int asset_id) {
  * @return Current timestamp in microseconds.
  */
 Timestamp BacktestEngine::current_time() { return current_time_us_; }
+
+const Microseconds BacktestEngine::order_entry_latency() const { return order_entry_latency_us; }
+
+const Microseconds BacktestEngine::order_response_latency() const { return order_response_latency_us; }
