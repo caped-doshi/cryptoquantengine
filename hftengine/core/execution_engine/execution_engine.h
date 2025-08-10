@@ -56,9 +56,12 @@ class ExecutionEngine {
 
     double f(const double x);
 
+    void set_order_entry_latency_us(const Microseconds latency_us);
+    void set_order_response_latency_us(const Microseconds latency_us);
+
   private:
-    std::uint64_t order_entry_latency_us = 1000;
-    std::uint64_t order_response_latency_us = 1000;
+    std::uint64_t order_entry_latency_us_ = 1000;
+    std::uint64_t order_response_latency_us_ = 1000;
 
     std::unordered_map<int, OrderBook> orderbooks_;
 

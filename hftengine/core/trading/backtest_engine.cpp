@@ -7,11 +7,6 @@
  * License: Proprietary
  */
 
-/*
- * Process fills needed to properly unit test elapse()
- *
- **/
-
 #include <cstdint>
 #include <iostream>
 #include <map>
@@ -397,7 +392,8 @@ std::vector<Order> BacktestEngine::orders(int asset_id) {
 
 double BacktestEngine::cash() { return cash_balance; }
 
-double BacktestEngine::equity() { double value = cash_balance;
+double BacktestEngine::equity() {
+    double value = cash_balance;
     for (auto &[asset_id, pos] : local_position_) {
         value += pos * local_orderbooks_[asset_id].mid_price();
     }
@@ -444,6 +440,32 @@ Depth BacktestEngine::depth(int asset_id) {
  */
 Timestamp BacktestEngine::current_time() { return current_time_us_; }
 
-const Microseconds BacktestEngine::order_entry_latency() const { return order_entry_latency_us; }
+/**
+ * @brief Sets the order entry latency in microseconds
+ * @param Latency in microseconds
+ */
+void BacktestEngine::set_order_entry_latency(const Microseconds latency) {
+    order_entry_latency_us = latency;
+    execution_engine_.set_order_entry_latency_us(latency);
+}
 
-const Microseconds BacktestEngine::order_response_latency() const { return order_response_latency_us; }
+/**
+ * @brief Sets ther order response latency in microseconds
+ * @param Latency in microseconds
+ */
+void BacktestEngine::set_order_response_latency(const Microseconds latency) {
+    order_response_latency_us = latency;
+    execution_engine_.set_order_response_latency_us(latency);
+}
+
+const Microseconds BacktestEngine::order_entry_latency() const {
+    return order_entry_latency_us;
+}
+
+const Microseconds BacktestEngine::order_response_latency() const {
+    return order_response_latency_us;
+}
+
+const Microseconds BacktestEngine::market_feed_latency() const {
+    return market_feed_latency_us;
+}

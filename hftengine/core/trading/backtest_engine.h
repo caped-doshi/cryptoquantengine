@@ -50,12 +50,18 @@ class BacktestEngine {
     Depth depth(int asset_id);
     Timestamp current_time();
 
+    void set_order_entry_latency(const Microseconds latency_us);
+    void set_order_response_latency(const Microseconds latency_us);
+    void set_market_feed_latency(const Microseconds latency_us);
+
     const Microseconds order_entry_latency() const;
     const Microseconds order_response_latency() const;
+    const Microseconds market_feed_latency() const;
 
   private:
     Microseconds order_entry_latency_us = 1000;
     Microseconds order_response_latency_us = 1000;
+    Microseconds market_feed_latency_us = 50000;
 
     // exchange origin methods
     bool clear_inactive_orders(int asset_id);
