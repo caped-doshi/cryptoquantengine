@@ -91,7 +91,7 @@ bool ExecutionEngine::cancel_order(int asset_id, const OrderId &orderId,
                      active_vec.end());
     // Remove from global orders map
     orders_.erase(it);
-    Timestamp local_timestamp = current_timestamp + order_response_latency_us;
+    Timestamp local_timestamp = current_timestamp + order_response_latency_us_;
     order_updates_.emplace_back(
         OrderUpdate{.exch_timestamp_ = current_timestamp,
                     .local_timestamp_ = local_timestamp,
@@ -158,7 +158,7 @@ void ExecutionEngine::execute_market_order(int asset_id, TradeSide side,
                 Fill{.asset_id_ = asset_id,
                      .exch_timestamp_ = order->exch_timestamp_,
                      .local_timestamp_ =
-                         order->exch_timestamp_ + order_response_latency_us,
+                         order->exch_timestamp_ + order_response_latency_us_,
                      .orderId_ = order->orderId_,
                      .side_ = side,
                      .price_ = level_price,
@@ -168,7 +168,7 @@ void ExecutionEngine::execute_market_order(int asset_id, TradeSide side,
             order_updates_.emplace_back(
                 OrderUpdate{.exch_timestamp_ = order->exch_timestamp_,
                             .local_timestamp_ = order->exch_timestamp_ +
-                                                order_response_latency_us,
+                                                order_response_latency_us_,
                             .asset_id_ = asset_id,
                             .orderId_ = order->orderId_,
                             .event_type_ = OrderEventType::Fill,
@@ -178,7 +178,7 @@ void ExecutionEngine::execute_market_order(int asset_id, TradeSide side,
                 Fill{.asset_id_ = asset_id,
                      .exch_timestamp_ = order->exch_timestamp_,
                      .local_timestamp_ =
-                         order->exch_timestamp_ + order_response_latency_us,
+                         order->exch_timestamp_ + order_response_latency_us_,
                      .orderId_ = order->orderId_,
                      .side_ = side,
                      .price_ = level_price,
@@ -188,7 +188,7 @@ void ExecutionEngine::execute_market_order(int asset_id, TradeSide side,
             order_updates_.emplace_back(
                 OrderUpdate{.exch_timestamp_ = order->exch_timestamp_,
                             .local_timestamp_ = order->exch_timestamp_ +
-                                                order_response_latency_us,
+                                                order_response_latency_us_,
                             .asset_id_ = asset_id,
                             .orderId_ = order->orderId_,
                             .event_type_ = OrderEventType::Fill,
@@ -259,7 +259,7 @@ bool ExecutionEngine::execute_fok_order(int asset_id, TradeSide side,
                 Fill{.asset_id_ = asset_id,
                      .exch_timestamp_ = order->exch_timestamp_,
                      .local_timestamp_ =
-                         order->exch_timestamp_ + order_response_latency_us,
+                         order->exch_timestamp_ + order_response_latency_us_,
                      .orderId_ = order->orderId_,
                      .side_ = TradeSide::Buy,
                      .price_ = level_price,
@@ -269,7 +269,7 @@ bool ExecutionEngine::execute_fok_order(int asset_id, TradeSide side,
             order_updates_.emplace_back(
                 OrderUpdate{.exch_timestamp_ = order->exch_timestamp_,
                             .local_timestamp_ = order->exch_timestamp_ +
-                                                order_response_latency_us,
+                                                order_response_latency_us_,
                             .asset_id_ = asset_id,
                             .orderId_ = order->orderId_,
                             .event_type_ = OrderEventType::Fill,
@@ -279,7 +279,7 @@ bool ExecutionEngine::execute_fok_order(int asset_id, TradeSide side,
                 Fill{.asset_id_ = asset_id,
                      .exch_timestamp_ = order->exch_timestamp_,
                      .local_timestamp_ =
-                         order->exch_timestamp_ + order_response_latency_us,
+                         order->exch_timestamp_ + order_response_latency_us_,
                      .orderId_ = order->orderId_,
                      .side_ = TradeSide::Buy,
                      .price_ = level_price,
@@ -289,7 +289,7 @@ bool ExecutionEngine::execute_fok_order(int asset_id, TradeSide side,
             order_updates_.emplace_back(
                 OrderUpdate{.exch_timestamp_ = order->exch_timestamp_,
                             .local_timestamp_ = order->exch_timestamp_ +
-                                                order_response_latency_us,
+                                                order_response_latency_us_,
                             .asset_id_ = asset_id,
                             .orderId_ = order->orderId_,
                             .event_type_ = OrderEventType::Fill,
@@ -344,7 +344,7 @@ bool ExecutionEngine::execute_ioc_order(int asset_id, TradeSide side,
             Fill fill = {.asset_id_ = asset_id,
                          .exch_timestamp_ = order->exch_timestamp_,
                          .local_timestamp_ =
-                             order->exch_timestamp_ + order_response_latency_us,
+                             order->exch_timestamp_ + order_response_latency_us_,
                          .orderId_ = order->orderId_,
                          .side_ = side,
                          .price_ = level_price,
@@ -356,7 +356,7 @@ bool ExecutionEngine::execute_ioc_order(int asset_id, TradeSide side,
             order_updates_.emplace_back(
                 OrderUpdate{.exch_timestamp_ = order->exch_timestamp_,
                             .local_timestamp_ = order->exch_timestamp_ +
-                                                order_response_latency_us,
+                                                order_response_latency_us_,
                             .asset_id_ = asset_id,
                             .orderId_ = order->orderId_,
                             .event_type_ = OrderEventType::Fill,
@@ -368,7 +368,7 @@ bool ExecutionEngine::execute_ioc_order(int asset_id, TradeSide side,
                 Fill{.asset_id_ = asset_id,
                      .exch_timestamp_ = order->exch_timestamp_,
                      .local_timestamp_ =
-                         order->exch_timestamp_ + order_response_latency_us,
+                         order->exch_timestamp_ + order_response_latency_us_,
                      .orderId_ = order->orderId_,
                      .side_ = side,
                      .price_ = level_price,
@@ -377,7 +377,7 @@ bool ExecutionEngine::execute_ioc_order(int asset_id, TradeSide side,
             order_updates_.emplace_back(
                 OrderUpdate{.exch_timestamp_ = order->exch_timestamp_,
                             .local_timestamp_ = order->exch_timestamp_ +
-                                                order_response_latency_us,
+                                                order_response_latency_us_,
                             .asset_id_ = asset_id,
                             .orderId_ = order->orderId_,
                             .event_type_ = OrderEventType::Fill,
@@ -438,7 +438,7 @@ bool ExecutionEngine::place_gtx_order(int asset_id,
     active_orders_[asset_id].push_back(order);
     order_updates_.emplace_back(OrderUpdate{
         .exch_timestamp_ = order->exch_timestamp_,
-        .local_timestamp_ = order->exch_timestamp_ + order_response_latency_us,
+        .local_timestamp_ = order->exch_timestamp_ + order_response_latency_us_,
         .asset_id_ = asset_id,
         .orderId_ = order->orderId_,
         .event_type_ = OrderEventType::Acknowledged});
@@ -596,7 +596,7 @@ void ExecutionEngine::handle_trade(int asset_id, const Trade &trade) {
         order_updates_.emplace_back(
             OrderUpdate{.exch_timestamp_ = trade.exch_timestamp_,
                         .local_timestamp_ =
-                            trade.exch_timestamp_ + order_response_latency_us,
+                            trade.exch_timestamp_ + order_response_latency_us_,
                         .asset_id_ = asset_id,
                         .orderId_ = order->orderId_,
                         .event_type_ = OrderEventType::Fill,
@@ -605,7 +605,7 @@ void ExecutionEngine::handle_trade(int asset_id, const Trade &trade) {
             Fill{.asset_id_ = asset_id,
                  .exch_timestamp_ = trade.exch_timestamp_,
                  .local_timestamp_ =
-                     trade.exch_timestamp_ + order_response_latency_us,
+                     trade.exch_timestamp_ + order_response_latency_us_,
                  .orderId_ = order->orderId_,
                  .side_ = (order->side_ == BookSide::Bid) ? TradeSide::Buy
                                                           : TradeSide::Sell,
@@ -664,3 +664,21 @@ void ExecutionEngine::clear_fills() { fills_.clear(); }
  * @return The natural logarithm of (1 + qty).
  */
 double ExecutionEngine::f(const double x) { return std::log1p(x); }
+
+/**
+ * @brief Sets the order entry latency in microseconds
+ * @param latency in microseconds
+ */
+void ExecutionEngine::set_order_entry_latency_us(
+    const Microseconds latency_us) {
+    order_entry_latency_us_ = latency_us;
+}
+
+/**
+ * @brief Sets the order response latency in microseconds
+ * @param latency in microseconds
+ */
+void ExecutionEngine::set_order_response_latency_us(
+    const Microseconds latency_us) {
+    order_response_latency_us_ = latency_us;
+}

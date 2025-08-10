@@ -156,6 +156,8 @@ TEST_CASE("[BacktestEngine] - elapse", "[backtest-engine][elapse]") {
     }
     SECTION("Market order executed in correct schedule") {
         BacktestEngine hbt(asset_configs);
+        hbt.set_order_entry_latency(1000);
+        hbt.set_order_response_latency(1000);
         REQUIRE(hbt.elapse(29500));
         REQUIRE(hbt.current_time() == 29500);
 
