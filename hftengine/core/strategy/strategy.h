@@ -12,13 +12,14 @@
 #include <memory>
 
 #include "../types/usings.h"
+#include "../trading/backtest_engine.h"
 
 class Strategy {
   public:
-    explicit Strategy() : capital_(0.0){};
+    explicit Strategy() {};
 
     virtual ~Strategy() = default;
 
     virtual void initialize() = 0;
-    virtual void on_interval() = 0;
+    virtual void on_elapse(BacktestEngine& hbt) = 0;
 };

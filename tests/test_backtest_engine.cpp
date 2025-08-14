@@ -21,6 +21,7 @@
 #include "core/types/time_in_force.h"
 #include "core/types/update_type.h"
 #include "core/types/usings.h"
+#include "utils/math/math_utils.h"
 
 namespace TestHelpers {
 void create_trade_csv(const std::string &filename) {
@@ -100,15 +101,15 @@ TEST_CASE("[BacktestEngine] - rejects invalid orders",
     BacktestEngine hbt(asset_configs);
 
     // Invalid price (0 or negative)
-    REQUIRE_THROWS_AS(hbt.submit_buy_order(asset_id, 0.0, 1.0, TimeInForce::GTX,
+    REQUIRE_THROWS_AS(hbt.submit_buy_order(asset_id, 0.0, 1.0, TimeInForce::GTC,
                                            OrderType::LIMIT),
                       std::invalid_argument);
     REQUIRE_THROWS_AS(hbt.submit_sell_order(asset_id, -1.0, 1.0,
-                                            TimeInForce::GTX, OrderType::LIMIT),
+                                            TimeInForce::GTC, OrderType::LIMIT),
                       std::invalid_argument);
     // Invalid quantity
     REQUIRE_THROWS_AS(hbt.submit_buy_order(asset_id, 50000.0, 0.0,
-                                           TimeInForce::GTX, OrderType::LIMIT),
+                                           TimeInForce::GTC, OrderType::LIMIT),
                       std::invalid_argument);
 }
 
@@ -119,13 +120,15 @@ TEST_CASE("[BacktestEngine] - elapse", "[backtest-engine][elapse]") {
     TestHelpers::create_trade_csv(trade_file);
 
     int asset_id = 1;
+    double tick_size = 0.001;
+    double lot_size = 0.00001;
     Depth depth;
 
     std::unordered_map<int, AssetConfig> asset_configs = {
         {asset_id, AssetConfig{.book_update_file_ = book_file,
                                .trade_file_ = trade_file,
-                               .tick_size_ = 0.001,
-                               .lot_size_ = 0.00001,
+                               .tick_size_ = tick_size,
+                               .lot_size_ = lot_size,
                                .contract_multiplier_ = 1.0,
                                .is_inverse_ = false,
                                .maker_fee_ = 0.0,
@@ -143,10 +146,12 @@ TEST_CASE("[BacktestEngine] - elapse", "[backtest-engine][elapse]") {
         REQUIRE(hbt.current_time() == 50000);
 
         depth = hbt.depth(asset_id);
-        REQUIRE(depth.best_ask_ == 50001.0);
-        REQUIRE(depth.best_bid_ == 50000.5);
+        REQUIRE(depth.best_ask_ == price_to_ticks(50001.0,tick_size));
+        REQUIRE(depth.best_bid_ == price_to_ticks(50000.5,tick_size));
         REQUIRE(depth.ask_qty_ == 1.5);
         REQUIRE(depth.bid_qty_ == 2.0);
+        REQUIRE(depth.bid_depth_[price_to_ticks(50000.5,tick_size)] == 2.0);
+        REQUIRE(depth.ask_depth_[price_to_ticks(50001.0,tick_size)] == 1.5);
 
         REQUIRE(hbt.elapse(2000) == true);
         REQUIRE(hbt.current_time() == 52000);
@@ -158,11 +163,14 @@ TEST_CASE("[BacktestEngine] - elapse", "[backtest-engine][elapse]") {
         BacktestEngine hbt(asset_configs);
         hbt.set_order_entry_latency(1000);
         hbt.set_order_response_latency(1000);
+        REQUIRE(hbt.order_entry_latency() == 1000);
+        REQUIRE(hbt.order_response_latency() == 1000);
+
         REQUIRE(hbt.elapse(29500));
         REQUIRE(hbt.current_time() == 29500);
 
         depth = hbt.depth(asset_id);
-        REQUIRE(depth.best_bid_ == 50000.0);
+        REQUIRE(depth.best_bid_ == price_to_ticks(50000.0,tick_size));
         REQUIRE(depth.bid_qty_ == 2.0);
         // Submit a buy order that will be delayed and scheduled
         OrderId order_id = hbt.submit_sell_order(
@@ -186,10 +194,10 @@ TEST_CASE("[BacktestEngine] - elapse", "[backtest-engine][elapse]") {
         REQUIRE(hbt.current_time() == 5000);
 
         depth = hbt.depth(asset_id);
-        REQUIRE(depth.best_ask_ == 50001.0);
+        REQUIRE(depth.best_ask_ == price_to_ticks(50001.0, tick_size));
 
         OrderId order_id = hbt.submit_sell_order(
-            asset_id, 50000.5, 1.0, TimeInForce::GTX, OrderType::LIMIT);
+            asset_id, 50000.5, 1.0, TimeInForce::GTC, OrderType::LIMIT);
 
         REQUIRE(hbt.elapse(6500));
         REQUIRE(hbt.current_time() == 11500);
@@ -208,9 +216,9 @@ TEST_CASE("[BacktestEngine] - elapse", "[backtest-engine][elapse]") {
         REQUIRE(hbt.current_time() == 5000);
 
         OrderId order1 = hbt.submit_sell_order(
-            asset_id, 50000.5, 1.0, TimeInForce::GTX, OrderType::LIMIT);
+            asset_id, 50000.5, 1.0, TimeInForce::GTC, OrderType::LIMIT);
         OrderId order2 = hbt.submit_sell_order(
-            asset_id, 50001.0, 2.0, TimeInForce::GTX, OrderType::LIMIT);
+            asset_id, 50001.0, 2.0, TimeInForce::GTC, OrderType::LIMIT);
 
         // Verify initial state
         REQUIRE(hbt.elapse(3000));
@@ -241,7 +249,7 @@ TEST_CASE("[BacktestEngine] - elapse", "[backtest-engine][elapse]") {
 
         // Submit order larger than available liquidity
         OrderId big_order = hbt.submit_sell_order(
-            asset_id, 50000.5, 5.0, TimeInForce::GTX, OrderType::LIMIT);
+            asset_id, 50000.5, 5.0, TimeInForce::GTC, OrderType::LIMIT);
 
         hbt.elapse(7001);
 

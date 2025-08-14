@@ -8,9 +8,4 @@
 
 #pragma once
 
-enum class OrderEventType {
-    Fill,
-    Cancelled,
-    Rejected,
-    Acknowledged
-};
+enum class OrderEventType { FILL, CANCELLED, REJECTED, ACKNOWLEDGED };

@@ -12,6 +12,7 @@
 #include "core/orderbook/orderbook.h"
 #include "core/types/book_side.h"
 #include "core/types/update_type.h"
+#include "utils/math/math_utils.h"
 
 TEST_CASE("[OrderBook] - Initial State", "[orderbook][init]") {
     OrderBook book;
@@ -23,7 +24,9 @@ TEST_CASE("[OrderBook] - Initial State", "[orderbook][init]") {
 }
 
 TEST_CASE("[OrderBook] - Book Update Processing", "[orderbook][updates]") {
-    OrderBook book;
+    double tick_size = 0.01;
+    double lot_size = 0.01;
+    OrderBook book(tick_size,lot_size);
 
     SECTION("Snapshot updates initialize book") {
         BookUpdate snapshot_bid{
@@ -33,7 +36,7 @@ TEST_CASE("[OrderBook] - Book Update Processing", "[orderbook][updates]") {
         REQUIRE_FALSE(book.is_empty());
         REQUIRE(book.best_bid() == 100.0);
         REQUIRE(book.best_ask() == 0.0);
-        REQUIRE(book.depth_at(BookSide::Bid, 100.0) == 500.0);
+        REQUIRE(book.depth_at(BookSide::Bid, price_to_ticks(100.0,tick_size)) == 500.0);
         REQUIRE(book.depth_at_level(BookSide::Bid, 0) == 500.0);
     }
 
@@ -46,7 +49,7 @@ TEST_CASE("[OrderBook] - Book Update Processing", "[orderbook][updates]") {
         book.apply_book_update(
             {20, 110, UpdateType::Incremental, BookSide::Ask, 101.0, 150.0});
 
-        REQUIRE(book.depth_at(BookSide::Ask, 101.0) == 150.0);
+        REQUIRE(book.depth_at(BookSide::Ask, price_to_ticks(101.0,tick_size)) == 150.0);
         REQUIRE(book.depth_at_level(BookSide::Ask, 0) == 150.0);
     }
 
@@ -63,7 +66,9 @@ TEST_CASE("[OrderBook] - Book Update Processing", "[orderbook][updates]") {
 }
 
 TEST_CASE("[OrderBook] - Price Level Priority", "[orderbook][priority]") {
-    OrderBook book;
+    double tick_size = 0.01;
+    double lot_size = 0.01;
+    OrderBook book(tick_size,lot_size);
 
     // snapshots
     SECTION("Bid book is sorted in descending order from snapshots") {

@@ -1,9 +1,9 @@
 /*
  * File: tests/test_execution_engine.cpp
  * Description: Unit tests for
- * hftengine/core/execution_engine/execution_engine.cpp. 
+ * hftengine/core/execution_engine/execution_engine.cpp.
  * Author: Arvind Rathnashyam
- * Date: 2025-06-27 
+ * Date: 2025-06-27
  * License: Proprietary
  */
 
@@ -22,10 +22,16 @@
 
 TEST_CASE("[ExecutionEngine] - multi-asset handling",
           "[execution-engine][multi-asset]") {
-    ExecutionEngine engine;
-
     int asset1 = 0;
+    double tick_size_1 = 0.01;
+    double lot_size_1 = 0.00001;
     int asset2 = 1;
+    double tick_size_2 = 0.01;
+    double lot_size_2 = 0.00001;
+
+    ExecutionEngine engine;
+    engine.add_asset(asset1, tick_size_1, lot_size_1);
+    engine.add_asset(asset2, tick_size_2, lot_size_2);
 
     // Add book updates for two assets
     engine.handle_book_update(
@@ -88,7 +94,7 @@ TEST_CASE("[ExecutionEngine] - multi-asset handling",
                                           .price_ = 0.0,
                                           .quantity_ = 10.0,
                                           .filled_quantity_ = 0.0,
-                                          .tif_ = TimeInForce::GTX,
+                                          .tif_ = TimeInForce::GTC,
                                           .orderType_ = OrderType::LIMIT,
                                           .queueEst_ = 0.0});
 
@@ -109,7 +115,7 @@ TEST_CASE("[ExecutionEngine] - multi-asset handling",
                                           .price_ = 100.0,
                                           .quantity_ = 3.0,
                                           .filled_quantity_ = 0.0,
-                                          .tif_ = TimeInForce::GTX,
+                                          .tif_ = TimeInForce::GTC,
                                           .orderType_ = OrderType::LIMIT,
                                           .queueEst_ = 0.0});
 
@@ -120,12 +126,12 @@ TEST_CASE("[ExecutionEngine] - multi-asset handling",
                                           .price_ = 200.0,
                                           .quantity_ = 4.0,
                                           .filled_quantity_ = 0.0,
-                                          .tif_ = TimeInForce::GTX,
+                                          .tif_ = TimeInForce::GTC,
                                           .orderType_ = OrderType::LIMIT,
                                           .queueEst_ = 0.0});
 
-        engine.place_gtx_order(asset1, order1);
-        engine.place_gtx_order(asset2, order2);
+        engine.place_maker_order(asset1, order1);
+        engine.place_maker_order(asset2, order2);
     }
 }
 
@@ -133,33 +139,36 @@ TEST_CASE("[ExecutionEngine] - cancel_order", "[execution][cancel]") {
     ExecutionEngine engine;
 
     const int asset_id = 1;
-    engine.add_asset(asset_id); // Assume this initializes orderbooks_[asset_id]
+    const double tick_size = 0.01;
+    const double lot_size = 0.00001;
+    engine.add_asset(asset_id, tick_size, lot_size);
 
-    // Create and submit a GTX order
+    // Create and submit a GTC order
     Order order{.exch_timestamp_ = 1000,
                 .orderId_ = 123456789,
                 .side_ = BookSide::Bid,
                 .price_ = 100.0,
                 .quantity_ = 1.0,
                 .filled_quantity_ = 0.0,
-                .tif_ = TimeInForce::GTX,
+                .tif_ = TimeInForce::GTC,
                 .orderType_ = OrderType::LIMIT,
                 .queueEst_ = 0.0};
 
     auto order_ptr = std::make_shared<Order>(order);
 
-    // Manually place GTX order (simulate submission logic)
-    bool placed = engine.place_gtx_order(asset_id, order_ptr);
+    // Manually place GTC order (simulate submission logic)
+    bool placed = engine.place_maker_order(asset_id, order_ptr);
     REQUIRE(placed);
 
     // Order should be present before cancellation
     REQUIRE(engine.order_exists(order.orderId_)); // Optional helper function
 
     // Now cancel the order
-    bool cancelled = engine.cancel_order(asset_id, order.orderId_,1100);
-    REQUIRE(cancelled);
+    bool cancelled = engine.cancel_order(asset_id, order.orderId_, 1100);
+    engine.clear_inactive_orders(asset_id);
 
     // Order should no longer exist
+    REQUIRE(cancelled);
     REQUIRE(engine.order_exists(order.orderId_) == false);
 }
 
@@ -167,34 +176,39 @@ TEST_CASE("[ExecutionEngine] - executes market buy and sell orders",
           "[execution-engine][market]") {
     ExecutionEngine engine;
 
+    const int asset_id = 1;
+    const double tick_size = 0.01;
+    const double lot_size = 0.00001;
+    engine.add_asset(asset_id, tick_size, lot_size);
+
     engine.handle_book_update(
-        0, BookUpdate{.exch_timestamp_ = 0,
-                      .local_timestamp_ = 10,
-                      .update_type_ = UpdateType::Incremental,
-                      .side_ = BookSide::Ask,
-                      .price_ = 101.0,
-                      .quantity_ = 2.0});
+        asset_id, BookUpdate{.exch_timestamp_ = 0,
+                             .local_timestamp_ = 10,
+                             .update_type_ = UpdateType::Incremental,
+                             .side_ = BookSide::Ask,
+                             .price_ = 101.0,
+                             .quantity_ = 2.0});
     engine.handle_book_update(
-        0, BookUpdate{.exch_timestamp_ = 10,
-                      .local_timestamp_ = 20,
-                      .update_type_ = UpdateType::Incremental,
-                      .side_ = BookSide::Ask,
-                      .price_ = 102.0,
-                      .quantity_ = 3.0});
+        asset_id, BookUpdate{.exch_timestamp_ = 10,
+                             .local_timestamp_ = 20,
+                             .update_type_ = UpdateType::Incremental,
+                             .side_ = BookSide::Ask,
+                             .price_ = 102.0,
+                             .quantity_ = 3.0});
     engine.handle_book_update(
-        0, BookUpdate{.exch_timestamp_ = 20,
-                      .local_timestamp_ = 30,
-                      .update_type_ = UpdateType::Incremental,
-                      .side_ = BookSide::Bid,
-                      .price_ = 100.0,
-                      .quantity_ = 1.5});
+        asset_id, BookUpdate{.exch_timestamp_ = 20,
+                             .local_timestamp_ = 30,
+                             .update_type_ = UpdateType::Incremental,
+                             .side_ = BookSide::Bid,
+                             .price_ = 100.0,
+                             .quantity_ = 1.5});
     engine.handle_book_update(
-        0, BookUpdate{.exch_timestamp_ = 30,
-                      .local_timestamp_ = 40,
-                      .update_type_ = UpdateType::Incremental,
-                      .side_ = BookSide::Bid,
-                      .price_ = 99.0,
-                      .quantity_ = 1.0});
+        asset_id, BookUpdate{.exch_timestamp_ = 30,
+                             .local_timestamp_ = 40,
+                             .update_type_ = UpdateType::Incremental,
+                             .side_ = BookSide::Bid,
+                             .price_ = 99.0,
+                             .quantity_ = 1.0});
 
     SECTION("Market buy order fills against ask levels") {
         auto buy_order =
@@ -207,7 +221,7 @@ TEST_CASE("[ExecutionEngine] - executes market buy and sell orders",
                                           .tif_ = TimeInForce::GTC,
                                           .orderType_ = OrderType::MARKET});
 
-        engine.execute_market_order(0, TradeSide::Buy, buy_order);
+        engine.execute_market_order(asset_id, TradeSide::Buy, buy_order);
 
         const auto &fills = engine.fills();
         REQUIRE(buy_order->filled_quantity_ == 4.0);
@@ -231,7 +245,7 @@ TEST_CASE("[ExecutionEngine] - executes market buy and sell orders",
                                           .tif_ = TimeInForce::GTC,
                                           .orderType_ = OrderType::MARKET});
 
-        engine.execute_market_order(0, TradeSide::Sell, sell_order);
+        engine.execute_market_order(asset_id, TradeSide::Sell, sell_order);
 
         const auto &fills = engine.fills();
         REQUIRE(sell_order->filled_quantity_ == 2.0);
@@ -247,36 +261,41 @@ TEST_CASE("[ExecutionEngine] - executes market buy and sell orders",
 
 TEST_CASE("[ExecutionEngine] - executes limit fill-or-kill buy and sell orders",
           "[execution-engine][FOK]") {
+    const int asset_id = 1;
+    const double tick_size = 0.01;
+    const double lot_size = 0.00001;
+
     ExecutionEngine engine;
+    engine.add_asset(asset_id, tick_size, lot_size);
 
     engine.handle_book_update(
-        0, BookUpdate{.exch_timestamp_ = 0,
-                      .local_timestamp_ = 10,
-                      .update_type_ = UpdateType::Incremental,
-                      .side_ = BookSide::Ask,
-                      .price_ = 101.0,
-                      .quantity_ = 2.0});
+        asset_id, BookUpdate{.exch_timestamp_ = 0,
+                             .local_timestamp_ = 10,
+                             .update_type_ = UpdateType::Incremental,
+                             .side_ = BookSide::Ask,
+                             .price_ = 101.0,
+                             .quantity_ = 2.0});
     engine.handle_book_update(
-        0, BookUpdate{.exch_timestamp_ = 10,
-                      .local_timestamp_ = 20,
-                      .update_type_ = UpdateType::Incremental,
-                      .side_ = BookSide::Ask,
-                      .price_ = 102.0,
-                      .quantity_ = 3.0});
+        asset_id, BookUpdate{.exch_timestamp_ = 10,
+                             .local_timestamp_ = 20,
+                             .update_type_ = UpdateType::Incremental,
+                             .side_ = BookSide::Ask,
+                             .price_ = 102.0,
+                             .quantity_ = 3.0});
     engine.handle_book_update(
-        0, BookUpdate{.exch_timestamp_ = 20,
-                      .local_timestamp_ = 30,
-                      .update_type_ = UpdateType::Incremental,
-                      .side_ = BookSide::Bid,
-                      .price_ = 100.0,
-                      .quantity_ = 1.5});
+        asset_id, BookUpdate{.exch_timestamp_ = 20,
+                             .local_timestamp_ = 30,
+                             .update_type_ = UpdateType::Incremental,
+                             .side_ = BookSide::Bid,
+                             .price_ = 100.0,
+                             .quantity_ = 1.5});
     engine.handle_book_update(
-        0, BookUpdate{.exch_timestamp_ = 30,
-                      .local_timestamp_ = 40,
-                      .update_type_ = UpdateType::Incremental,
-                      .side_ = BookSide::Bid,
-                      .price_ = 99.0,
-                      .quantity_ = 1.0});
+        asset_id, BookUpdate{.exch_timestamp_ = 30,
+                             .local_timestamp_ = 40,
+                             .update_type_ = UpdateType::Incremental,
+                             .side_ = BookSide::Bid,
+                             .price_ = 99.0,
+                             .quantity_ = 1.0});
 
     SECTION("Limit buy fill-or-kill order fills against ask levels") {
         auto buy_order =
@@ -288,7 +307,7 @@ TEST_CASE("[ExecutionEngine] - executes limit fill-or-kill buy and sell orders",
                                           .filled_quantity_ = 0.0,
                                           .tif_ = TimeInForce::FOK,
                                           .orderType_ = OrderType::LIMIT});
-        REQUIRE(engine.execute_fok_order(0, TradeSide::Buy, buy_order) ==
+        REQUIRE(engine.execute_fok_order(asset_id, TradeSide::Buy, buy_order) ==
                 false);
 
         const auto &fills = engine.fills();
@@ -305,8 +324,8 @@ TEST_CASE("[ExecutionEngine] - executes limit fill-or-kill buy and sell orders",
                                           .filled_quantity_ = 0.0,
                                           .tif_ = TimeInForce::FOK,
                                           .orderType_ = OrderType::LIMIT});
-        REQUIRE(engine.execute_fok_order(0, TradeSide::Sell, sell_order) ==
-                true);
+        REQUIRE(engine.execute_fok_order(asset_id, TradeSide::Sell,
+                                         sell_order) == true);
 
         const auto &fills = engine.fills();
         REQUIRE(sell_order->filled_quantity_ == 2.0);
@@ -321,36 +340,41 @@ TEST_CASE("[ExecutionEngine] - executes limit fill-or-kill buy and sell orders",
 TEST_CASE(
     "[ExecutionEngine] - executes limit immediate-or-cancel buy and sell ",
     "[execution-engine][IOC]") {
+    const int asset_id = 1;
+    const double tick_size = 0.01;
+    const double lot_size = 0.00001;
+
     ExecutionEngine engine;
+    engine.add_asset(asset_id, tick_size, lot_size);
 
     engine.handle_book_update(
-        0, BookUpdate{.exch_timestamp_ = 0,
-                      .local_timestamp_ = 10,
-                      .update_type_ = UpdateType::Incremental,
-                      .side_ = BookSide::Ask,
-                      .price_ = 101.0,
-                      .quantity_ = 2.0});
+        asset_id, BookUpdate{.exch_timestamp_ = 0,
+                             .local_timestamp_ = 10,
+                             .update_type_ = UpdateType::Incremental,
+                             .side_ = BookSide::Ask,
+                             .price_ = 101.0,
+                             .quantity_ = 2.0});
     engine.handle_book_update(
-        0, BookUpdate{.exch_timestamp_ = 10,
-                      .local_timestamp_ = 20,
-                      .update_type_ = UpdateType::Incremental,
-                      .side_ = BookSide::Ask,
-                      .price_ = 102.0,
-                      .quantity_ = 3.0});
+        asset_id, BookUpdate{.exch_timestamp_ = 10,
+                             .local_timestamp_ = 20,
+                             .update_type_ = UpdateType::Incremental,
+                             .side_ = BookSide::Ask,
+                             .price_ = 102.0,
+                             .quantity_ = 3.0});
     engine.handle_book_update(
-        0, BookUpdate{.exch_timestamp_ = 20,
-                      .local_timestamp_ = 30,
-                      .update_type_ = UpdateType::Incremental,
-                      .side_ = BookSide::Bid,
-                      .price_ = 100.0,
-                      .quantity_ = 1.5});
+        asset_id, BookUpdate{.exch_timestamp_ = 20,
+                             .local_timestamp_ = 30,
+                             .update_type_ = UpdateType::Incremental,
+                             .side_ = BookSide::Bid,
+                             .price_ = 100.0,
+                             .quantity_ = 1.5});
     engine.handle_book_update(
-        0, BookUpdate{.exch_timestamp_ = 30,
-                      .local_timestamp_ = 40,
-                      .update_type_ = UpdateType::Incremental,
-                      .side_ = BookSide::Bid,
-                      .price_ = 99.0,
-                      .quantity_ = 1.0});
+        asset_id, BookUpdate{.exch_timestamp_ = 30,
+                             .local_timestamp_ = 40,
+                             .update_type_ = UpdateType::Incremental,
+                             .side_ = BookSide::Bid,
+                             .price_ = 99.0,
+                             .quantity_ = 1.0});
 
     SECTION("Limit buy immediate-or-cancel order fills against ask levels") {
         auto buy_order =
@@ -362,7 +386,8 @@ TEST_CASE(
                                           .filled_quantity_ = 0.0,
                                           .tif_ = TimeInForce::IOC,
                                           .orderType_ = OrderType::LIMIT});
-        REQUIRE(engine.execute_ioc_order(0, TradeSide::Buy, buy_order) == true);
+        REQUIRE(engine.execute_ioc_order(asset_id, TradeSide::Buy, buy_order) ==
+                true);
 
         const auto &fills = engine.fills();
         REQUIRE(buy_order->filled_quantity_ == 2.0);
@@ -380,8 +405,8 @@ TEST_CASE(
                                           .filled_quantity_ = 0.0,
                                           .tif_ = TimeInForce::IOC,
                                           .orderType_ = OrderType::LIMIT});
-        REQUIRE(engine.execute_ioc_order(0, TradeSide::Sell, sell_order) ==
-                true);
+        REQUIRE(engine.execute_ioc_order(asset_id, TradeSide::Sell,
+                                         sell_order) == true);
 
         const auto &fills = engine.fills();
         REQUIRE(sell_order->filled_quantity_ == 2.0);
@@ -393,40 +418,45 @@ TEST_CASE(
     }
 }
 
-TEST_CASE("[ExecutionEngine] - places limit GTX orders ",
-          "[execution-engine][GTX]") {
+TEST_CASE("[ExecutionEngine] - places limit GTC orders ",
+          "[execution-engine][GTC]") {
+    const int asset_id = 1;
+    const double tick_size = 0.01;
+    const double lot_size = 0.00001;
+
     ExecutionEngine engine;
+    engine.add_asset(asset_id, tick_size, lot_size);
 
     engine.handle_book_update(
-        0, BookUpdate{.exch_timestamp_ = 0,
-                      .local_timestamp_ = 10,
-                      .update_type_ = UpdateType::Incremental,
-                      .side_ = BookSide::Ask,
-                      .price_ = 101.0,
-                      .quantity_ = 2.0});
+        asset_id, BookUpdate{.exch_timestamp_ = 0,
+                             .local_timestamp_ = 10,
+                             .update_type_ = UpdateType::Incremental,
+                             .side_ = BookSide::Ask,
+                             .price_ = 101.0,
+                             .quantity_ = 2.0});
     engine.handle_book_update(
-        0, BookUpdate{.exch_timestamp_ = 10,
-                      .local_timestamp_ = 20,
-                      .update_type_ = UpdateType::Incremental,
-                      .side_ = BookSide::Ask,
-                      .price_ = 102.0,
-                      .quantity_ = 3.0});
+        asset_id, BookUpdate{.exch_timestamp_ = 10,
+                             .local_timestamp_ = 20,
+                             .update_type_ = UpdateType::Incremental,
+                             .side_ = BookSide::Ask,
+                             .price_ = 102.0,
+                             .quantity_ = 3.0});
     engine.handle_book_update(
-        0, BookUpdate{.exch_timestamp_ = 20,
-                      .local_timestamp_ = 30,
-                      .update_type_ = UpdateType::Incremental,
-                      .side_ = BookSide::Bid,
-                      .price_ = 100.0,
-                      .quantity_ = 1.5});
+        asset_id, BookUpdate{.exch_timestamp_ = 20,
+                             .local_timestamp_ = 30,
+                             .update_type_ = UpdateType::Incremental,
+                             .side_ = BookSide::Bid,
+                             .price_ = 100.0,
+                             .quantity_ = 1.5});
     engine.handle_book_update(
-        0, BookUpdate{.exch_timestamp_ = 30,
-                      .local_timestamp_ = 40,
-                      .update_type_ = UpdateType::Incremental,
-                      .side_ = BookSide::Bid,
-                      .price_ = 99.0,
-                      .quantity_ = 1.0});
+        asset_id, BookUpdate{.exch_timestamp_ = 30,
+                             .local_timestamp_ = 40,
+                             .update_type_ = UpdateType::Incremental,
+                             .side_ = BookSide::Bid,
+                             .price_ = 99.0,
+                             .quantity_ = 1.0});
 
-    SECTION("Places limit GTX buy order against bid levels") {
+    SECTION("Places limit GTC buy order against bid levels") {
         auto buy_order_1 =
             std::make_shared<Order>(Order{.local_timestamp_ = 50,
                                           .exch_timestamp_ = 60,
@@ -435,10 +465,10 @@ TEST_CASE("[ExecutionEngine] - places limit GTX orders ",
                                           .price_ = 101.5,
                                           .quantity_ = 3.0,
                                           .filled_quantity_ = 0.0,
-                                          .tif_ = TimeInForce::GTX,
+                                          .tif_ = TimeInForce::GTC,
                                           .orderType_ = OrderType::LIMIT,
                                           .queueEst_ = 0.0});
-        REQUIRE(engine.place_gtx_order(0, buy_order_1) == false);
+        REQUIRE(engine.place_maker_order(asset_id, buy_order_1) == false);
         const auto &fills_1 = engine.fills();
         REQUIRE(fills_1.size() == 0);
 
@@ -450,14 +480,14 @@ TEST_CASE("[ExecutionEngine] - places limit GTX orders ",
                                           .price_ = 98.0,
                                           .quantity_ = 3.0,
                                           .filled_quantity_ = 0.0,
-                                          .tif_ = TimeInForce::GTX,
+                                          .tif_ = TimeInForce::GTC,
                                           .orderType_ = OrderType::LIMIT,
                                           .queueEst_ = 0.0});
-        REQUIRE(engine.place_gtx_order(0, buy_order_2) == true);
+        REQUIRE(engine.place_maker_order(asset_id, buy_order_2) == true);
         const auto &fills_2 = engine.fills();
         REQUIRE(fills_2.size() == 0);
     }
-    SECTION("Places limit GTX sell order against ask levels") {
+    SECTION("Places limit GTC sell order against ask levels") {
         auto sell_order_1 =
             std::make_shared<Order>(Order{.local_timestamp_ = 50,
                                           .exch_timestamp_ = 60,
@@ -466,9 +496,9 @@ TEST_CASE("[ExecutionEngine] - places limit GTX orders ",
                                           .price_ = 99.0,
                                           .quantity_ = 2.0,
                                           .filled_quantity_ = 0.0,
-                                          .tif_ = TimeInForce::GTX,
+                                          .tif_ = TimeInForce::GTC,
                                           .orderType_ = OrderType::LIMIT});
-        REQUIRE(engine.place_gtx_order(0, sell_order_1) == false);
+        REQUIRE(engine.place_maker_order(asset_id, sell_order_1) == false);
         const auto &fills_1 = engine.fills();
         REQUIRE(fills_1.size() == 0);
 
@@ -480,46 +510,52 @@ TEST_CASE("[ExecutionEngine] - places limit GTX orders ",
                                           .price_ = 102.0,
                                           .quantity_ = 2.0,
                                           .filled_quantity_ = 0.0,
-                                          .tif_ = TimeInForce::GTX,
+                                          .tif_ = TimeInForce::GTC,
                                           .orderType_ = OrderType::LIMIT});
-        REQUIRE(engine.place_gtx_order(0, sell_order_2) == true);
+        REQUIRE(engine.place_maker_order(asset_id, sell_order_2) == true);
         REQUIRE(sell_order_2->queueEst_ == 3.0);
         const auto &fills_2 = engine.fills();
         REQUIRE(fills_2.size() == 0);
     }
 }
 
-TEST_CASE("[ExecutionEngine] - submit_order routes correctly", "[execution]") {
-    int asset_id = 1;
+TEST_CASE("[ExecutionEngine] - submit_order routes correctly",
+          "[execution-engine][routing]") {
+    const int asset_id = 1;
+    const double tick_size = 0.01;
+    const double lot_size = 0.00001;
+
     ExecutionEngine engine;
+    engine.add_asset(asset_id, tick_size, lot_size);
+
     engine.handle_book_update(
-        0, BookUpdate{.exch_timestamp_ = 0,
-                      .local_timestamp_ = 10,
-                      .update_type_ = UpdateType::Incremental,
-                      .side_ = BookSide::Ask,
-                      .price_ = 101.0,
-                      .quantity_ = 2.0});
+        asset_id, BookUpdate{.exch_timestamp_ = 0,
+                             .local_timestamp_ = 10,
+                             .update_type_ = UpdateType::Incremental,
+                             .side_ = BookSide::Ask,
+                             .price_ = 101.0,
+                             .quantity_ = 2.0});
     engine.handle_book_update(
-        0, BookUpdate{.exch_timestamp_ = 10,
-                      .local_timestamp_ = 20,
-                      .update_type_ = UpdateType::Incremental,
-                      .side_ = BookSide::Ask,
-                      .price_ = 102.0,
-                      .quantity_ = 3.0});
+        asset_id, BookUpdate{.exch_timestamp_ = 10,
+                             .local_timestamp_ = 20,
+                             .update_type_ = UpdateType::Incremental,
+                             .side_ = BookSide::Ask,
+                             .price_ = 102.0,
+                             .quantity_ = 3.0});
     engine.handle_book_update(
-        0, BookUpdate{.exch_timestamp_ = 20,
-                      .local_timestamp_ = 30,
-                      .update_type_ = UpdateType::Incremental,
-                      .side_ = BookSide::Bid,
-                      .price_ = 100.0,
-                      .quantity_ = 1.5});
+        asset_id, BookUpdate{.exch_timestamp_ = 20,
+                             .local_timestamp_ = 30,
+                             .update_type_ = UpdateType::Incremental,
+                             .side_ = BookSide::Bid,
+                             .price_ = 100.0,
+                             .quantity_ = 1.5});
     engine.handle_book_update(
-        0, BookUpdate{.exch_timestamp_ = 30,
-                      .local_timestamp_ = 40,
-                      .update_type_ = UpdateType::Incremental,
-                      .side_ = BookSide::Bid,
-                      .price_ = 99.0,
-                      .quantity_ = 1.0});
+        asset_id, BookUpdate{.exch_timestamp_ = 30,
+                             .local_timestamp_ = 40,
+                             .update_type_ = UpdateType::Incremental,
+                             .side_ = BookSide::Bid,
+                             .price_ = 99.0,
+                             .quantity_ = 1.0});
 
     SECTION("Market buy order is routed to execute_market_order") {
         Order market_buy_order{.local_timestamp_ = 50,
@@ -530,9 +566,8 @@ TEST_CASE("[ExecutionEngine] - submit_order routes correctly", "[execution]") {
                                .filled_quantity_ = 0.0,
                                .tif_ = TimeInForce::GTC,
                                .orderType_ = OrderType::MARKET};
-
         REQUIRE_NOTHROW(
-            engine.execute_order(0, TradeSide::Buy, market_buy_order));
+            engine.execute_order(asset_id, TradeSide::Buy, market_buy_order));
         const auto &fills = engine.fills();
         REQUIRE(fills.size() == 2);
     }
@@ -546,8 +581,7 @@ TEST_CASE("[ExecutionEngine] - submit_order routes correctly", "[execution]") {
                                 .tif_ = TimeInForce::GTC,
                                 .orderType_ = OrderType::MARKET};
         REQUIRE_NOTHROW(
-            engine.execute_order(0, TradeSide::Sell, market_sell_order));
-
+            engine.execute_order(asset_id, TradeSide::Sell, market_sell_order));
         const auto &fills = engine.fills();
         REQUIRE(fills.size() == 2);
     }
@@ -562,8 +596,7 @@ TEST_CASE("[ExecutionEngine] - submit_order routes correctly", "[execution]") {
                                   .tif_ = TimeInForce::FOK,
                                   .orderType_ = OrderType::LIMIT};
         REQUIRE_NOTHROW(
-            engine.execute_order(0, TradeSide::Buy, limit_fok_buy_order));
-
+            engine.execute_order(asset_id, TradeSide::Buy, limit_fok_buy_order));
         const auto &fills = engine.fills();
         REQUIRE(fills.size() == 0);
     }
@@ -578,7 +611,7 @@ TEST_CASE("[ExecutionEngine] - submit_order routes correctly", "[execution]") {
                                    .tif_ = TimeInForce::FOK,
                                    .orderType_ = OrderType::LIMIT};
         REQUIRE_NOTHROW(
-            engine.execute_order(0, TradeSide::Sell, limit_fok_sell_order));
+            engine.execute_order(asset_id, TradeSide::Sell, limit_fok_sell_order));
 
         const auto &fills = engine.fills();
         REQUIRE(fills.size() == 2);
@@ -593,9 +626,8 @@ TEST_CASE("[ExecutionEngine] - submit_order routes correctly", "[execution]") {
                                   .filled_quantity_ = 0.0,
                                   .tif_ = TimeInForce::IOC,
                                   .orderType_ = OrderType::LIMIT};
-        REQUIRE_NOTHROW(
-            engine.execute_order(0, TradeSide::Buy, limit_ioc_buy_order));
-
+        REQUIRE_NOTHROW(engine.execute_order(asset_id, TradeSide::Buy,
+                                             limit_ioc_buy_order));
         const auto &fills = engine.fills();
         REQUIRE(fills.size() == 1);
     }
@@ -610,13 +642,12 @@ TEST_CASE("[ExecutionEngine] - submit_order routes correctly", "[execution]") {
                                    .tif_ = TimeInForce::IOC,
                                    .orderType_ = OrderType::LIMIT};
         REQUIRE_NOTHROW(
-            engine.execute_order(0, TradeSide::Sell, limit_ioc_sell_order));
-
+            engine.execute_order(asset_id, TradeSide::Sell, limit_ioc_sell_order));
         const auto &fills = engine.fills();
         REQUIRE(fills.size() == 2);
     }
 
-    SECTION("Limit bid order with GTX is routed to place_gtx_order") {
+    SECTION("Limit bid order with GTC is routed to place_maker_order") {
         Order limit_gtx_buy_order{.local_timestamp_ = 50,
                                   .exch_timestamp_ = 60,
                                   .orderId_ = 1,
@@ -624,16 +655,16 @@ TEST_CASE("[ExecutionEngine] - submit_order routes correctly", "[execution]") {
                                   .price_ = 101.5,
                                   .quantity_ = 3.0,
                                   .filled_quantity_ = 0.0,
-                                  .tif_ = TimeInForce::GTX,
+                                  .tif_ = TimeInForce::GTC,
                                   .orderType_ = OrderType::LIMIT,
                                   .queueEst_ = 0.0};
         REQUIRE_NOTHROW(
-            engine.execute_order(0, TradeSide::Buy, limit_gtx_buy_order));
+            engine.execute_order(asset_id, TradeSide::Buy, limit_gtx_buy_order));
         const auto &fills = engine.fills();
         REQUIRE(fills.size() == 0);
     }
 
-    SECTION("Limit ask order with GTX is routed to place_gtx_order") {
+    SECTION("Limit ask order with GTC is routed to place_maker_order") {
         Order limit_gtx_sell_order{.local_timestamp_ = 50,
                                    .exch_timestamp_ = 60,
                                    .orderId_ = 2,
@@ -641,10 +672,10 @@ TEST_CASE("[ExecutionEngine] - submit_order routes correctly", "[execution]") {
                                    .price_ = 99.0,
                                    .quantity_ = 2.0,
                                    .filled_quantity_ = 0.0,
-                                   .tif_ = TimeInForce::GTX,
+                                   .tif_ = TimeInForce::GTC,
                                    .orderType_ = OrderType::LIMIT};
-        REQUIRE(engine.execute_order(0, TradeSide::Sell, limit_gtx_sell_order) ==
-                false);
+        REQUIRE(engine.execute_order(asset_id, TradeSide::Sell,
+                                     limit_gtx_sell_order) == false);
 
         const auto &fills = engine.fills();
         REQUIRE(fills.size() == 0);
@@ -662,7 +693,6 @@ TEST_CASE("[ExecutionEngine] - submit_order routes correctly", "[execution]") {
             .tif_ = static_cast<TimeInForce>(999), // Invalid enum value
             .orderType_ = OrderType::LIMIT,
             .queueEst_ = 0.0};
-
         REQUIRE_THROWS_AS(
             engine.execute_order(asset_id, TradeSide::Sell, invalid_order),
             std::invalid_argument);
@@ -695,7 +725,7 @@ TEST_CASE("[ExecutionEngine] - queue estimation", "[execution-engine][queue]") {
                                       .price_ = 99.0,
                                       .quantity_ = 3.0,
                                       .filled_quantity_ = 0.0,
-                                      .tif_ = TimeInForce::GTX,
+                                      .tif_ = TimeInForce::GTC,
                                       .orderType_ = OrderType::LIMIT,
                                       .queueEst_ = 0.0});
     auto sell_order_1 =
@@ -706,21 +736,21 @@ TEST_CASE("[ExecutionEngine] - queue estimation", "[execution-engine][queue]") {
                                       .price_ = 102.0,
                                       .quantity_ = 1.0,
                                       .filled_quantity_ = 0.0,
-                                      .tif_ = TimeInForce::GTX,
+                                      .tif_ = TimeInForce::GTC,
                                       .orderType_ = OrderType::LIMIT,
                                       .queueEst_ = 0.0});
 
     SECTION("Initial queue estimation") {
         // placed at the end of existing depth at price level
-        engine.place_gtx_order(0, buy_order_1);
-        engine.place_gtx_order(0, sell_order_1);
+        engine.place_maker_order(0, buy_order_1);
+        engine.place_maker_order(0, sell_order_1);
         REQUIRE(buy_order_1->queueEst_ == 1.0);
         REQUIRE(sell_order_1->queueEst_ == 3.0);
     }
     SECTION("Queue estimation updates") {
         // f(x) = ln(1+x)
-        engine.place_gtx_order(0, buy_order_1);
-        engine.place_gtx_order(0, sell_order_1);
+        engine.place_maker_order(0, buy_order_1);
+        engine.place_maker_order(0, sell_order_1);
 
         engine.handle_book_update(
             0, BookUpdate{.exch_timestamp_ = 60,
@@ -773,10 +803,10 @@ TEST_CASE("[ExecutionEngine] - processes trades", "[execution-engine][trade]") {
                                           .price_ = 100.0,
                                           .quantity_ = 1.0,
                                           .filled_quantity_ = 0.0,
-                                          .tif_ = TimeInForce::GTX,
+                                          .tif_ = TimeInForce::GTC,
                                           .orderType_ = OrderType::LIMIT,
                                           .queueEst_ = 0.0});
-        engine.place_gtx_order(0, buy_order);
+        engine.place_maker_order(0, buy_order);
         REQUIRE(buy_order->queueEst_ == 0.0);
 
         engine.handle_trade(0, Trade{.exch_timestamp_ = 20,
@@ -807,10 +837,10 @@ TEST_CASE("[ExecutionEngine] - processes trades", "[execution-engine][trade]") {
                                           .price_ = 102.0,
                                           .quantity_ = 1.0,
                                           .filled_quantity_ = 0.0,
-                                          .tif_ = TimeInForce::GTX,
+                                          .tif_ = TimeInForce::GTC,
                                           .orderType_ = OrderType::LIMIT,
                                           .queueEst_ = 0.0});
-        engine.place_gtx_order(0, sell_order);
+        engine.place_maker_order(0, sell_order);
 
         engine.handle_trade(0, Trade{.exch_timestamp_ = 40,
                                      .local_timestamp_ = 45,
@@ -836,10 +866,10 @@ TEST_CASE("[ExecutionEngine] - processes trades", "[execution-engine][trade]") {
                                           .price_ = 101.0,
                                           .quantity_ = 1.5,
                                           .filled_quantity_ = 0.0,
-                                          .tif_ = TimeInForce::GTX,
+                                          .tif_ = TimeInForce::GTC,
                                           .orderType_ = OrderType::LIMIT,
                                           .queueEst_ = 0.0});
-        engine.place_gtx_order(0, buy_order);
+        engine.place_maker_order(0, buy_order);
         engine.handle_trade(0, Trade{.exch_timestamp_ = 20,
                                      .local_timestamp_ = 21,
                                      .side_ = TradeSide::Sell,
@@ -861,10 +891,10 @@ TEST_CASE("[ExecutionEngine] - processes trades", "[execution-engine][trade]") {
                                           .price_ = 103.0,
                                           .quantity_ = 3.5,
                                           .filled_quantity_ = 0.0,
-                                          .tif_ = TimeInForce::GTX,
+                                          .tif_ = TimeInForce::GTC,
                                           .orderType_ = OrderType::LIMIT,
                                           .queueEst_ = 0.0});
-        engine.place_gtx_order(0, sell_order);
+        engine.place_maker_order(0, sell_order);
         engine.handle_trade(0, Trade{.exch_timestamp_ = 40,
                                      .local_timestamp_ = 41,
                                      .side_ = TradeSide::Buy,
@@ -886,10 +916,10 @@ TEST_CASE("[ExecutionEngine] - processes trades", "[execution-engine][trade]") {
                                           .price_ = 101.0,
                                           .quantity_ = 2.0,
                                           .filled_quantity_ = 0.0,
-                                          .tif_ = TimeInForce::GTX,
+                                          .tif_ = TimeInForce::GTC,
                                           .orderType_ = OrderType::LIMIT,
                                           .queueEst_ = 0.0});
-        engine.place_gtx_order(0, buy_order);
+        engine.place_maker_order(0, buy_order);
         engine.handle_trade(0, Trade{.exch_timestamp_ = 20,
                                      .local_timestamp_ = 21,
                                      .side_ = TradeSide::Sell,
@@ -907,10 +937,10 @@ TEST_CASE("[ExecutionEngine] - processes trades", "[execution-engine][trade]") {
                                           .price_ = 101.0,
                                           .quantity_ = 2.0,
                                           .filled_quantity_ = 0.0,
-                                          .tif_ = TimeInForce::GTX,
+                                          .tif_ = TimeInForce::GTC,
                                           .orderType_ = OrderType::LIMIT,
                                           .queueEst_ = 0.0});
-        engine.place_gtx_order(0, sell_order);
+        engine.place_maker_order(0, sell_order);
         engine.handle_trade(0, Trade{.exch_timestamp_ = 40,
                                      .local_timestamp_ = 21,
                                      .side_ = TradeSide::Buy,
