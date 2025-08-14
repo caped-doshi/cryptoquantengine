@@ -595,8 +595,8 @@ TEST_CASE("[ExecutionEngine] - submit_order routes correctly",
                                   .filled_quantity_ = 0.0,
                                   .tif_ = TimeInForce::FOK,
                                   .orderType_ = OrderType::LIMIT};
-        REQUIRE_NOTHROW(
-            engine.execute_order(asset_id, TradeSide::Buy, limit_fok_buy_order));
+        REQUIRE_NOTHROW(engine.execute_order(asset_id, TradeSide::Buy,
+                                             limit_fok_buy_order));
         const auto &fills = engine.fills();
         REQUIRE(fills.size() == 0);
     }
@@ -610,8 +610,8 @@ TEST_CASE("[ExecutionEngine] - submit_order routes correctly",
                                    .filled_quantity_ = 0.0,
                                    .tif_ = TimeInForce::FOK,
                                    .orderType_ = OrderType::LIMIT};
-        REQUIRE_NOTHROW(
-            engine.execute_order(asset_id, TradeSide::Sell, limit_fok_sell_order));
+        REQUIRE_NOTHROW(engine.execute_order(asset_id, TradeSide::Sell,
+                                             limit_fok_sell_order));
 
         const auto &fills = engine.fills();
         REQUIRE(fills.size() == 2);
@@ -641,8 +641,8 @@ TEST_CASE("[ExecutionEngine] - submit_order routes correctly",
                                    .filled_quantity_ = 0.0,
                                    .tif_ = TimeInForce::IOC,
                                    .orderType_ = OrderType::LIMIT};
-        REQUIRE_NOTHROW(
-            engine.execute_order(asset_id, TradeSide::Sell, limit_ioc_sell_order));
+        REQUIRE_NOTHROW(engine.execute_order(asset_id, TradeSide::Sell,
+                                             limit_ioc_sell_order));
         const auto &fills = engine.fills();
         REQUIRE(fills.size() == 2);
     }
@@ -658,8 +658,8 @@ TEST_CASE("[ExecutionEngine] - submit_order routes correctly",
                                   .tif_ = TimeInForce::GTC,
                                   .orderType_ = OrderType::LIMIT,
                                   .queueEst_ = 0.0};
-        REQUIRE_NOTHROW(
-            engine.execute_order(asset_id, TradeSide::Buy, limit_gtx_buy_order));
+        REQUIRE_NOTHROW(engine.execute_order(asset_id, TradeSide::Buy,
+                                             limit_gtx_buy_order));
         const auto &fills = engine.fills();
         REQUIRE(fills.size() == 0);
     }
@@ -700,7 +700,12 @@ TEST_CASE("[ExecutionEngine] - submit_order routes correctly",
 }
 
 TEST_CASE("[ExecutionEngine] - queue estimation", "[execution-engine][queue]") {
+    int asset_id = 0;
+    double tick_size = 0.01;
+    double lot_size = 0.00001;
+
     ExecutionEngine engine;
+    engine.add_asset(asset_id, tick_size, lot_size);
 
     engine.handle_book_update(
         0, BookUpdate{.exch_timestamp_ = 10,
@@ -794,7 +799,12 @@ TEST_CASE("[ExecutionEngine] - queue estimation", "[execution-engine][queue]") {
 
 TEST_CASE("[ExecutionEngine] - processes trades", "[execution-engine][trade]") {
     SECTION("Full execution of bid order when sufficient trade size") {
+        int asset_id = 0;
+        double tick_size = 0.01;
+        double lot_size = 0.00001;
+
         ExecutionEngine engine;
+        engine.add_asset(asset_id, tick_size, lot_size);
 
         auto buy_order =
             std::make_shared<Order>(Order{.exch_timestamp_ = 10,
@@ -809,12 +819,12 @@ TEST_CASE("[ExecutionEngine] - processes trades", "[execution-engine][trade]") {
         engine.place_maker_order(0, buy_order);
         REQUIRE(buy_order->queueEst_ == 0.0);
 
-        engine.handle_trade(0, Trade{.exch_timestamp_ = 20,
-                                     .local_timestamp_ = 25,
-                                     .side_ = TradeSide::Sell,
-                                     .price_ = 100.0,
-                                     .quantity_ = 1.0,
-                                     .orderId_ = 999});
+        engine.handle_trade(asset_id, Trade{.exch_timestamp_ = 20,
+                                            .local_timestamp_ = 25,
+                                            .side_ = TradeSide::Sell,
+                                            .price_ = 100.0,
+                                            .quantity_ = 1.0,
+                                            .orderId_ = 999});
 
         REQUIRE(buy_order->filled_quantity_ == buy_order->quantity_);
 
@@ -840,14 +850,14 @@ TEST_CASE("[ExecutionEngine] - processes trades", "[execution-engine][trade]") {
                                           .tif_ = TimeInForce::GTC,
                                           .orderType_ = OrderType::LIMIT,
                                           .queueEst_ = 0.0});
-        engine.place_maker_order(0, sell_order);
+        engine.place_maker_order(asset_id, sell_order);
 
-        engine.handle_trade(0, Trade{.exch_timestamp_ = 40,
-                                     .local_timestamp_ = 45,
-                                     .side_ = TradeSide::Buy,
-                                     .price_ = 102.0,
-                                     .quantity_ = 3.0,
-                                     .orderId_ = 999});
+        engine.handle_trade(asset_id, Trade{.exch_timestamp_ = 40,
+                                            .local_timestamp_ = 45,
+                                            .side_ = TradeSide::Buy,
+                                            .price_ = 102.0,
+                                            .quantity_ = 3.0,
+                                            .orderId_ = 999});
         REQUIRE(fills.size() == 1);
         REQUIRE(fills[0].price_ == 102.0);
         REQUIRE(fills[0].quantity_ == 1.0);
@@ -857,7 +867,12 @@ TEST_CASE("[ExecutionEngine] - processes trades", "[execution-engine][trade]") {
         REQUIRE(buy_order->filled_quantity_ == 1.0);
     }
     SECTION("Partially fills order when trade quantity is smaller") {
+        int asset_id = 0;
+        double tick_size = 0.01;
+        double lot_size = 0.00001;
+
         ExecutionEngine engine;
+        engine.add_asset(asset_id, tick_size, lot_size);
 
         auto buy_order =
             std::make_shared<Order>(Order{.exch_timestamp_ = 10,
@@ -869,13 +884,13 @@ TEST_CASE("[ExecutionEngine] - processes trades", "[execution-engine][trade]") {
                                           .tif_ = TimeInForce::GTC,
                                           .orderType_ = OrderType::LIMIT,
                                           .queueEst_ = 0.0});
-        engine.place_maker_order(0, buy_order);
-        engine.handle_trade(0, Trade{.exch_timestamp_ = 20,
-                                     .local_timestamp_ = 21,
-                                     .side_ = TradeSide::Sell,
-                                     .price_ = 101.0,
-                                     .quantity_ = 1.0,
-                                     .orderId_ = 1000});
+        engine.place_maker_order(asset_id, buy_order);
+        engine.handle_trade(asset_id, Trade{.exch_timestamp_ = 20,
+                                            .local_timestamp_ = 21,
+                                            .side_ = TradeSide::Sell,
+                                            .price_ = 101.0,
+                                            .quantity_ = 1.0,
+                                            .orderId_ = 1000});
 
         REQUIRE(buy_order->filled_quantity_ == 1.0);
         REQUIRE(buy_order->queueEst_ == 0.0);
@@ -894,20 +909,25 @@ TEST_CASE("[ExecutionEngine] - processes trades", "[execution-engine][trade]") {
                                           .tif_ = TimeInForce::GTC,
                                           .orderType_ = OrderType::LIMIT,
                                           .queueEst_ = 0.0});
-        engine.place_maker_order(0, sell_order);
-        engine.handle_trade(0, Trade{.exch_timestamp_ = 40,
-                                     .local_timestamp_ = 41,
-                                     .side_ = TradeSide::Buy,
-                                     .price_ = 103.0,
-                                     .quantity_ = 2.0,
-                                     .orderId_ = 1000});
+        engine.place_maker_order(asset_id, sell_order);
+        engine.handle_trade(asset_id, Trade{.exch_timestamp_ = 40,
+                                            .local_timestamp_ = 41,
+                                            .side_ = TradeSide::Buy,
+                                            .price_ = 103.0,
+                                            .quantity_ = 2.0,
+                                            .orderId_ = 1000});
 
         REQUIRE(sell_order->filled_quantity_ == 2.0);
         REQUIRE(sell_order->queueEst_ == 0.0);
         REQUIRE(engine.fills().size() == 1);
     }
     SECTION("Does not fill if trade timestamp is before order") {
+        int asset_id = 0;
+        double tick_size = 0.01;
+        double lot_size = 0.00001;
+
         ExecutionEngine engine;
+        engine.add_asset(asset_id, tick_size, lot_size);
 
         auto buy_order =
             std::make_shared<Order>(Order{.exch_timestamp_ = 30,
@@ -919,13 +939,13 @@ TEST_CASE("[ExecutionEngine] - processes trades", "[execution-engine][trade]") {
                                           .tif_ = TimeInForce::GTC,
                                           .orderType_ = OrderType::LIMIT,
                                           .queueEst_ = 0.0});
-        engine.place_maker_order(0, buy_order);
-        engine.handle_trade(0, Trade{.exch_timestamp_ = 20,
-                                     .local_timestamp_ = 21,
-                                     .side_ = TradeSide::Sell,
-                                     .price_ = 101.0,
-                                     .quantity_ = 1.0,
-                                     .orderId_ = 1234});
+        engine.place_maker_order(asset_id, buy_order);
+        engine.handle_trade(asset_id, Trade{.exch_timestamp_ = 20,
+                                            .local_timestamp_ = 21,
+                                            .side_ = TradeSide::Sell,
+                                            .price_ = 101.0,
+                                            .quantity_ = 1.0,
+                                            .orderId_ = 1234});
 
         REQUIRE(buy_order->filled_quantity_ == 0.0);
         REQUIRE(engine.fills().empty());
@@ -940,13 +960,13 @@ TEST_CASE("[ExecutionEngine] - processes trades", "[execution-engine][trade]") {
                                           .tif_ = TimeInForce::GTC,
                                           .orderType_ = OrderType::LIMIT,
                                           .queueEst_ = 0.0});
-        engine.place_maker_order(0, sell_order);
-        engine.handle_trade(0, Trade{.exch_timestamp_ = 40,
-                                     .local_timestamp_ = 21,
-                                     .side_ = TradeSide::Buy,
-                                     .price_ = 101.0,
-                                     .quantity_ = 1.0,
-                                     .orderId_ = 1234});
+        engine.place_maker_order(asset_id, sell_order);
+        engine.handle_trade(asset_id, Trade{.exch_timestamp_ = 40,
+                                            .local_timestamp_ = 21,
+                                            .side_ = TradeSide::Buy,
+                                            .price_ = 101.0,
+                                            .quantity_ = 1.0,
+                                            .orderId_ = 1234});
 
         REQUIRE(buy_order->filled_quantity_ == 0.0);
         REQUIRE(engine.fills().empty());

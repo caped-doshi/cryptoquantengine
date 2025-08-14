@@ -42,8 +42,9 @@
  * entries in @p book_files. Trade file entries are optional but recommended.
  */
 BacktestEngine::BacktestEngine(
-    const std::unordered_map<int, AssetConfig> &asset_configs)
-    : current_time_us_(0), cash_balance(0.0) {
+    const std::unordered_map<int, AssetConfig> &asset_configs,
+    std::shared_ptr<Logger> logger)
+    : current_time_us_(0), cash_balance(0.0), logger_(logger) {
 
     for (const auto &[asset_id, config] : asset_configs) {
         // Initialize BacktestAsset
@@ -55,8 +56,8 @@ BacktestEngine::BacktestEngine(
         market_data_feed_.add_stream(asset_id, config.book_update_file_,
                                      config.trade_file_);
         // Initialize local orderbooks
-        local_orderbooks_[asset_id] =
-            OrderBook(config.tick_size_, config.lot_size_);
+        local_orderbooks_.emplace(
+            asset_id, OrderBook(config.tick_size_, config.lot_size_, logger_));
         // Initialize per-asset tracking state
         num_trades_[asset_id] = 0;
         trading_volume_[asset_id] = 0.0;
@@ -397,7 +398,7 @@ void BacktestEngine::process_fill_local(int asset_id, const Fill &fill) {
 
 void BacktestEngine::process_book_update_local(int asset_id,
                                                const BookUpdate &book_update) {
-    local_orderbooks_[asset_id].apply_book_update(book_update);
+    local_orderbooks_.at(asset_id).apply_book_update(book_update);
 }
 
 /**

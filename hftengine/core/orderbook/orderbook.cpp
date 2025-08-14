@@ -16,10 +16,9 @@
 #include "../types/book_side.h"
 #include "orderbook.h"
 
-OrderBook::OrderBook() : last_update_(UpdateType::Snapshot) {}
-
-OrderBook::OrderBook(double tick_size, double lot_size)
-    : tick_size_(tick_size), lot_size_(lot_size),
+OrderBook::OrderBook(double tick_size, double lot_size,
+                     std::shared_ptr<Logger> logger)
+    : tick_size_(tick_size), lot_size_(lot_size), logger_(logger),
       last_update_(UpdateType::Snapshot) {
     if (tick_size <= 0.0) {
         throw std::invalid_argument("Tick size must be positive: " +
