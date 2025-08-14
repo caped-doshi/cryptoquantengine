@@ -7,33 +7,81 @@
  * License: Proprietary
  */
 
-#include <vector>
 #include <algorithm>
 #include <iterator>
 #include <stdexcept>
+#include <vector>
+#include <iostream>
 
 #include "../../utils/stat/stat_utils.h"
 #include "../types/usings.h"
 #include "recorder.h"
 
-Recorder::Recorder(Microseconds interval_us) : interval_us_(interval_us) {}
+/**
+ * @brief Constructs a Recorder with a specified interval.
+ *
+ * This constructor initializes the Recorder with a given time interval in
+ * microseconds, which will be used to calculate returns and risk metrics.
+ *
+ * @param interval_us The time interval in microseconds for recording equity
+ * snapshots.
+ */
+Recorder::Recorder(const Microseconds interval_us)
+    : interval_us_(interval_us) {}
 
-void Recorder::record(const EquitySnapshot &snapshot) { records_.emplace_back(snapshot); }
+/**
+ * @brief Records an equity snapshot.
+ *
+ * This method appends a new equity snapshot to the internal records vector.
+ *
+ * @param snapshot The equity snapshot to record.
+ */
+void Recorder::record(const EquitySnapshot &snapshot) {
+    records_.emplace_back(snapshot);
+}
 
-void Recorder::record(Timestamp timestamp, double equity) {
+/**
+ * @brief Records an equity snapshot at a given timestamp.
+ *
+ * This method appends a new equity snapshot to the internal records vector.
+ *
+ * @param timestamp The timestamp of the equity snapshot.
+ * @param equity The equity value at the given timestamp.
+ */
+void Recorder::record(const Timestamp timestamp, const double equity) {
     records_.emplace_back(EquitySnapshot{timestamp, equity});
 }
 
 /**
+ * @brief Records the current equity and position for a specific asset.
+ *
+ * This method captures the current equity and position of the specified asset
+ * in the backtest engine and appends it to the internal state records vector.
+ *
+ * @param hbt The BacktestEngine instance containing the current state.
+ * @param asset_id The ID of the asset to record.
+ */
+void Recorder::record(const BacktestEngine &hbt, const int asset_id) {
+    Timestamp current_time = hbt.current_time();
+    double equity = hbt.equity();
+    Quantity position = hbt.position(asset_id);
+    records_.emplace_back(EquitySnapshot{current_time, equity});
+    state_records_.emplace_back(StateSnapshot{current_time, equity, position});
+    std::cout << "[Recorder] - asset " << asset_id << " recorded equity at "
+              << current_time << ": " << equity << ", position: " << position
+              << "\n";
+}
+
+/**
  * @brief gets returns between intervals
- * 
+ *
  * Equity snapshots are from non-uniform time intervals. To calculate
  * the risk ratios (e.g. sharpe), we take the equity at pre-determined
- * intervals and then put the returns in a vector. 
- * 
- * @return vector of double returns. 
+ * intervals and then put the returns in a vector.
+ *
+ * @return vector of double returns.
  */
-std::vector<double> Recorder::interval_returns() const {
+const std::vector<double> Recorder::interval_returns() const {
     std::vector<double> returns;
     if (records_.size() < 2) return returns;
 
@@ -43,9 +91,9 @@ std::vector<double> Recorder::interval_returns() const {
     double current_value = records_.front().equity_;
     std::size_t i = 0;
 
-    for (Timestamp t = start_time; t <= end_time;
-         t += interval_us_) {
-        while (i + 1 < records_.size() && records_[i + 1].timestamp_ <= t + interval_us_) {
+    for (Timestamp t = start_time; t <= end_time; t += interval_us_) {
+        while (i + 1 < records_.size() &&
+               records_[i + 1].timestamp_ <= t + interval_us_) {
             ++i;
         }
         current_value = records_[i].equity_;
@@ -60,9 +108,16 @@ std::vector<double> Recorder::interval_returns() const {
 }
 
 /**
- * @brief Returns the sharpe value from chronologically increasing equities. 
- * 
- * @return Sharpe value. 
+ * @brief Returns the annualized Sharpe ratio from chronologically increasing
+ * equities.
+ *
+ * The Sharpe ratio is a measure of risk-adjusted return, calculated as the
+ * mean return divided by the standard deviation of returns, scaled by an
+ * annualization factor.
+ *
+ * @return Sharpe ratio value.
+ * @throws std::runtime_error if no returns data is available or if standard
+ * deviation is zero.
  */
 const double Recorder::sharpe() const {
     std::vector<double> returns = interval_returns();
@@ -72,22 +127,28 @@ const double Recorder::sharpe() const {
             "Cannot calculate Sharpe ratio: no returns data");
     }
 
-    long double ann_factor = sqrt((365 * 24 * 60 * 60) / (interval_us_ / 1'000'000.0));
+    long double ann_factor =
+        sqrt((365 * 24 * 60 * 60) / (interval_us_ / 1'000'000.0));
     double ret_mean = mean(returns);
     double ret_stddev = stddev(returns);
 
     if (std::abs(ret_stddev) <= 1e-9) {
         throw std::runtime_error(
-            "Cannot calculate Sharpe ratio: no returns data");    
+            "Cannot calculate Sharpe ratio: no returns data");
     }
     return ann_factor * mean(returns) / stddev(returns);
 }
 
 /**
- * @brief Returns the sortino ratio. 
- * 
+ * @brief Returns the Sortino value from chronologically increasing equities.
+ *
+ * Sortino ratio is a modification of the Sharpe ratio that only considers
+ * downside risk (negative returns).
+ *
  * @return Sortino value.
- */ 
+ * @throws std::runtime_error if no negative returns are available
+ * or if downside deviation is zero.
+ */
 const double Recorder::sortino() const {
     std::vector<double> returns = interval_returns();
     std::vector<double> returns_neg;
@@ -107,7 +168,7 @@ const double Recorder::sortino() const {
 
     if (std::abs(ret_stddev_neg) <= 1e-9) {
         throw std::runtime_error(
-            "Cannot calculate Sortino ratio : downside deviation is zero");   
+            "Cannot calculate Sortino ratio : downside deviation is zero");
     }
 
     return ann_factor * mean(returns) / stddev(returns_neg);
@@ -115,16 +176,17 @@ const double Recorder::sortino() const {
 
 /**
  * @brief Calculates the max drawdown from recorded equity values
- * 
- * Max drawdown is the largest peak-to-trough decline in equty value, 
- * expressed as a percentage of the peak value. 
- * 
+ *
+ * Max drawdown is the largest peak-to-trough decline in equty value,
+ * expressed as a percentage of the peak value.
+ *
  * @return maximum drawdown of as a percentage (0.0 to 1.0)
  * @throws std::runtime_error if no records are available
  */
 const double Recorder::max_drawdown() const {
     if (records_.empty()) {
-        throw std::runtime_error("Cannot calculate max drawdown : no records available");
+        throw std::runtime_error(
+            "Cannot calculate max drawdown : no records available");
     }
 
     double peak = records_.front().equity_;

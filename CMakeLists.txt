@@ -138,6 +138,12 @@ target_include_directories(test_stat_utils PRIVATE
 add_executable(test_recorder
   tests/test_recorder.cpp
   hftengine/core/recorder/recorder.cpp
+  hftengine/core/trading/backtest_engine.cpp
+  hftengine/core/orderbook/orderbook.cpp
+  hftengine/core/execution_engine/execution_engine.cpp
+  hftengine/core/data/market_data_feed.cpp
+  hftengine/core/data/readers/trade_stream_reader.cpp
+  hftengine/core/data/readers/book_stream_reader.cpp
 )
 
 target_include_directories(test_recorder PRIVATE
