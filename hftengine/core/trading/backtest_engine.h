@@ -1,7 +1,8 @@
 /*
  * File: hftengine/core/execution_engine/backtest_engine.h
  * Description: Class structure for execution engine to take orders, fill
- * orders. Author: Arvind Rathnashyam
+ * orders.
+ * Author: Arvind Rathnashyam
  * Date: 2025-06-26
  * License: Proprietary
  */
@@ -22,6 +23,7 @@
 #include "../types/order_type.h"
 #include "../types/time_in_force.h"
 #include "../types/usings.h"
+#include "../types/order_status.h"
 #include "backtest_asset.h"
 #include "depth.h"
 #include "orderId_generator.h"
@@ -30,8 +32,10 @@ class BacktestEngine {
   public:
     explicit BacktestEngine(
         const std::unordered_map<int, AssetConfig> &asset_configs);
-
+    
+    // global methods
     bool elapse(std::uint64_t microseconds);
+    void clear_inactive_orders(int asset_id);
 
     // local origin methods
     OrderId submit_buy_order(int asset_id, const Price &price,
@@ -40,7 +44,7 @@ class BacktestEngine {
     OrderId submit_sell_order(int asset_id, const Price &price,
                               const Quantity &quantity, const TimeInForce &tif,
                               const OrderType &orderType);
-    void cancel_order(int asset_id, const OrderId &orderId);
+    void cancel_order(const int asset_id, const OrderId &orderId);
 
     // local state access methods
     std::vector<Order> orders(int asset_id);
@@ -64,7 +68,6 @@ class BacktestEngine {
     Microseconds market_feed_latency_us = 50000;
 
     // exchange origin methods
-    bool clear_inactive_orders(int asset_id);
 
     void process_exchange_order_updates();
     void process_order_update_local(OrderEventType event_type, OrderId orderId,
@@ -82,6 +85,9 @@ class BacktestEngine {
     std::unordered_map<int, OrderBook> local_orderbooks_;
     std::unordered_map<int, Order> local_active_orders_;
     std::unordered_map<int, BacktestAsset> assets_;
+
+    std::unordered_map<int, double> tick_sizes_;
+    std::unordered_map<int, double> lot_sizes_;
 
     double cash_balance;
     std::unordered_map<int, int> num_trades_;

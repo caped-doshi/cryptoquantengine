@@ -1,0 +1,164 @@
+/*
+ * File: hftengine/core/strategy/grid_trading.cpp
+ * Description: Basic grid market making strategy with no alpha.
+ * Author: Arvind Rathnashyam
+ * Date: 2025-08-10
+ * License: Proprietary
+ */
+
+#include <cmath>
+#include <iostream>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
+
+#include "../../utils/math/math_utils.h"
+#include "../trading/backtest_engine.h"
+#include "../trading/depth.h"
+#include "../trading/order.h"
+#include "../types/book_side.h"
+#include "../types/order_status.h"
+#include "../types/usings.h"
+#include "grid_trading.h"
+#include "strategy.h"
+
+GridTrading::GridTrading(const int asset_id, const int grid_num,
+                         const Ticks grid_interval, const Ticks half_spread,
+                         const double position_limit,
+                         const double notional_order_qty)
+    : asset_id_(asset_id), grid_num_(grid_num), grid_interval_(grid_interval),
+      half_spread_(half_spread), position_limit_(position_limit),
+      notional_order_qty_(notional_order_qty) {}
+
+void GridTrading::initialize() {
+    // Initialization logic if needed
+    std::cout << "[GridTrading] - Strategy initialized for asset ID: "
+              << asset_id_ << "\n";
+}
+
+void GridTrading::on_elapse(BacktestEngine &hbt) {
+    Depth depth = hbt.depth(asset_id_);
+    Quantity position = hbt.position(asset_id_);
+    std::vector<Order> orders = hbt.orders(asset_id_);
+
+    double tick_size = depth.tick_size_;
+    double lot_size = depth.lot_size_;
+    Price best_bid = ticks_to_price(depth.best_bid_, tick_size);
+    Price best_ask = ticks_to_price(depth.best_ask_, tick_size);
+
+    Price mid_price = (best_bid + best_ask) / 2.0;
+
+    Price bid_price = std::floor((mid_price - half_spread_ * tick_size) /
+                                 (grid_interval_ * tick_size)) *
+                      grid_interval_ * tick_size;
+    Price ask_price = std::ceil((mid_price + half_spread_ * tick_size) /
+                                (grid_interval_ * tick_size)) *
+                      grid_interval_ * tick_size;
+
+    // Create new bid and ask order grids
+    std::unordered_set<Ticks> new_bid_prices;
+    if (position < position_limit_) {
+        for (int i = 0; i < grid_num_; i++) {
+            const Ticks bid_price_ticks =
+                static_cast<Ticks>(std::floor(bid_price / tick_size));
+            new_bid_prices.insert(bid_price_ticks);
+            bid_price -= grid_interval_ * tick_size;
+        }
+    }
+    std::unordered_set<Ticks> new_ask_prices;
+    if (position > -position_limit_) {
+        for (int i = 0; i < grid_num_; ++i) {
+            const Ticks ask_price_ticks =
+                static_cast<Ticks>(std::ceil(ask_price / tick_size));
+            new_ask_prices.insert(ask_price_ticks);
+            ask_price += grid_interval_ * tick_size;
+        }
+    }
+    // Cancel orders not in the new grid
+    std::unordered_set<Ticks> existing_bid_prices;
+    std::unordered_set<Ticks> existing_ask_prices;
+    for (const Order &order : orders) {
+        if (order.orderStatus_ == OrderStatus::ACTIVE ||
+            order.orderStatus_ == OrderStatus::PARTIALLY_FILLED) {
+            Ticks order_price_ticks =
+                (order.side_ == BookSide::Bid)
+                    ? static_cast<Ticks>(std::floor(order.price_ / tick_size))
+                    : static_cast<Ticks>(std::ceil(order.price_ / tick_size));
+            // add to existing prices
+            if (order.side_ == BookSide::Bid) {
+                existing_bid_prices.insert(order_price_ticks);
+            } else {
+                existing_ask_prices.insert(order_price_ticks);
+            }
+            // cancel orders not in the new grid
+            if ((order.side_ == BookSide::Bid &&
+                 new_bid_prices.find(order_price_ticks) ==
+                     new_bid_prices.end()) ||
+                (order.side_ == BookSide::Ask &&
+                 new_ask_prices.find(order_price_ticks) ==
+                     new_ask_prices.end())) {
+                hbt.cancel_order(asset_id_, order.orderId_);
+                if (order.side_ == BookSide::Bid) {
+                    std::cout
+                        << "[GridTrading] - Cancelled bid order at price: "
+                        << order.price_ << " for asset ID: " << asset_id_
+                        << "\n";
+                } else {
+                    std::cout
+                        << "[GridTrading] - Cancelled ask order at price: "
+                        << order.price_ << " for asset ID: " << asset_id_
+                        << "\n";
+                }
+            }
+        }
+    }
+    // submit new orders for the grid
+    double raw_qty = notional_order_qty_ / mid_price;
+    Quantity order_qty = std::round(raw_qty / lot_size) * lot_size;
+    for (const Ticks &bid_price_ticks : new_bid_prices) {
+        if (existing_bid_prices.find(bid_price_ticks) ==
+            existing_bid_prices.end()) {
+            Price bid_price = bid_price_ticks * tick_size;
+            if (bid_price <= 0.0) {
+                std::cerr << "[GridTrading] - Invalid bid price: " << bid_price
+                          << " for asset ID: " << asset_id_
+                          << ". Skipping order submission.\n";
+                continue;
+            }
+            if (order_qty <= 0.0) {
+                std::cerr << "[GridTrading] - Invalid order quantity: "
+                          << order_qty << " for asset ID: " << asset_id_
+                          << ". Skipping order submission.\n";
+                continue;
+            }
+            std::cout << "[GridTrading] - Submitted buy order at price: "
+                      << bid_price << " for asset ID: " << asset_id_
+                      << " with quantity: " << order_qty << "\n";
+            hbt.submit_buy_order(asset_id_, bid_price, order_qty,
+                                 TimeInForce::GTC, OrderType::LIMIT);
+        }
+    }
+    for (const Ticks &ask_price_ticks : new_ask_prices) {
+        if (existing_ask_prices.find(ask_price_ticks) ==
+            existing_ask_prices.end()) {
+            Price ask_price = ask_price_ticks * tick_size;
+            if (ask_price <= 0.0) {
+                std::cerr << "[GridTrading] - Invalid ask price: " << ask_price
+                          << " for asset ID: " << asset_id_
+                          << ". Skipping order submission.\n";
+                continue;
+            }
+            if (order_qty <= 0.0) {
+                std::cerr << "[GridTrading] - Invalid order quantity: "
+                          << order_qty << " for asset ID: " << asset_id_
+                          << ". Skipping order submission.\n";
+                continue;
+            }
+            hbt.submit_sell_order(asset_id_, ask_price, order_qty,
+                                  TimeInForce::GTC, OrderType::LIMIT);
+            std::cout << "[GridTrading] - Submitted sell order at price: "
+                      << ask_price << " for asset ID: " << asset_id_
+                      << " with quantity: " << order_qty << "\n";
+        }
+    }
+}

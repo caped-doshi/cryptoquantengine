@@ -13,7 +13,7 @@
 
 class OrderIdGenerator {
   public:
-    OrderIdGenerator() : current_id_(1) {}
+    OrderIdGenerator() : current_id_(0) {}
 
     OrderId nextId() { return ++current_id_; }
 

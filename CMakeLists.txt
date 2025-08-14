@@ -16,6 +16,7 @@ add_executable(hftengine
   hftengine/core/data/readers/book_stream_reader.cpp
   hftengine/core/data/readers/trade_stream_reader.cpp
   hftengine/core/recorder/recorder.cpp
+  hftengine/core/strategy/grid_trading.cpp
 )
 
 # THEN set properties
@@ -126,7 +127,7 @@ target_include_directories(test_backtest_engine PRIVATE
 
 # 8. Stat util tests
 add_executable(test_stat_utils
-  tests/test_stat_utils.cpp
+  tests/utils/test_stat_utils.cpp
 )
 
 target_include_directories(test_stat_utils PRIVATE
@@ -143,6 +144,30 @@ target_include_directories(test_recorder PRIVATE
   ${CMAKE_CURRENT_SOURDE_DIR}/hftengine
 )
 
+# 10. Grid Trading Strategy Tests
+add_executable(test_grid_trading
+  tests/strategies/test_grid_trading.cpp
+  hftengine/core/strategy/grid_trading.cpp
+  hftengine/core/execution_engine/execution_engine.cpp
+  hftengine/core/trading/backtest_engine.cpp
+  hftengine/core/orderbook/orderbook.cpp
+  hftengine/core/data/market_data_feed.cpp
+  hftengine/core/data/readers/trade_stream_reader.cpp
+  hftengine/core/data/readers/book_stream_reader.cpp
+)
+
+target_include_directories(test_grid_trading PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/hftengine)
+
+# 11. Math Utils Tests
+add_executable(test_math_utils
+  tests/utils/test_math_utils.cpp
+)
+
+target_include_directories(test_math_utils PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/hftengine
+)
+
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
@@ -156,6 +181,8 @@ target_link_libraries(test_execution_engine PRIVATE Catch2::Catch2WithMain Threa
 target_link_libraries(test_backtest_engine PRIVATE Catch2::Catch2WithMain Threads::Threads)
 target_link_libraries(test_stat_utils PRIVATE Catch2::Catch2WithMain Threads::Threads)
 target_link_libraries(test_recorder PRIVATE Catch2::Catch2WithMain Threads::Threads)
+target_link_libraries(test_grid_trading PRIVATE Catch2::Catch2WithMain Threads::Threads)
+target_link_libraries(test_math_utils PRIVATE Catch2::Catch2WithMain Threads::Threads)
 
 # Discover tests for both executables
 include(CTest)
@@ -169,6 +196,8 @@ catch_discover_tests(test_execution_engine)
 catch_discover_tests(test_backtest_engine)
 catch_discover_tests(test_stat_utils)
 catch_discover_tests(test_recorder)
+catch_discover_tests(test_grid_trading)
+catch_discover_tests(test_math_utils)
 
 # Optional: Add a global test target
 add_custom_target(run_all_tests DEPENDS
@@ -181,4 +210,6 @@ add_custom_target(run_all_tests DEPENDS
   test_backtest_engine
   test_stat_utils
   test_recorder
+  test_grid_trading
+  test_math_utils
 )

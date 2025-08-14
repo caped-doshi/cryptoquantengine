@@ -1,7 +1,6 @@
 /*
- * File: hftengine/core/execution_engine/backtest_engine.h
- * Description: Class structure for execution engine to take orders, fill
-                    orders.
+ * File: hftengine/core/trading/backtest_engine.h
+ * Description: BacktestEngine to simulate trading with multiple assets.
  * Author: Arvind Rathnashyam
  * Date: 2025-06-26
  * License: Proprietary
@@ -13,8 +12,10 @@
 #include <optional>
 #include <unordered_map>
 
+#include "../../utils/math/math_utils.h"
 #include "../data/market_data_feed.h"
 #include "../types/action_type.h"
+#include "../types/order_status.h"
 #include "asset_config.h"
 #include "backtest_asset.h"
 #include "backtest_engine.h"
@@ -46,17 +47,24 @@ BacktestEngine::BacktestEngine(
     for (const auto &[asset_id, config] : asset_configs) {
         // Initialize BacktestAsset
         assets_.emplace(asset_id, BacktestAsset(config));
-
+        // Initialize execution engine with tick and lot sizes
+        execution_engine_.add_asset(asset_id, config.tick_size_,
+                                    config.lot_size_);
         // Initialize MarketDataFeed streams
         market_data_feed_.add_stream(asset_id, config.book_update_file_,
                                      config.trade_file_);
-
+        // Initialize local orderbooks
+        local_orderbooks_[asset_id] =
+            OrderBook(config.tick_size_, config.lot_size_);
         // Initialize per-asset tracking state
         num_trades_[asset_id] = 0;
         trading_volume_[asset_id] = 0.0;
         trading_value_[asset_id] = 0.0;
         realized_pnl_[asset_id] = 0.0;
         local_position_[asset_id] = 0.0;
+        // tick and lot sizes
+        tick_sizes_[asset_id] = config.tick_size_;
+        lot_sizes_[asset_id] = config.lot_size_;
     }
 }
 
@@ -89,7 +97,7 @@ bool BacktestEngine::elapse(std::uint64_t microseconds) {
         auto next_event_us_opt = market_data_feed_.peek_timestamp();
         Timestamp next_event_us = std::numeric_limits<Timestamp>::max();
         if (next_event_us_opt.has_value()) next_event_us = *next_event_us_opt;
-        // Get all delayed actions scheduled between now next market event
+        // Get all delayed actions scheduled between now and next market event
         auto it = delayed_actions_.lower_bound(current_time_us_);
         Timestamp interval_end_us = std::min(next_event_us, next_interval_us);
 
@@ -161,6 +169,12 @@ bool BacktestEngine::elapse(std::uint64_t microseconds) {
 }
 
 /**
+ * @brief Clears cancelled, filled, or expired orders.
+ * @param asset_id
+ */
+void BacktestEngine::clear_inactive_orders(int asset_id) {}
+
+/**
  * @brief Submits a buy order to the backtest engine with simulated latency.
  *
  * A buy order is submitted by the local system. This method processes
@@ -191,7 +205,10 @@ OrderId BacktestEngine::submit_buy_order(int asset_id, const Price &price,
                     .filled_quantity_ = 0.0,
                     .tif_ = tif,
                     .orderType_ = orderType,
-                    .queueEst_ = 0.0};
+                    .queueEst_ = 0.0,
+                    .orderStatus_ = OrderStatus::NEW};
+    std::cout << "[BacktestEngine] - " << current_time_us_ << " - buy order ("
+              << buy_order.orderId_ << ") submitted to exchange\n";
     delayed_actions_.insert(
         {buy_order.exch_timestamp_,
          DelayedAction{.type_ = ActionType::SubmitBuy,
@@ -232,9 +249,10 @@ OrderId BacktestEngine::submit_sell_order(int asset_id, const Price &price,
                      .filled_quantity_ = 0.0,
                      .tif_ = tif,
                      .orderType_ = orderType,
-                     .queueEst_ = 0.0};
+                     .queueEst_ = 0.0,
+                     .orderStatus_ = OrderStatus::NEW};
     std::cout << "[BacktestEngine] - " << current_time_us_ << " - sell order ("
-              << sell_order.orderId_ << ") submitted to exchange\n ";
+              << sell_order.orderId_ << ") submitted to exchange\n";
     delayed_actions_.insert(
         {sell_order.exch_timestamp_,
          DelayedAction{.type_ = ActionType::SubmitSell,
@@ -250,14 +268,14 @@ OrderId BacktestEngine::submit_sell_order(int asset_id, const Price &price,
  *
  * Local originated, received by the exchange with order entry latency.
  */
-void BacktestEngine::cancel_order(int asset_id, const OrderId &orderId) {
+void BacktestEngine::cancel_order(const int asset_id, const OrderId &orderId) {
     delayed_actions_.insert(
         {current_time_us_ + order_response_latency_us,
          DelayedAction{.type_ = ActionType::Cancel,
                        .asset_id_ = asset_id,
                        .orderId_ = orderId,
                        .execute_time_ =
-                           current_time_us_ + order_response_latency_us}});
+                           current_time_us_ + order_entry_latency_us}});
 }
 
 /**
@@ -290,14 +308,15 @@ void BacktestEngine::process_exchange_order_updates() {
  */
 void BacktestEngine::process_order_update_local(OrderEventType event_type,
                                                 OrderId orderId, Order order) {
-    if (event_type == OrderEventType::Acknowledged) {
+    if (event_type == OrderEventType::ACKNOWLEDGED) {
         local_active_orders_[orderId] = order;
-        std::cout << "[BacktestEngine] - processed ACKNOWLEDGE local order ("
-                  << orderId << ") update\n";
-    } else if (event_type == OrderEventType::Cancelled) {
+        std::cout << "[BacktestEngine] - " << current_time_us_
+                  << " - processed ACKNOWLEDGE local order (" << orderId
+                  << ") update\n";
+    } else if (event_type == OrderEventType::CANCELLED) {
         auto it = local_active_orders_.find(orderId);
         if (it != local_active_orders_.end()) local_active_orders_.erase(it);
-    } else if (event_type == OrderEventType::Fill) {
+    } else if (event_type == OrderEventType::FILL) {
         if (order.filled_quantity_ == order.quantity_) {
             auto it = local_active_orders_.find(orderId);
             if (it != local_active_orders_.end())
@@ -305,7 +324,7 @@ void BacktestEngine::process_order_update_local(OrderEventType event_type,
         } else {
             local_active_orders_[orderId] = order;
         }
-    } else if (event_type == OrderEventType::Rejected) {
+    } else if (event_type == OrderEventType::REJECTED) {
         std::cout << "[BacktestEngine] - local order update REJECTED\n";
     } else {
         throw std::invalid_argument(
@@ -362,7 +381,10 @@ void BacktestEngine::process_exchange_fills() {
  *       additional logic may be needed.
  */
 void BacktestEngine::process_fill_local(int asset_id, const Fill &fill) {
-    std::cout << "[BacktestEngine] - process fill local\n";
+    // update output to include fill price and quantity
+    std::cout << "[BacktestEngine] - " << fill.local_timestamp_
+              << " - fill processed locally at price " << fill.price_ << " @ "
+              << fill.quantity_ << " quantity\n";
     Quantity signed_qty =
         (fill.side_ == TradeSide::Buy) ? fill.quantity_ : -fill.quantity_;
     local_position_[asset_id] += signed_qty;
@@ -380,8 +402,8 @@ void BacktestEngine::process_book_update_local(int asset_id,
 }
 
 std::vector<Order> BacktestEngine::orders(int asset_id) {
-    std::cout << "[BacktestEngine] - " << current_time_us_
-              << " - retrieving local active orders\n";
+    std::cout << "[BacktestEngine] - " << current_time_us_ << " - retrieving "
+              << local_active_orders_.size() << " local active orders\n";
     std::vector<Order> active_orders;
     active_orders.reserve(local_active_orders_.size());
     for (const auto &[id, order] : local_active_orders_) {
@@ -411,22 +433,48 @@ double BacktestEngine::equity() {
  * @return The current position as a double.
  */
 Quantity BacktestEngine::position(int asset_id) {
-    return local_position_[asset_id];
+    auto it = local_position_.find(asset_id);
+    return (it != local_position_.end()) ? it->second : 0.0;
 }
 
 Depth BacktestEngine::depth(int asset_id) {
-    Price best_ask =
+    Ticks best_ask =
         local_orderbooks_.at(asset_id).price_at_level(BookSide::Ask, 0);
-    Price best_bid =
+    Ticks best_bid =
         local_orderbooks_.at(asset_id).price_at_level(BookSide::Bid, 0);
     Quantity ask_0_size =
         local_orderbooks_.at(asset_id).depth_at_level(BookSide::Ask, 0);
     Quantity bid_0_size =
         local_orderbooks_.at(asset_id).depth_at_level(BookSide::Bid, 0);
+    std::cout << "[BacktestEngine] - " << current_time_us_
+              << " - retrieving depth for asset " << asset_id << "\n";
+    local_orderbooks_.at(asset_id).print_top_levels();
+    std::unordered_map<Ticks, Quantity> bid_depth;
+    int bid_levels = local_orderbooks_.at(asset_id).bid_levels();
+    for (int level = 0; level < bid_levels; level++) {
+        Ticks bid_level_price_ticks =
+            local_orderbooks_.at(asset_id).price_at_level(BookSide::Bid, level);
+        double bid_level_depth =
+            local_orderbooks_.at(asset_id).depth_at_level(BookSide::Bid, level);
+        bid_depth[bid_level_price_ticks] = bid_level_depth;
+    }
+    std::unordered_map<Ticks, Quantity> ask_depth;
+    int ask_levels = local_orderbooks_.at(asset_id).ask_levels();
+    for (int level = 0; level < ask_levels; level++) {
+        Ticks ask_level_price_ticks =
+            local_orderbooks_.at(asset_id).price_at_level(BookSide::Ask, level);
+        double ask_level_depth =
+            local_orderbooks_.at(asset_id).depth_at_level(BookSide::Ask, level);
+        ask_depth[ask_level_price_ticks] = ask_level_depth;
+    }
     return Depth{.best_bid_ = best_bid,
                  .bid_qty_ = bid_0_size,
                  .best_ask_ = best_ask,
-                 .ask_qty_ = ask_0_size};
+                 .ask_qty_ = ask_0_size,
+                 .bid_depth_ = bid_depth,
+                 .ask_depth_ = ask_depth,
+                 .tick_size_ = tick_sizes_[asset_id],
+                 .lot_size_ = lot_sizes_[asset_id]};
 }
 
 /**
@@ -456,6 +504,14 @@ void BacktestEngine::set_order_entry_latency(const Microseconds latency) {
 void BacktestEngine::set_order_response_latency(const Microseconds latency) {
     order_response_latency_us = latency;
     execution_engine_.set_order_response_latency_us(latency);
+}
+
+/**
+ * @brief Sets the market feed latency in microseconds
+ * @param Latency in microseconds
+ */
+void BacktestEngine::set_market_feed_latency(const Microseconds latency_us) {
+    market_feed_latency_us = latency_us;
 }
 
 const Microseconds BacktestEngine::order_entry_latency() const {

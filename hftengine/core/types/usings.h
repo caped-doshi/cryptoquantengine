@@ -17,10 +17,10 @@ struct BookUpdate;
 struct Trade;
 struct Order;
 
-using PriceTick = std::uint32_t;
 using QuantityLot = std::uint32_t;
 using Timestamp = std::uint64_t;
 using OrderId = std::uint64_t;
+using Ticks = std::uint64_t;
 using Price = double;
 using Quantity = double;
 using Position = double;
