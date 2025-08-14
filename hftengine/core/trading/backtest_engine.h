@@ -14,6 +14,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "../../utils/logger/logger.h"
 #include "../data/market_data_feed.h"
 #include "../execution_engine/execution_engine.h"
 #include "../orderbook/orderbook.h"

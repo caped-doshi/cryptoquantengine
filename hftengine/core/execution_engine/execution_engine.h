@@ -14,6 +14,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "../../utils/logger/logger.h"
 #include "../orderbook/orderbook.h"
 #include "../trading/depth.h"
 #include "../trading/fill.h"

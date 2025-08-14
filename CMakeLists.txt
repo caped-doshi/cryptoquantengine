@@ -17,6 +17,7 @@ add_executable(hftengine
   hftengine/core/data/readers/trade_stream_reader.cpp
   hftengine/core/recorder/recorder.cpp
   hftengine/core/strategy/grid_trading.cpp
+  hftengine/utils/logger/logger.cpp
 )
 
 # THEN set properties
@@ -161,7 +162,6 @@ add_executable(test_grid_trading
   hftengine/core/data/readers/trade_stream_reader.cpp
   hftengine/core/data/readers/book_stream_reader.cpp
 )
-
 target_include_directories(test_grid_trading PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/hftengine)
 
@@ -169,10 +169,19 @@ target_include_directories(test_grid_trading PRIVATE
 add_executable(test_math_utils
   tests/utils/test_math_utils.cpp
 )
-
 target_include_directories(test_math_utils PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/hftengine
 )
+
+# 12. Logger Tests
+add_executable(test_logger
+  tests/utils/test_logger.cpp
+  hftengine/utils/logger/logger.cpp
+)
+target_include_directories(test_logger PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/hftengine
+)
+
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
@@ -189,6 +198,7 @@ target_link_libraries(test_stat_utils PRIVATE Catch2::Catch2WithMain Threads::Th
 target_link_libraries(test_recorder PRIVATE Catch2::Catch2WithMain Threads::Threads)
 target_link_libraries(test_grid_trading PRIVATE Catch2::Catch2WithMain Threads::Threads)
 target_link_libraries(test_math_utils PRIVATE Catch2::Catch2WithMain Threads::Threads)
+target_link_libraries(test_logger PRIVATE Catch2::Catch2WithMain Threads::Threads)
 
 # Discover tests for both executables
 include(CTest)
@@ -204,6 +214,7 @@ catch_discover_tests(test_stat_utils)
 catch_discover_tests(test_recorder)
 catch_discover_tests(test_grid_trading)
 catch_discover_tests(test_math_utils)
+catch_discover_tests(test_logger)
 
 # Optional: Add a global test target
 add_custom_target(run_all_tests DEPENDS
@@ -218,4 +229,5 @@ add_custom_target(run_all_tests DEPENDS
   test_recorder
   test_grid_trading
   test_math_utils
+  test_logger
 )

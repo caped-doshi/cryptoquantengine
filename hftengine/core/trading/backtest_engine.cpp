@@ -12,6 +12,7 @@
 #include <optional>
 #include <unordered_map>
 
+#include "../../utils/logger/logger.h"
 #include "../../utils/math/math_utils.h"
 #include "../data/market_data_feed.h"
 #include "../types/action_type.h"
