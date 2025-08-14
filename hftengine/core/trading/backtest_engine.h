@@ -17,13 +17,13 @@
 #include "../data/market_data_feed.h"
 #include "../execution_engine/execution_engine.h"
 #include "../orderbook/orderbook.h"
-#include "../trading/order.h"
 #include "../trading/fill.h"
+#include "../trading/order.h"
 #include "../types/action_type.h"
+#include "../types/order_status.h"
 #include "../types/order_type.h"
 #include "../types/time_in_force.h"
 #include "../types/usings.h"
-#include "../types/order_status.h"
 #include "backtest_asset.h"
 #include "depth.h"
 #include "orderId_generator.h"
@@ -32,31 +32,29 @@ class BacktestEngine {
   public:
     explicit BacktestEngine(
         const std::unordered_map<int, AssetConfig> &asset_configs);
-    
+
     // global methods
     bool elapse(std::uint64_t microseconds);
     void clear_inactive_orders(int asset_id);
 
     // local origin methods
-    OrderId submit_buy_order(int asset_id, const Price &price,
-                             const Quantity &quantity, const TimeInForce &tif,
-                             const OrderType &orderType);
-    OrderId submit_sell_order(int asset_id, const Price &price,
-                              const Quantity &quantity, const TimeInForce &tif,
-                              const OrderType &orderType);
-    void cancel_order(const int asset_id, const OrderId &orderId);
+    OrderId submit_buy_order(int asset_id, Price price, Quantity quantity,
+                             TimeInForce tif, OrderType orderType);
+    OrderId submit_sell_order(int asset_id, Price price, Quantity quantity,
+                              TimeInForce tif, OrderType orderType);
+    void cancel_order(int asset_id, OrderId orderId);
 
     // local state access methods
-    std::vector<Order> orders(int asset_id);
-    double cash();
-    double equity();
-    Quantity position(int asset_id);
-    Depth depth(int asset_id);
-    Timestamp current_time();
+    const std::vector<Order> orders(int asset_id) const;
+    const double cash() const;
+    const double equity() const;
+    const Quantity position(int asset_id) const;
+    const Depth depth(int asset_id) const;
+    const Timestamp current_time() const;
 
-    void set_order_entry_latency(const Microseconds latency_us);
-    void set_order_response_latency(const Microseconds latency_us);
-    void set_market_feed_latency(const Microseconds latency_us);
+    void set_order_entry_latency(Microseconds latency_us);
+    void set_order_response_latency(Microseconds latency_us);
+    void set_market_feed_latency(Microseconds latency_us);
 
     const Microseconds order_entry_latency() const;
     const Microseconds order_response_latency() const;
@@ -67,16 +65,14 @@ class BacktestEngine {
     Microseconds order_response_latency_us = 1000;
     Microseconds market_feed_latency_us = 50000;
 
-    // exchange origin methods
-
+    // backtest simulation methods
     void process_exchange_order_updates();
+    void process_exchange_fills();
+
     void process_order_update_local(OrderEventType event_type, OrderId orderId,
                                     Order order);
-
-    void process_exchange_fills();
     void process_fill_local(int asset_id, const Fill &fill);
-
-    void process_book_update_local(int asset_id, const BookUpdate& book_update);
+    void process_book_update_local(int asset_id, const BookUpdate &book_update);
 
     Timestamp current_time_us_; // microseconds
     ExecutionEngine execution_engine_;

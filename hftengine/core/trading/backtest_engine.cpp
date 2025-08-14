@@ -188,10 +188,9 @@ void BacktestEngine::clear_inactive_orders(int asset_id) {}
  * @param orderType The type of the order (e.g., LIMIT, MARKET).
  * @return The unique order ID assigned to the submitted order.
  */
-OrderId BacktestEngine::submit_buy_order(int asset_id, const Price &price,
-                                         const Quantity &quantity,
-                                         const TimeInForce &tif,
-                                         const OrderType &orderType) {
+OrderId BacktestEngine::submit_buy_order(int asset_id, Price price,
+                                         Quantity quantity, TimeInForce tif,
+                                         OrderType orderType) {
     if (quantity <= 0.0) throw std::invalid_argument("Insufficient quantity");
     if (orderType == OrderType::LIMIT && price <= 0.0)
         throw std::invalid_argument("Invalid price for limit order");
@@ -232,10 +231,9 @@ OrderId BacktestEngine::submit_buy_order(int asset_id, const Price &price,
  * @param orderType The type of the order (e.g., LIMIT, MARKET).
  * @return The unique order ID assigned to the submitted order.
  */
-OrderId BacktestEngine::submit_sell_order(int asset_id, const Price &price,
-                                          const Quantity &quantity,
-                                          const TimeInForce &tif,
-                                          const OrderType &orderType) {
+OrderId BacktestEngine::submit_sell_order(int asset_id, Price price,
+                                          Quantity quantity, TimeInForce tif,
+                                          OrderType orderType) {
     if (quantity <= 0.0) throw std::invalid_argument("Insufficient quantity");
     if (orderType == OrderType::LIMIT && price <= 0.0)
         throw std::invalid_argument("Invalid price for limit order");
@@ -268,7 +266,7 @@ OrderId BacktestEngine::submit_sell_order(int asset_id, const Price &price,
  *
  * Local originated, received by the exchange with order entry latency.
  */
-void BacktestEngine::cancel_order(const int asset_id, const OrderId &orderId) {
+void BacktestEngine::cancel_order(int asset_id, OrderId orderId) {
     delayed_actions_.insert(
         {current_time_us_ + order_response_latency_us,
          DelayedAction{.type_ = ActionType::Cancel,
@@ -401,7 +399,17 @@ void BacktestEngine::process_book_update_local(int asset_id,
     local_orderbooks_[asset_id].apply_book_update(book_update);
 }
 
-std::vector<Order> BacktestEngine::orders(int asset_id) {
+/**
+ * @brief Returns a vector of active orders for the specified asset.
+ *
+ * This method retrieves all active orders for the given asset ID from the
+ * local order book. It returns a vector of `Order` objects representing
+ * the current state of each order.
+ *
+ * @param asset_id The identifier of the asset for which to retrieve orders.
+ * @return A vector containing all active orders for the specified asset.
+ */
+const std::vector<Order> BacktestEngine::orders(int asset_id) const {
     std::cout << "[BacktestEngine] - " << current_time_us_ << " - retrieving "
               << local_active_orders_.size() << " local active orders\n";
     std::vector<Order> active_orders;
@@ -412,12 +420,28 @@ std::vector<Order> BacktestEngine::orders(int asset_id) {
     return active_orders;
 }
 
-double BacktestEngine::cash() { return cash_balance; }
+/**
+ * @brief Returns the current cash balance of the backtest portfolio.
+ *
+ * This method retrieves the cash balance available in the backtest engine,
+ * which is used for trading and position management.
+ *
+ * @return The current cash balance as a double.
+ */
+const double BacktestEngine::cash() const { return cash_balance; }
 
-double BacktestEngine::equity() {
+/**
+ * @brief Returns the current equity value of the backtest portfolio.
+ *
+ * This method calculates the total equity by summing the cash balance and the
+ * value of all local positions based on their mid prices in the order book.
+ *
+ * @return The total equity as a double.
+ */
+const double BacktestEngine::equity() const {
     double value = cash_balance;
     for (auto &[asset_id, pos] : local_position_) {
-        value += pos * local_orderbooks_[asset_id].mid_price();
+        value += pos * local_orderbooks_.at(asset_id).mid_price();
     }
     return value;
 }
@@ -432,12 +456,12 @@ double BacktestEngine::equity() {
  * @param asset_id The identifier of the asset.
  * @return The current position as a double.
  */
-Quantity BacktestEngine::position(int asset_id) {
+const Quantity BacktestEngine::position(int asset_id) const {
     auto it = local_position_.find(asset_id);
     return (it != local_position_.end()) ? it->second : 0.0;
 }
 
-Depth BacktestEngine::depth(int asset_id) {
+const Depth BacktestEngine::depth(int asset_id) const {
     Ticks best_ask =
         local_orderbooks_.at(asset_id).price_at_level(BookSide::Ask, 0);
     Ticks best_bid =
@@ -473,8 +497,8 @@ Depth BacktestEngine::depth(int asset_id) {
                  .ask_qty_ = ask_0_size,
                  .bid_depth_ = bid_depth,
                  .ask_depth_ = ask_depth,
-                 .tick_size_ = tick_sizes_[asset_id],
-                 .lot_size_ = lot_sizes_[asset_id]};
+                 .tick_size_ = tick_sizes_.at(asset_id),
+                 .lot_size_ = lot_sizes_.at(asset_id)};
 }
 
 /**
@@ -486,13 +510,15 @@ Depth BacktestEngine::depth(int asset_id) {
  *
  * @return Current timestamp in microseconds.
  */
-Timestamp BacktestEngine::current_time() { return current_time_us_; }
+const Timestamp BacktestEngine::current_time() const {
+    return current_time_us_;
+}
 
 /**
  * @brief Sets the order entry latency in microseconds
  * @param Latency in microseconds
  */
-void BacktestEngine::set_order_entry_latency(const Microseconds latency) {
+void BacktestEngine::set_order_entry_latency(Microseconds latency) {
     order_entry_latency_us = latency;
     execution_engine_.set_order_entry_latency_us(latency);
 }
@@ -501,7 +527,7 @@ void BacktestEngine::set_order_entry_latency(const Microseconds latency) {
  * @brief Sets ther order response latency in microseconds
  * @param Latency in microseconds
  */
-void BacktestEngine::set_order_response_latency(const Microseconds latency) {
+void BacktestEngine::set_order_response_latency(Microseconds latency) {
     order_response_latency_us = latency;
     execution_engine_.set_order_response_latency_us(latency);
 }
@@ -510,18 +536,44 @@ void BacktestEngine::set_order_response_latency(const Microseconds latency) {
  * @brief Sets the market feed latency in microseconds
  * @param Latency in microseconds
  */
-void BacktestEngine::set_market_feed_latency(const Microseconds latency_us) {
-    market_feed_latency_us = latency_us;
+void BacktestEngine::set_market_feed_latency(Microseconds latency) {
+    market_feed_latency_us = latency;
 }
 
+/**
+ * @brief Returns the order entry latency in microseconds.
+ *
+ * This method retrieves the configured order entry latency, which simulates
+ * the time taken for an order to be accepted by the exchange after submission.
+ *
+ * @return The order entry latency in microseconds.
+ */
 const Microseconds BacktestEngine::order_entry_latency() const {
     return order_entry_latency_us;
 }
 
+/**
+ * @brief Returns the order response latency in microseconds.
+ *
+ * This method retrieves the configured order response latency, which simulates
+ * the time taken for an order update (e.g., ACK, FILL) to be reflected in the
+ * local system after being processed by the exchange.
+ *
+ * @return The order response latency in microseconds.
+ */
 const Microseconds BacktestEngine::order_response_latency() const {
     return order_response_latency_us;
 }
 
+/**
+ * @brief Returns the market feed latency in microseconds.
+ *
+ * This method retrieves the configured market feed latency, which simulates
+ * the time taken for market data updates (e.g., book updates, trades) to be
+ * received and processed by the backtest engine.
+ *
+ * @return The market feed latency in microseconds.
+ */
 const Microseconds BacktestEngine::market_feed_latency() const {
     return market_feed_latency_us;
 }
