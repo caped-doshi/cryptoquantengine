@@ -11,8 +11,11 @@
 #include <stdexcept>
 #include <string>
 
+#include "../../core/strategy/gridtrading_config.h"
 #include "../../core/trading/asset_config.h"
 #include "config_reader.h"
+
+ConfigReader::ConfigReader() {}
 
 /*
  * opens a config reader for filename.txt formatted as :
@@ -21,7 +24,7 @@
  * ...
  * keys are strings, and values can be string, double, int
  */
-ConfigReader::ConfigReader(const std::string &filename) {
+void ConfigReader::load(const std::string &filename) {
     std::ifstream file(filename);
     if (!file.is_open()) {
         throw std::runtime_error("Failed to open config file: " + filename);
@@ -40,6 +43,11 @@ ConfigReader::ConfigReader(const std::string &filename) {
         }
     }
 }
+
+/*
+ * @brief clears the config reader, removing all constants.
+ */
+void ConfigReader::clear() { constants.clear(); }
 
 /*
  * given a key, returns a string from filename if it exists.
@@ -89,7 +97,10 @@ bool ConfigReader::has(const std::string &key) const {
     return constants.find(key) != constants.end();
 }
 
-AssetConfig ConfigReader::get_asset_config() const {
+AssetConfig ConfigReader::get_asset_config(const std::string &filename) {
+    clear();
+    load(filename);
+    // read the asset config from the file
     AssetConfig config;
     config.book_update_file_ = get_string("book_update_file");
     config.trade_file_ = get_string("trade_file");
@@ -99,5 +110,20 @@ AssetConfig ConfigReader::get_asset_config() const {
     config.is_inverse_ = get_int("is_inverse") != 0;
     config.maker_fee_ = get_double("maker_fee");
     config.taker_fee_ = get_double("taker_fee");
+    return config;
+}
+
+GridTradingConfig
+ConfigReader::get_grid_trading_config(const std::string &filename) {
+    clear();
+    load(filename);
+    // read the grid trading config from the file
+    GridTradingConfig config;
+    config.tick_size = get_double("tick_size");
+    config.lot_size = get_double("lot_size");
+    config.grid_num = get_int("grid_num");
+    config.grid_interval = static_cast<Ticks>(get_int("grid_interval"));
+    config.half_spread = static_cast<Ticks>(get_int("half_spread"));
+    config.position_limit = get_double("position_limit");
     return config;
 }
