@@ -9,8 +9,10 @@
 #pragma once
 
 #include <cmath>
+#include <memory>
 #include <vector>
 
+#include "../../utils/logger/logger.h"
 #include "../trading/backtest_engine.h"
 #include "../trading/depth.h"
 #include "../types/usings.h"
@@ -18,10 +20,10 @@
 
 class GridTrading : public Strategy {
   public:
-    explicit GridTrading(const int asset_id, const int grid_num,
-                         const Ticks grid_interval, const Ticks half_spread,
-                         const double position_limit,
-                         const double notional_order_qty);
+    explicit GridTrading(int asset_id, int grid_num, Ticks grid_interval,
+                         Ticks half_spread, double position_limit,
+                         double notional_order_qty,
+                         std::shared_ptr<Logger> logger);
 
     void initialize() override;
     void on_elapse(BacktestEngine &hbt) override;
@@ -33,4 +35,6 @@ class GridTrading : public Strategy {
     Ticks half_spread_;
     double position_limit_;
     double notional_order_qty_;
+
+    std::shared_ptr<Logger> logger_;
 };

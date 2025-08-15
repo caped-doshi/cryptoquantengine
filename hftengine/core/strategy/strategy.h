@@ -1,18 +1,19 @@
 /*
  * File: hftengine/core/strategy/strategy.cpp
- * Description: Base class for strategies. 
+ * Description: Base class for strategies.
  * Author: Arvind Rathnashyam
  * Date: 2025-08-09
  * License: Proprietary
  */
 
-#pragma once 
+#pragma once
 
-#include <vector>
 #include <memory>
+#include <vector>
 
-#include "../types/usings.h"
+#include "../../utils/logger/logger.h"
 #include "../trading/backtest_engine.h"
+#include "../types/usings.h"
 
 class Strategy {
   public:
@@ -21,5 +22,7 @@ class Strategy {
     virtual ~Strategy() = default;
 
     virtual void initialize() = 0;
-    virtual void on_elapse(BacktestEngine& hbt) = 0;
+    virtual void on_elapse(BacktestEngine &hbt) = 0;
+
+  private:
 };

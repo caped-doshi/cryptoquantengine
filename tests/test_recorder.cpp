@@ -169,7 +169,7 @@ TEST_CASE("[Recorder] - Max drawdown edge cases", "[recorder][drawdown]") {
     }
 }
 
-TEST_CASE("[Recorder] - record(BacktestEngine, int) with market orders and "
+TEST_CASE("[Recorder] - record(BacktestEngine, int) with limit orders"
           "trade file",
           "[recorder][backtest][market_order]") {
     // Create a minimal trade file
@@ -202,8 +202,8 @@ TEST_CASE("[Recorder] - record(BacktestEngine, int) with market orders and "
                                .is_inverse_ = false,
                                .maker_fee_ = 0.0,
                                .taker_fee_ = 0.0}}};
-
-    BacktestEngine engine(asset_configs);
+    auto logger = std::make_shared<Logger>("test_recorder_limit_order.log");
+    BacktestEngine engine(asset_configs,logger);
     engine.set_order_entry_latency(1000);
     engine.set_order_response_latency(1000);
 

@@ -68,13 +68,13 @@ TEST_CASE("[GridTrading] - does not submit orders when notional too small",
                                .is_inverse_ = false,
                                .maker_fee_ = 0.0,
                                .taker_fee_ = 0.0}}};
-
-    BacktestEngine hbt(asset_configs);
+    auto logger = std::make_shared<Logger>("test_grid_trading_notional.log");
+    BacktestEngine hbt(asset_configs, logger);
     hbt.set_order_entry_latency(order_entry_latency_us);
     hbt.set_order_response_latency(order_response_latency_us);
 
     GridTrading strat(asset_id, grid_num, grid_interval, half_spread,
-                      position_limit, notional_order_qty);
+                      position_limit, notional_order_qty, logger);
 
     REQUIRE(hbt.elapse(42000));
     strat.initialize();
@@ -116,13 +116,13 @@ TEST_CASE("[GridTrading] - cancels orders not in new grid",
                                .is_inverse_ = false,
                                .maker_fee_ = 0.0,
                                .taker_fee_ = 0.0}}};
-
-    BacktestEngine hbt(asset_configs);
+    auto logger = std::make_shared<Logger>("test_grid_trading_cancel.log");
+    BacktestEngine hbt(asset_configs,logger);
     hbt.set_order_entry_latency(order_entry_latency_us);
     hbt.set_order_response_latency(order_response_latency_us);
 
     GridTrading strat(asset_id, grid_num, grid_interval, half_spread,
-                      position_limit, notional_order_qty);
+                      position_limit, notional_order_qty, logger);
 
     REQUIRE(hbt.elapse(42000));
     strat.initialize();
@@ -170,13 +170,14 @@ TEST_CASE("[GridTrading] - on_elapse submits correct grid orders",
                                .is_inverse_ = false,
                                .maker_fee_ = 0.0,
                                .taker_fee_ = 0.0}}};
+    auto logger = std::make_shared<Logger>("test_grid_trading_elapse.log");
 
-    BacktestEngine hbt(asset_configs);
+    BacktestEngine hbt(asset_configs,logger);
     hbt.set_order_entry_latency(order_entry_latency_us);
     hbt.set_order_response_latency(order_response_latency_us);
 
     GridTrading strat(asset_id, grid_num, grid_interval, half_spread,
-                      position_limit, notional_order_qty);
+                      position_limit, notional_order_qty, logger);
 
     // Advance engine to load book and trades
     REQUIRE(hbt.elapse(42000));
@@ -232,11 +233,13 @@ TEST_CASE("[GridTrading] - handles position limits correctly",
                                .is_inverse_ = false,
                                .maker_fee_ = 0.0,
                                .taker_fee_ = 0.0}}};
-    BacktestEngine hbt(asset_configs);
+    auto logger = std::make_shared<Logger>("test_grid_trading_position_limit.log");
+
+    BacktestEngine hbt(asset_configs,logger);
     hbt.set_order_entry_latency(order_entry_latency_us);
     hbt.set_order_response_latency(order_response_latency_us);
     GridTrading strat(asset_id, grid_num, grid_interval, half_spread,
-                      position_limit, notional_order_qty);
+                      position_limit, notional_order_qty, logger);
     // Advance engine to load book and trades
     REQUIRE(hbt.elapse(42000));
     strat.initialize();
@@ -249,7 +252,7 @@ TEST_CASE("[GridTrading] - handles position limits correctly",
     REQUIRE(hbt.elapse(5900));
     REQUIRE(hbt.current_time() == 50000);
     REQUIRE(hbt.position(asset_id) == Catch::Approx(-6.0).margin(1e-8));
-    hbt.clear_inactive_orders(asset_id);
+    hbt.clear_inactive_orders();
     // Verify that no new ask orders are placed due to position limit
     strat.on_elapse(hbt);
     REQUIRE(hbt.elapse(2100));

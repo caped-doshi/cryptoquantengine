@@ -15,7 +15,10 @@
 #include "utils/math/math_utils.h"
 
 TEST_CASE("[OrderBook] - Initial State", "[orderbook][init]") {
-    OrderBook book;
+    double tick_size = 0.01;
+    double lot_size = 0.01;
+
+    OrderBook book(tick_size,lot_size);
 
     REQUIRE(book.is_empty());
     REQUIRE(book.best_bid() == 0.0);
@@ -148,7 +151,9 @@ TEST_CASE("[OrderBook] - Price Level Priority", "[orderbook][priority]") {
 }
 
 TEST_CASE("[OrderBook] - Edge Cases", "[orderbook][edge]") {
-    OrderBook book;
+    double tick_size = 0.01;
+    double lot_size = 0.01;
+    OrderBook book(tick_size,lot_size);
 
     SECTION("Zero price handling") {
         REQUIRE_THROWS(book.apply_book_update(

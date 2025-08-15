@@ -14,6 +14,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "../../utils/logger/logger.h"
 #include "../orderbook/orderbook.h"
 #include "../trading/depth.h"
 #include "../trading/fill.h"
@@ -26,7 +27,7 @@
 
 class ExecutionEngine {
   public:
-    ExecutionEngine();
+    ExecutionEngine(std::shared_ptr<Logger> logger = nullptr);
 
     void add_asset(int asset_id, double tick_size, double lot_size);
 
@@ -81,4 +82,6 @@ class ExecutionEngine {
 
     std::unordered_map<int, std::vector<std::shared_ptr<Order>>> active_orders_;
     std::unordered_map<OrderId, std::shared_ptr<Order>> orders_;
+
+    std::shared_ptr<Logger> logger_;
 };

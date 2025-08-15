@@ -8,10 +8,12 @@
 
 #include <cmath>
 #include <iostream>
+#include <memory>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
+#include "../../utils/logger/logger.h"
 #include "../../utils/math/math_utils.h"
 #include "../trading/backtest_engine.h"
 #include "../trading/depth.h"
@@ -22,18 +24,17 @@
 #include "grid_trading.h"
 #include "strategy.h"
 
-GridTrading::GridTrading(const int asset_id, const int grid_num,
-                         const Ticks grid_interval, const Ticks half_spread,
-                         const double position_limit,
-                         const double notional_order_qty)
+GridTrading::GridTrading(int asset_id, int grid_num, Ticks grid_interval,
+                         Ticks half_spread, double position_limit,
+                         double notional_order_qty,
+                         std::shared_ptr<Logger> logger)
     : asset_id_(asset_id), grid_num_(grid_num), grid_interval_(grid_interval),
       half_spread_(half_spread), position_limit_(position_limit),
-      notional_order_qty_(notional_order_qty) {}
+      notional_order_qty_(notional_order_qty), logger_(logger) {}
 
 void GridTrading::initialize() {
-    // Initialization logic if needed
-    std::cout << "[GridTrading] - Strategy initialized for asset ID: "
-              << asset_id_ << "\n";
+    logger_->log("[GridTrading] - Strategy initialized for asset ID: " +
+                 std::to_string(asset_id_));
 }
 
 void GridTrading::on_elapse(BacktestEngine &hbt) {
@@ -99,15 +100,15 @@ void GridTrading::on_elapse(BacktestEngine &hbt) {
                      new_ask_prices.end())) {
                 hbt.cancel_order(asset_id_, order.orderId_);
                 if (order.side_ == BookSide::Bid) {
-                    std::cout
-                        << "[GridTrading] - Cancelled bid order at price: "
-                        << order.price_ << " for asset ID: " << asset_id_
-                        << "\n";
+                    logger_->log(
+                        "[GridTrading] - Cancelled bid order at price: " +
+                        std::to_string(order.price_) +
+                        " for asset ID: " + std::to_string(asset_id_));
                 } else {
-                    std::cout
-                        << "[GridTrading] - Cancelled ask order at price: "
-                        << order.price_ << " for asset ID: " << asset_id_
-                        << "\n";
+                    logger_->log(
+                        "[GridTrading] - Cancelled ask order at price: " +
+                        std::to_string(order.price_) +
+                        " for asset ID: " + std::to_string(asset_id_));
                 }
             }
         }
@@ -119,21 +120,24 @@ void GridTrading::on_elapse(BacktestEngine &hbt) {
         if (existing_bid_prices.find(bid_price_ticks) ==
             existing_bid_prices.end()) {
             Price bid_price = bid_price_ticks * tick_size;
-            if (bid_price <= 0.0) {
-                std::cerr << "[GridTrading] - Invalid bid price: " << bid_price
-                          << " for asset ID: " << asset_id_
-                          << ". Skipping order submission.\n";
+            if (bid_price_ticks <= 0) {
+                logger_->log("[GridTrading] - Invalid bid price: " +
+                             std::to_string(bid_price) +
+                             " for asset ID: " + std::to_string(asset_id_) +
+                             ". Skipping order submission.");
                 continue;
             }
             if (order_qty <= 0.0) {
-                std::cerr << "[GridTrading] - Invalid order quantity: "
-                          << order_qty << " for asset ID: " << asset_id_
-                          << ". Skipping order submission.\n";
+                logger_->log("[GridTrading] - Invalid bid order quantity: " +
+                             std::to_string(order_qty) +
+                             " for asset ID: " + std::to_string(asset_id_) +
+                             ". Skipping order submission.");
                 continue;
             }
-            std::cout << "[GridTrading] - Submitted buy order at price: "
-                      << bid_price << " for asset ID: " << asset_id_
-                      << " with quantity: " << order_qty << "\n";
+            logger_->log("[GridTrading] - Submitted buy order at price: " +
+                         std::to_string(bid_price) +
+                         " for asset ID: " + std::to_string(asset_id_) +
+                         " with quantity: " + std::to_string(order_qty));
             hbt.submit_buy_order(asset_id_, bid_price, order_qty,
                                  TimeInForce::GTC, OrderType::LIMIT);
         }
@@ -143,22 +147,25 @@ void GridTrading::on_elapse(BacktestEngine &hbt) {
             existing_ask_prices.end()) {
             Price ask_price = ask_price_ticks * tick_size;
             if (ask_price <= 0.0) {
-                std::cerr << "[GridTrading] - Invalid ask price: " << ask_price
-                          << " for asset ID: " << asset_id_
-                          << ". Skipping order submission.\n";
+                logger_->log("[GridTrading] - Invalid ask price: " +
+                             std::to_string(bid_price) +
+                             " for asset ID: " + std::to_string(asset_id_) +
+                             ". Skipping order submission.");
                 continue;
             }
             if (order_qty <= 0.0) {
-                std::cerr << "[GridTrading] - Invalid order quantity: "
-                          << order_qty << " for asset ID: " << asset_id_
-                          << ". Skipping order submission.\n";
+                logger_->log("[GridTrading] - Invalid ask order quantity: " +
+                             std::to_string(order_qty) +
+                             " for asset ID: " + std::to_string(asset_id_) +
+                             ". Skipping order submission.");
                 continue;
             }
             hbt.submit_sell_order(asset_id_, ask_price, order_qty,
                                   TimeInForce::GTC, OrderType::LIMIT);
-            std::cout << "[GridTrading] - Submitted sell order at price: "
-                      << ask_price << " for asset ID: " << asset_id_
-                      << " with quantity: " << order_qty << "\n";
+            logger_->log("[GridTrading] - Submitted ask order at price: " +
+                         std::to_string(bid_price) +
+                         " for asset ID: " + std::to_string(asset_id_) +
+                         " with quantity: " + std::to_string(order_qty));
         }
     }
 }

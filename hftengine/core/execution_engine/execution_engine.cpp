@@ -17,6 +17,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include "../../utils/logger/logger.h"
+#include "../../utils/math/math_utils.h"
 #include "../trading/fill.h"
 #include "../trading/order_update.h"
 #include "../types/book_side.h"
@@ -24,7 +26,6 @@
 #include "../types/order_type.h"
 #include "../types/time_in_force.h"
 #include "../types/usings.h"
-#include "../../utils/math/math_utils.h"
 #include "execution_engine.h"
 
 /**
@@ -34,7 +35,8 @@
  * internal data structures. The order books, order tracking, and asset-related
  * state will need to be set up through subsequent calls.
  */
-ExecutionEngine::ExecutionEngine() {}
+ExecutionEngine::ExecutionEngine(std::shared_ptr<Logger> logger)
+    : logger_(logger) {}
 
 /**
  * @brief Registers a new asset in the execution engine.
@@ -50,8 +52,14 @@ void ExecutionEngine::add_asset(int asset_id, double tick_size,
                                 double lot_size) {
     tick_sizes_[asset_id] = tick_size;
     lot_sizes_[asset_id] = lot_size;
-    orderbooks_[asset_id] = OrderBook(tick_size,lot_size);
-    active_orders_[asset_id] = std::vector<std::shared_ptr<Order>>();
+    orderbooks_.emplace(asset_id, OrderBook(tick_size, lot_size, logger_));
+    active_orders_.emplace(asset_id, std::vector<std::shared_ptr<Order>>());
+    if (logger_) {
+        logger_->log("[ExecutionEngine] - Added asset with ID: " +
+                     std::to_string(asset_id) +
+                     ", Tick Size: " + std::to_string(tick_size) +
+                     ", Lot Size: " + std::to_string(lot_size));
+    }
 }
 
 /**
@@ -181,17 +189,18 @@ void ExecutionEngine::execute_market_order(int asset_id, TradeSide side,
                                            std::shared_ptr<Order> order) {
     if (order->orderStatus_ != OrderStatus::NEW) return;
     int level = 0;
-    int levels = (side == TradeSide::Buy) ? orderbooks_[asset_id].ask_levels()
-                                          : orderbooks_[asset_id].bid_levels();
+    int levels = (side == TradeSide::Buy)
+                     ? orderbooks_.at(asset_id).ask_levels()
+                     : orderbooks_.at(asset_id).bid_levels();
     while (order->filled_quantity_ < order->quantity_ && level < levels) {
         Quantity level_depth =
             (side == TradeSide::Buy)
-                ? orderbooks_[asset_id].depth_at_level(BookSide::Ask, level)
-                : orderbooks_[asset_id].depth_at_level(BookSide::Bid, level);
+                ? orderbooks_.at(asset_id).depth_at_level(BookSide::Ask, level)
+                : orderbooks_.at(asset_id).depth_at_level(BookSide::Bid, level);
         Ticks level_price_ticks =
             (side == TradeSide::Buy)
-                ? orderbooks_[asset_id].price_at_level(BookSide::Ask, level)
-                : orderbooks_[asset_id].price_at_level(BookSide::Bid, level);
+                ? orderbooks_.at(asset_id).price_at_level(BookSide::Ask, level)
+                : orderbooks_.at(asset_id).price_at_level(BookSide::Bid, level);
         Price level_price = level_price_ticks * tick_sizes_[asset_id];
         if (level_depth > (order->quantity_ - order->filled_quantity_)) {
             fills_.emplace_back(
@@ -269,21 +278,22 @@ bool ExecutionEngine::execute_fok_order(int asset_id, TradeSide side,
                                         std::shared_ptr<Order> order) {
     if (order->orderStatus_ != OrderStatus::NEW) return false;
     int level = -1;
-    int levels = (side == TradeSide::Buy) ? orderbooks_[asset_id].ask_levels()
-                                          : orderbooks_[asset_id].bid_levels();
+    int levels = (side == TradeSide::Buy)
+                     ? orderbooks_.at(asset_id).ask_levels()
+                     : orderbooks_.at(asset_id).bid_levels();
     Quantity available_qty;
     while (++level < levels && available_qty < order->quantity_) {
         Ticks level_price_ticks =
             (side == TradeSide::Buy)
-                ? orderbooks_[asset_id].price_at_level(BookSide::Ask, level)
-                : orderbooks_[asset_id].price_at_level(BookSide::Bid, level);
+                ? orderbooks_.at(asset_id).price_at_level(BookSide::Ask, level)
+                : orderbooks_.at(asset_id).price_at_level(BookSide::Bid, level);
         Price level_price = level_price_ticks * tick_sizes_[asset_id];
         if (side == TradeSide::Buy && level_price > order->price_) break;
         if (side == TradeSide::Sell && level_price < order->price_) break;
         available_qty +=
             (side == TradeSide::Buy)
-                ? orderbooks_[asset_id].depth_at_level(BookSide::Ask, level)
-                : orderbooks_[asset_id].depth_at_level(BookSide::Bid, level);
+                ? orderbooks_.at(asset_id).depth_at_level(BookSide::Ask, level)
+                : orderbooks_.at(asset_id).depth_at_level(BookSide::Bid, level);
     }
     if (available_qty < order->quantity_) {
         order->orderStatus_ = OrderStatus::REJECTED;
@@ -293,12 +303,12 @@ bool ExecutionEngine::execute_fok_order(int asset_id, TradeSide side,
     while (++level < levels && order->filled_quantity_ < order->quantity_) {
         Quantity level_depth =
             (side == TradeSide::Buy)
-                ? orderbooks_[asset_id].depth_at_level(BookSide::Ask, level)
-                : orderbooks_[asset_id].depth_at_level(BookSide::Bid, level);
+                ? orderbooks_.at(asset_id).depth_at_level(BookSide::Ask, level)
+                : orderbooks_.at(asset_id).depth_at_level(BookSide::Bid, level);
         Ticks level_price_ticks =
             (side == TradeSide::Buy)
-                ? orderbooks_[asset_id].price_at_level(BookSide::Ask, level)
-                : orderbooks_[asset_id].price_at_level(BookSide::Bid, level);
+                ? orderbooks_.at(asset_id).price_at_level(BookSide::Ask, level)
+                : orderbooks_.at(asset_id).price_at_level(BookSide::Bid, level);
         Price level_price = level_price_ticks * tick_sizes_[asset_id];
         if (side == TradeSide::Buy && level_price > order->price_) break;
         if (side == TradeSide::Sell && level_price < order->price_) break;
@@ -376,25 +386,27 @@ bool ExecutionEngine::execute_fok_order(int asset_id, TradeSide side,
 bool ExecutionEngine::execute_ioc_order(int asset_id, TradeSide side,
                                         std::shared_ptr<Order> order) {
     if (order->orderStatus_ != OrderStatus::NEW) {
-        std::cout << "[ExecutionEngine] - " << order->exch_timestamp_
-                  << " - IOC order not NEW, skipping\n ";
+        logger_->log("[ExecutionEngine] - " +
+                     std::to_string(order->exch_timestamp_) +
+                     " - IOC order not NEW, skipping\n ");
         return false;
     }
     int level = 0;
-    int levels = (side == TradeSide::Buy) ? orderbooks_[asset_id].ask_levels()
-                                          : orderbooks_[asset_id].bid_levels();
+    int levels = (side == TradeSide::Buy)
+                     ? orderbooks_.at(asset_id).ask_levels()
+                     : orderbooks_.at(asset_id).bid_levels();
     while (level < levels && order->filled_quantity_ < order->quantity_) {
         Ticks level_price_ticks =
             (side == TradeSide::Buy)
-                ? orderbooks_[asset_id].price_at_level(BookSide::Ask, level)
-                : orderbooks_[asset_id].price_at_level(BookSide::Bid, level);
+                ? orderbooks_.at(asset_id).price_at_level(BookSide::Ask, level)
+                : orderbooks_.at(asset_id).price_at_level(BookSide::Bid, level);
         Price level_price = level_price_ticks * tick_sizes_[asset_id];
         if (side == TradeSide::Buy && level_price > order->price_) break;
         if (side == TradeSide::Sell && level_price < order->price_) break;
         Quantity level_depth =
             (side == TradeSide::Buy)
-                ? orderbooks_[asset_id].depth_at_level(BookSide::Ask, level)
-                : orderbooks_[asset_id].depth_at_level(BookSide::Bid, level);
+                ? orderbooks_.at(asset_id).depth_at_level(BookSide::Ask, level)
+                : orderbooks_.at(asset_id).depth_at_level(BookSide::Bid, level);
         if (level_depth > (order->quantity_ - order->filled_quantity_)) {
             Fill fill = {.asset_id_ = asset_id,
                          .exch_timestamp_ = order->exch_timestamp_,
@@ -477,20 +489,22 @@ bool ExecutionEngine::execute_ioc_order(int asset_id, TradeSide side,
  */
 bool ExecutionEngine::place_maker_order(int asset_id,
                                         std::shared_ptr<Order> order) {
-    Price best_ask = orderbooks_[asset_id].best_ask();
-    Price best_bid = orderbooks_[asset_id].best_bid();
+    Price best_ask = orderbooks_.at(asset_id).best_ask();
+    Price best_bid = orderbooks_.at(asset_id).best_bid();
     if ((order->side_ == BookSide::Bid && best_ask > 0.0 &&
          order->price_ >= best_ask) ||
         (order->side_ == BookSide::Ask && best_bid > 0.0 &&
          order->price_ <= best_bid)) {
         order->orderStatus_ = OrderStatus::REJECTED;
-        std::cout << "[ExecutionEngine] - maker order rejected\n";
+        logger_->log("[ExecutionEngine] - " +
+                     std::to_string(order->exch_timestamp_) +
+                     " - maker order rejected\n");
         return false;
     }
     Ticks order_price_ticks =
         price_to_ticks(order->price_, tick_sizes_[asset_id]);
     order->queueEst_ =
-        orderbooks_[asset_id].depth_at(order->side_, order_price_ticks);
+        orderbooks_.at(asset_id).depth_at(order->side_, order_price_ticks);
     if (order->side_ == BookSide::Bid)
         maker_books_[asset_id].bid_orders_[order_price_ticks] = order;
     else
@@ -499,17 +513,19 @@ bool ExecutionEngine::place_maker_order(int asset_id,
     active_orders_[asset_id].push_back(order);
     order->orderStatus_ = OrderStatus::ACTIVE;
     if (order->side_ == BookSide::Bid) {
-        std::cout << "[ExecutionEngine] - " << order->exch_timestamp_
-                  << " - MAKER BID order placed : id=" << order->orderId_
-                  << ", price=" << std::fixed << std::setprecision(8)
-                  << order->price_ << ", qty=" << std::fixed
-                  << std::setprecision(8) << order->quantity_ << "\n";
+        logger_->log("[ExecutionEngine] - " +
+                     std::to_string(order->exch_timestamp_) +
+                     " - MAKER BID order placed : id=" +
+                     std::to_string(order->orderId_) +
+                     ", price=" + std::to_string(order->price_) +
+                     ", qty=" + std::to_string(order->quantity_));
     } else if (order->side_ == BookSide::Ask) {
-        std::cout << "[ExecutionEngine] - " << order->exch_timestamp_
-                  << " - MAKER ASK order placed : id = " << order->orderId_
-                  << ", price=" << std::fixed << std::setprecision(8)
-                  << order->price_ << ", qty=" << std::fixed
-                  << std::setprecision(8) << order->quantity_ << "\n";
+        logger_->log("[ExecutionEngine] - " +
+                     std::to_string(order->exch_timestamp_) +
+                     " - MAKER ASK order placed : id = " +
+                     std::to_string(order->orderId_) +
+                     ", price=" + std::to_string(order->price_) +
+                     ", qty=" + std::to_string(order->quantity_));
     }
     order_updates_.emplace_back(OrderUpdate{
         .exch_timestamp_ = order->exch_timestamp_,
@@ -588,8 +604,8 @@ void ExecutionEngine::handle_book_update(int asset_id,
     Ticks book_update_price_ticks =
         price_to_ticks(book_update.price_, tick_sizes_[asset_id]);
     // update queue position estimationsO
-    Quantity Q_n =
-        orderbooks_[asset_id].depth_at(book_update.side_, book_update_price_ticks);
+    Quantity Q_n = orderbooks_.at(asset_id).depth_at(book_update.side_,
+                                                     book_update_price_ticks);
     Quantity deltaQ_n = book_update.quantity_ - Q_n;
     if (deltaQ_n < 0) {
         if (book_update.side_ == BookSide::Bid) {
@@ -623,7 +639,7 @@ void ExecutionEngine::handle_book_update(int asset_id,
         }
     }
     // update orderbook
-    orderbooks_[asset_id].apply_book_update(book_update);
+    orderbooks_.at(asset_id).apply_book_update(book_update);
 }
 
 /**
@@ -661,42 +677,57 @@ void ExecutionEngine::handle_trade(int asset_id, const Trade &trade) {
                    : maker_books_[asset_id].ask_orders_.end();
     if (it == end) {
         if (trade.side_ == TradeSide::Sell) {
-            std::cout << "[ExecutionEngine] - " << trade.exch_timestamp_
-                      << " - no matching orders found at price " << trade.price_
-                      << " among " << maker_books_[asset_id].bid_orders_.size()
-                      << " bid orders : ";
+            logger_->log(
+                "[ExecutionEngine] - " + std::to_string(trade.exch_timestamp_) +
+                " - no matching orders found at price " +
+                std::to_string(trade.price_) + " among " +
+                std::to_string(maker_books_[asset_id].bid_orders_.size()) +
+                " bid orders : ");
             for (const auto &kv : maker_books_[asset_id].bid_orders_) {
-                std::cout << std::fixed << std::setprecision(8) << kv.first
-                          << " ";
+                logger_->log(std::to_string(kv.first) + " ");
             }
-            std::cout << "\n";
         } else if (trade.side_ == TradeSide::Buy) {
-            std::cout << "[ExecutionEngine] - " << trade.exch_timestamp_
-                      << " - no matching orders found at price " << trade.price_
-                      << " among " << maker_books_[asset_id].ask_orders_.size()
-                      << " ask orders : ";
+            logger_->log(
+                "[ExecutionEngine] - " + std::to_string(trade.exch_timestamp_) +
+                " - no matching orders found at price " +
+                std::to_string(trade.price_) + " among " +
+                std::to_string(maker_books_[asset_id].ask_orders_.size()) +
+                " ask orders : ");
             for (const auto &kv : maker_books_[asset_id].ask_orders_) {
-                std::cout << std::fixed << std::setprecision(8) << kv.first
-                          << " ";
+                logger_->log(std::to_string(kv.first) + " ");
             }
-            std::cout << "\n";
         }
         return;
     }
     auto order = it->second;
 
     if (order->exch_timestamp_ >= trade.exch_timestamp_) return;
-    std::cout << "[ExecutionEngine] - " << trade.exch_timestamp_ << " - order ("
-              << order->orderId_ << ") found at trade price " << std::fixed
-              << std::setprecision(8) << order->price_ << " USD\n";
+    logger_->log("[ExecutionEngine] - " +
+                 std::to_string(trade.exch_timestamp_) + " - order (" +
+                 std::to_string(order->orderId_) + ") found at trade price " +
+                 std::to_string(order->price_) + " USD");
 
     if (order->queueEst_ == 0.0 && order->filled_quantity_ < order->quantity_) {
         Quantity fill_qty = std::min(
             trade.quantity_, order->quantity_ - order->filled_quantity_);
-        std::cout << "[ExecutionEngine] - " << trade.exch_timestamp_
-                  << " - fill signaled for " << std::fixed
-                  << std::setprecision(8) << fill_qty << " quantity\n";
         order->filled_quantity_ += fill_qty;
+        if (order->filled_quantity_ >= order->quantity_) {
+            order->orderStatus_ = OrderStatus::FILLED;
+            logger_->log("[ExecutionEngine] - " +
+                         std::to_string(trade.exch_timestamp_) + " - order (" +
+                         std::to_string(order->orderId_) +
+                         ") filled at price " + std::to_string(order->price_) +
+                         " USD @ " + std::to_string(order->filled_quantity_) +
+                         " quantity");
+        } else {
+            order->orderStatus_ = OrderStatus::PARTIALLY_FILLED;
+            logger_->log("[ExecutionEngine] - " +
+                         std::to_string(trade.exch_timestamp_) + " - order (" +
+                         std::to_string(order->orderId_) +
+                         ") partially filled at price " +
+                         std::to_string(order->price_) + " USD @ " +
+                         std::to_string(order->filled_quantity_) + " quantity");
+        }
         order_updates_.emplace_back(
             OrderUpdate{.exch_timestamp_ = trade.exch_timestamp_,
                         .local_timestamp_ =

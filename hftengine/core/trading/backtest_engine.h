@@ -14,6 +14,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "../../utils/logger/logger.h"
 #include "../data/market_data_feed.h"
 #include "../execution_engine/execution_engine.h"
 #include "../orderbook/orderbook.h"
@@ -31,11 +32,14 @@
 class BacktestEngine {
   public:
     explicit BacktestEngine(
-        const std::unordered_map<int, AssetConfig> &asset_configs);
+        const std::unordered_map<int, AssetConfig> &asset_configs,
+        std::shared_ptr<Logger> logger = nullptr);
 
     // global methods
     bool elapse(std::uint64_t microseconds);
-    void clear_inactive_orders(int asset_id);
+
+    bool order_inactive(const Order& order);
+    void clear_inactive_orders();
 
     // local origin methods
     OrderId submit_buy_order(int asset_id, Price price, Quantity quantity,
@@ -78,6 +82,7 @@ class BacktestEngine {
     ExecutionEngine execution_engine_;
     MarketDataFeed market_data_feed_;
     OrderIdGenerator orderId_gen_;
+    
     std::unordered_map<int, OrderBook> local_orderbooks_;
     std::unordered_map<int, Order> local_active_orders_;
     std::unordered_map<int, BacktestAsset> assets_;
@@ -105,4 +110,6 @@ class BacktestEngine {
     };
 
     std::multimap<Timestamp, DelayedAction> delayed_actions_;
+
+    std::shared_ptr<Logger> logger_;
 };
