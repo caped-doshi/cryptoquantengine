@@ -134,10 +134,10 @@ void GridTrading::on_elapse(BacktestEngine &hbt) {
                              ". Skipping order submission.");
                 continue;
             }
-            logger_->log("[GridTrading] - Submitted buy order at price: " +
-                         std::to_string(bid_price) +
-                         " for asset ID: " + std::to_string(asset_id_) +
-                         " with quantity: " + std::to_string(order_qty));
+            logger_->log("[GridTrading] - Submitted buy order : asset_id=" +
+                         std::to_string(asset_id_) +
+                         ", price=" + std::to_string(bid_price) +
+                         ", qty=" + std::to_string(order_qty));
             hbt.submit_buy_order(asset_id_, bid_price, order_qty,
                                  TimeInForce::GTC, OrderType::LIMIT);
         }
@@ -162,10 +162,10 @@ void GridTrading::on_elapse(BacktestEngine &hbt) {
             }
             hbt.submit_sell_order(asset_id_, ask_price, order_qty,
                                   TimeInForce::GTC, OrderType::LIMIT);
-            logger_->log("[GridTrading] - Submitted ask order at price: " +
-                         std::to_string(bid_price) +
-                         " for asset ID: " + std::to_string(asset_id_) +
-                         " with quantity: " + std::to_string(order_qty));
+            logger_->log("[GridTrading] - Submitted buy order : asset_id=" +
+                         std::to_string(asset_id_) +
+                         ", price=" + std::to_string(bid_price) +
+                         ", qty=" + std::to_string(order_qty));
         }
     }
 }

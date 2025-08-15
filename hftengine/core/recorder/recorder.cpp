@@ -8,11 +8,13 @@
  */
 
 #include <algorithm>
+#include <iostream>
 #include <iterator>
+#include <memory>
 #include <stdexcept>
 #include <vector>
-#include <iostream>
 
+#include "../../utils/logger/logger.h"
 #include "../../utils/stat/stat_utils.h"
 #include "../types/usings.h"
 #include "recorder.h"
@@ -25,9 +27,13 @@
  *
  * @param interval_us The time interval in microseconds for recording equity
  * snapshots.
+ * @param logger Optional shared pointer to a Logger instance for logging
  */
-Recorder::Recorder(const Microseconds interval_us)
-    : interval_us_(interval_us) {}
+Recorder::Recorder(Microseconds interval_us, std::shared_ptr<Logger> logger)
+    : interval_us_(interval_us), logger_(logger) {
+    logger_->log("[Recorder] - Initialized with interval: " +
+                 std::to_string(interval_us) + " microseconds");
+}
 
 /**
  * @brief Records an equity snapshot.
@@ -48,7 +54,7 @@ void Recorder::record(const EquitySnapshot &snapshot) {
  * @param timestamp The timestamp of the equity snapshot.
  * @param equity The equity value at the given timestamp.
  */
-void Recorder::record(const Timestamp timestamp, const double equity) {
+void Recorder::record(Timestamp timestamp, double equity) {
     records_.emplace_back(EquitySnapshot{timestamp, equity});
 }
 
@@ -61,15 +67,16 @@ void Recorder::record(const Timestamp timestamp, const double equity) {
  * @param hbt The BacktestEngine instance containing the current state.
  * @param asset_id The ID of the asset to record.
  */
-void Recorder::record(const BacktestEngine &hbt, const int asset_id) {
+void Recorder::record(const BacktestEngine &hbt, int asset_id) {
     Timestamp current_time = hbt.current_time();
     double equity = hbt.equity();
     Quantity position = hbt.position(asset_id);
     records_.emplace_back(EquitySnapshot{current_time, equity});
     state_records_.emplace_back(StateSnapshot{current_time, equity, position});
-    std::cout << "[Recorder] - asset " << asset_id << " recorded equity at "
-              << current_time << ": " << equity << ", position: " << position
-              << "\n";
+    logger_->log("[Recorder] - " + std::to_string(current_time) +
+                 "us - equity : " + std::to_string(equity) + ", asset id : " +
+                 std::to_string(asset_id) +
+                 " position : " + std::to_string(position));
 }
 
 /**
@@ -81,7 +88,7 @@ void Recorder::record(const BacktestEngine &hbt, const int asset_id) {
  *
  * @return vector of double returns.
  */
-const std::vector<double> Recorder::interval_returns() const {
+std::vector<double> Recorder::interval_returns() const {
     std::vector<double> returns;
     if (records_.size() < 2) return returns;
 
@@ -119,7 +126,7 @@ const std::vector<double> Recorder::interval_returns() const {
  * @throws std::runtime_error if no returns data is available or if standard
  * deviation is zero.
  */
-const double Recorder::sharpe() const {
+double Recorder::sharpe() const {
     std::vector<double> returns = interval_returns();
 
     if (returns.empty()) {
@@ -133,8 +140,8 @@ const double Recorder::sharpe() const {
     double ret_stddev = stddev(returns);
 
     if (std::abs(ret_stddev) <= 1e-9) {
-        throw std::runtime_error(
-            "Cannot calculate Sharpe ratio: no returns data");
+        throw std::runtime_error("Cannot calculate Sharpe ratio: standard "
+                                 "deviation too close to zero");
     }
     return ann_factor * mean(returns) / stddev(returns);
 }
@@ -149,7 +156,7 @@ const double Recorder::sharpe() const {
  * @throws std::runtime_error if no negative returns are available
  * or if downside deviation is zero.
  */
-const double Recorder::sortino() const {
+double Recorder::sortino() const {
     std::vector<double> returns = interval_returns();
     std::vector<double> returns_neg;
     std::copy_if(returns.begin(), returns.end(),
@@ -183,7 +190,7 @@ const double Recorder::sortino() const {
  * @return maximum drawdown of as a percentage (0.0 to 1.0)
  * @throws std::runtime_error if no records are available
  */
-const double Recorder::max_drawdown() const {
+double Recorder::max_drawdown() const {
     if (records_.empty()) {
         throw std::runtime_error(
             "Cannot calculate max drawdown : no records available");
