@@ -37,7 +37,9 @@ class BacktestEngine {
 
     // global methods
     bool elapse(std::uint64_t microseconds);
-    void clear_inactive_orders(int asset_id);
+
+    bool order_inactive(const Order& order);
+    void clear_inactive_orders();
 
     // local origin methods
     OrderId submit_buy_order(int asset_id, Price price, Quantity quantity,
@@ -80,6 +82,7 @@ class BacktestEngine {
     ExecutionEngine execution_engine_;
     MarketDataFeed market_data_feed_;
     OrderIdGenerator orderId_gen_;
+    
     std::unordered_map<int, OrderBook> local_orderbooks_;
     std::unordered_map<int, Order> local_active_orders_;
     std::unordered_map<int, BacktestAsset> assets_;

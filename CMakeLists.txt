@@ -50,6 +50,7 @@ enable_testing()
 add_executable(test_orderbook
   tests/test_orderbook.cpp
   hftengine/core/orderbook/orderbook.cpp
+  hftengine/utils/logger/logger.cpp
 )
 
 target_include_directories(test_orderbook PRIVATE
@@ -71,6 +72,7 @@ add_executable(test_book_stream_reader
   tests/test_book_stream_reader.cpp
   hftengine/core/data/readers/book_stream_reader.cpp
   hftengine/core/orderbook/orderbook.cpp
+  hftengine/utils/logger/logger.cpp
 )
 
 target_include_directories(test_book_stream_reader PRIVATE
@@ -82,6 +84,7 @@ add_executable(test_trade_stream_reader
   tests/test_trade_stream_reader.cpp
   hftengine/core/data/readers/trade_stream_reader.cpp
   hftengine/core/orderbook/orderbook.cpp
+  hftengine/utils/logger/logger.cpp
 )
 
 target_include_directories(test_trade_stream_reader PRIVATE
@@ -105,6 +108,7 @@ add_executable(test_execution_engine
   tests/test_execution_engine.cpp
   hftengine/core/execution_engine/execution_engine.cpp
   hftengine/core/orderbook/orderbook.cpp
+  hftengine/utils/logger/logger.cpp
 )
 
 target_include_directories(test_execution_engine PRIVATE
@@ -120,6 +124,7 @@ add_executable(test_backtest_engine
   hftengine/core/data/market_data_feed.cpp
   hftengine/core/data/readers/trade_stream_reader.cpp
   hftengine/core/data/readers/book_stream_reader.cpp
+  hftengine/utils/logger/logger.cpp
 )
 
 target_include_directories(test_backtest_engine PRIVATE
@@ -145,6 +150,7 @@ add_executable(test_recorder
   hftengine/core/data/market_data_feed.cpp
   hftengine/core/data/readers/trade_stream_reader.cpp
   hftengine/core/data/readers/book_stream_reader.cpp
+  hftengine/utils/logger/logger.cpp
 )
 
 target_include_directories(test_recorder PRIVATE
@@ -161,6 +167,7 @@ add_executable(test_grid_trading
   hftengine/core/data/market_data_feed.cpp
   hftengine/core/data/readers/trade_stream_reader.cpp
   hftengine/core/data/readers/book_stream_reader.cpp
+  hftengine/utils/logger/logger.cpp
 )
 target_include_directories(test_grid_trading PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/hftengine)

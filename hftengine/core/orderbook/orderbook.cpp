@@ -8,8 +8,10 @@
 
 #include <algorithm>
 #include <cmath>
+#include <iomanip>
 #include <iostream>
 
+#include "../../utils/logger/logger.h"
 #include "../../utils/math/math_utils.h"
 #include "../market_data/book_update.h"
 #include "../market_data/trade.h"
@@ -230,18 +232,25 @@ bool OrderBook::is_empty() const {
  * @param depth The number of price levels to display from the top of each side.
  */
 void OrderBook::print_top_levels(int depth) const {
-    std::cout << "\n--- Order Book Top " << depth << " Levels ---\n";
-    std::cout << " Ask:\n";
+    std::ostringstream oss;
+    oss << "[OrderBook] Top " << depth << " levels:\n";
+    oss << "Bids:\n";
     int count = 0;
-    for (const auto &[price, qty] : ask_book_) {
-        std::cout << "  " << price << " @ " << qty << "\n";
-        if (++count >= depth) break;
-    }
-    std::cout << " Bid:\n";
-    count = 0;
     for (const auto &[price, qty] : bid_book_) {
-        std::cout << "  " << price << " @ " << qty << "\n";
-        if (++count >= depth) break;
+        if (count++ >= depth) break;
+        oss << "  " << std::fixed << std::setprecision(8)
+            << ticks_to_price(price, tick_size_) << " : " << qty << "\n";
     }
-    std::cout << "--------------------------------\n";
+    oss << "Asks:\n";
+    count = 0;
+    for (const auto &[price, qty] : ask_book_) {
+        if (count++ >= depth) break;
+        oss << "  " << std::fixed << std::setprecision(8)
+            << ticks_to_price(price, tick_size_) << " : " << qty << "\n";
+    }
+    if (logger_) {
+        logger_->log(oss.str());
+    } else {
+        std::cout << oss.str();
+    }
 }
