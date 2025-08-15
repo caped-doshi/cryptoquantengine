@@ -14,10 +14,12 @@
 #include <memory>
 
 #include "../hftengine/core/recorder/recorder.h"
+#include "../hftengine/utils/logger/logger.h"
 #include "../hftengine/utils/stat/stat_utils.h"
 
 TEST_CASE("[Recorder] - recorder interval returns", "[recorder][initial]") {
-    Recorder recorder(1'000'000);
+    auto logger = std::make_shared<Logger>("test_recorder_initial.log");
+    Recorder recorder(1'000'000, logger);
     SECTION("Empty recorder returns empty vectors") {
         REQUIRE(recorder.interval_returns().empty());
         REQUIRE_THROWS_AS(recorder.sharpe(), std::runtime_error);
@@ -30,7 +32,8 @@ TEST_CASE("[Recorder] - recorder interval returns", "[recorder][initial]") {
 }
 
 TEST_CASE("[Recorder] - interval returns calculation", "[recorder][returns]") {
-    Recorder recorder(1'000'000);
+    auto logger = std::make_shared<Logger>("test_recorder_returns.log");
+    Recorder recorder(1'000'000, logger);
     SECTION("Process multiple returns") {
         recorder.record(0, 100.0);
         recorder.record(500'000, 105.0);
@@ -47,7 +50,8 @@ TEST_CASE("[Recorder] - interval returns calculation", "[recorder][returns]") {
 }
 
 TEST_CASE("[Recorder] - Risk-adjusted metrics edge cases", "[recorder][edge]") {
-    Recorder recorder(1'000'000); // 1 second interval
+    auto logger = std::make_shared<Logger>("test_recorder_edge.log");
+    Recorder recorder(1'000'000, logger); // 1 second interval
 
     SECTION("Sharpe ratio calculation") {
         recorder.record(0, 100.0);
@@ -63,13 +67,12 @@ TEST_CASE("[Recorder] - Risk-adjusted metrics edge cases", "[recorder][edge]") {
     }
 
     SECTION("Sortino ratio calculation") {
-        // Volatile returns with some negative values
         recorder.record(0, 100.0);
         recorder.record(1'000'000, 110.0); // +10%
         recorder.record(2'000'000, 99.0);  // -10%
         recorder.record(3'000'000, 108.9); // +10%
 
-        // Should calculate without throwing
+        // Should throw as only one negative return exists
         REQUIRE_THROWS_AS(recorder.sortino(), std::runtime_error);
     }
 
@@ -85,8 +88,8 @@ TEST_CASE("[Recorder] - Risk-adjusted metrics edge cases", "[recorder][edge]") {
 
 TEST_CASE("[Recorder] - Risk adjusted metrics correctness",
           "[recorder][correctness]") {
-
-    Recorder recorder(60'000'000);
+    auto logger = std::make_shared<Logger>("test_recorder_correctness.log");
+    Recorder recorder(60'000'000, logger);
 
     recorder.record(0, 100.0);
     recorder.record(50'000'000, 110.0);
@@ -141,18 +144,23 @@ TEST_CASE("[Recorder] - Risk adjusted metrics correctness",
 
 TEST_CASE("[Recorder] - Max drawdown edge cases", "[recorder][drawdown]") {
     SECTION("Empty recorder throws") {
-        Recorder recorder(60'000'000);
+        auto logger = std::make_shared<Logger>("test_recorder_drawdown_throws.log");
+        Recorder recorder(60'000'000, logger);
         REQUIRE_THROWS_AS(recorder.max_drawdown(), std::runtime_error);
     }
 
     SECTION("Single record gives zero drawdown") {
-        Recorder recorder(60'000'000);
+        auto logger =
+            std::make_shared<Logger>("test_recorder_drawdown_single.log");
+        Recorder recorder(60'000'000, logger);
         recorder.record(0, 100.0);
         REQUIRE(recorder.max_drawdown() == 0.0);
     }
 
     SECTION("All increasing values gives zero drawdown") {
-        Recorder recorder(60'000'000);
+        auto logger =
+            std::make_shared<Logger>("test_recorder_drawdown_increasing.log");
+        Recorder recorder(60'000'000, logger);
         recorder.record(0, 100.0);
         recorder.record(60'000'000, 110.0);
         recorder.record(120'000'000, 121.0);
@@ -160,7 +168,9 @@ TEST_CASE("[Recorder] - Max drawdown edge cases", "[recorder][drawdown]") {
     }
 
     SECTION("All decreasing values gives max drawdown") {
-        Recorder recorder(60'000'000);
+        auto logger =
+            std::make_shared<Logger>("test_recorder_drawdown_decreasing.log");
+        Recorder recorder(60'000'000, logger);
         recorder.record(0, 100.0);
         recorder.record(60'000'000, 90.0);
         recorder.record(120'000'000, 81.0);
@@ -203,11 +213,11 @@ TEST_CASE("[Recorder] - record(BacktestEngine, int) with limit orders"
                                .maker_fee_ = 0.0,
                                .taker_fee_ = 0.0}}};
     auto logger = std::make_shared<Logger>("test_recorder_limit_order.log");
-    BacktestEngine engine(asset_configs,logger);
+    BacktestEngine engine(asset_configs, logger);
     engine.set_order_entry_latency(1000);
     engine.set_order_response_latency(1000);
 
-    Recorder recorder(10'000);
+    Recorder recorder(10'000, logger);
     // Submit a tighter market
     engine.submit_buy_order(asset_id, 95.0, 3.0, TimeInForce::GTC,
                             OrderType::LIMIT);
