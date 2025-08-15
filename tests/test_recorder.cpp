@@ -232,6 +232,8 @@ TEST_CASE("[Recorder] - record(BacktestEngine, int) with limit orders"
     REQUIRE(!returns.empty());
     REQUIRE(returns[0] == Catch::Approx(1.0).margin(1e-8)); // 10.5 -> 21.0
 
+    // recorder.plot(asset_id);
+
     // Cleanup
     std::remove(trade_file.c_str());
     std::remove(book_file.c_str());

@@ -31,6 +31,8 @@ class Recorder {
     double sortino() const;
     double max_drawdown() const;
 
+    void plot(int asset_id) const;
+
     std::vector<double> interval_returns() const;
 
   private:

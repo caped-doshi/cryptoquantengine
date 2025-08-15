@@ -15,4 +15,5 @@ struct StateSnapshot {
     Timestamp timestamp_;
     double equity_;
     double position_;
+    double price_;
 };
