@@ -8,6 +8,8 @@
  */
 
 #include <algorithm>
+#include <cstdlib>
+#include <fstream>
 #include <iostream>
 #include <iterator>
 #include <memory>
@@ -74,8 +76,8 @@ void Recorder::record(const BacktestEngine &hbt, int asset_id) {
     records_.emplace_back(EquitySnapshot{current_time, equity});
     state_records_.emplace_back(StateSnapshot{current_time, equity, position});
     logger_->log("[Recorder] - " + std::to_string(current_time) +
-                 "us - equity : " + std::to_string(equity) + ", asset id : " +
-                 std::to_string(asset_id) +
+                 "us - equity : " + std::to_string(equity) +
+                 ", asset id : " + std::to_string(asset_id) +
                  " position : " + std::to_string(position));
 }
 
@@ -210,4 +212,20 @@ double Recorder::max_drawdown() const {
         }
     }
     return max_dd;
+}
+
+void Recorder::plot(int asset_id) const {
+    std::string csv_filename =
+        "recorder_plot_" + std::to_string(asset_id) + ".csv";
+    std::ofstream csv(csv_filename);
+    csv << "timestamp,equity,position,mid_price\n";
+    for (const auto &state : state_records_) {
+        csv << state.timestamp_ << "," << state.equity_ << ","
+            << state.position_ << "," << state.price_ << "\n";
+    }
+    csv.close();
+
+    std::string command = "python ../hftengine/core/recorder/plot_recorder.py " + csv_filename + " " +
+                          std::to_string(asset_id);
+    std::system(command.c_str());
 }
