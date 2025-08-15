@@ -10,6 +10,8 @@
 #include <string>
 #include <unordered_map>
 
+#include "../../core/trading/asset_config.h"
+
 class ConfigReader {
 private:
     std::unordered_map<std::string, std::string> constants;
@@ -22,4 +24,6 @@ public:
     int get_int(const std::string& key) const;
 
     bool has(const std::string& key) const;
+
+    AssetConfig get_asset_config() const;
 };
