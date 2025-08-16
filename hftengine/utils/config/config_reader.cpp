@@ -11,7 +11,7 @@
 #include <stdexcept>
 #include <string>
 
-#include "../../core/strategy/gridtrading_config.h"
+#include "../../core/strategy/grid_trading_config.h"
 #include "../../core/trading/asset_config.h"
 #include "config_reader.h"
 
@@ -119,11 +119,12 @@ ConfigReader::get_grid_trading_config(const std::string &filename) {
     load(filename);
     // read the grid trading config from the file
     GridTradingConfig config;
-    config.tick_size = get_double("tick_size");
-    config.lot_size = get_double("lot_size");
-    config.grid_num = get_int("grid_num");
-    config.grid_interval = static_cast<Ticks>(get_int("grid_interval"));
-    config.half_spread = static_cast<Ticks>(get_int("half_spread"));
-    config.position_limit = get_double("position_limit");
+    config.tick_size_ = get_double("tick_size");
+    config.lot_size_ = get_double("lot_size");
+    config.grid_num_ = get_int("grid_num");
+    config.grid_interval_ = static_cast<Ticks>(get_int("grid_interval"));
+    config.half_spread_ = static_cast<Ticks>(get_int("half_spread"));
+    config.position_limit_ = get_double("position_limit");
+    config.notional_order_qty_ = get_double("notional_order_qty");
     return config;
 }

@@ -10,7 +10,7 @@
 #include <string>
 #include <unordered_map>
 
-#include "../../core/strategy/gridtrading_config.h"
+#include "../../core/strategy/grid_trading_config.h"
 #include "../../core/trading/asset_config.h"
 
 class ConfigReader {

@@ -11,10 +11,11 @@
 #include "../types/usings.h" 
 
 struct GridTradingConfig {
-    double tick_size;
-    double lot_size;
-    int grid_num;
-    Ticks grid_interval;
-    Ticks half_spread;
-    double position_limit;
+    double tick_size_;
+    double lot_size_;
+    int grid_num_;
+    Ticks grid_interval_;
+    Ticks half_spread_;
+    double position_limit_;
+    double notional_order_qty_;
 };

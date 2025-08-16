@@ -19,17 +19,26 @@
 int main() {
 
     ConfigReader config_reader;
-    auto asset_config = config_reader.get_asset_config("asset_config.txt");
+    auto asset_config = config_reader.get_asset_config("../config/asset_config.txt");
     auto grid_trading_config =
-        config_reader.get_grid_trading_config("grid_trading_config.txt");
+        config_reader.get_grid_trading_config("../config/grid_trading_config.txt");
     std::unordered_map<int, AssetConfig> asset_configs;
-    asset_configs.insert({1, asset_config});
+    const int asset_id = 1; // Example asset ID
+    asset_configs.insert({asset_id, asset_config});
     auto logger = std::make_shared<Logger>("backtest.log");
 
-    BacktestEngine backtest_engine(asset_configs, logger);
-    Recorder recorder(1'000'000, logger); // 1 second intervals
+    BacktestEngine hbt(asset_configs, logger);
+    Recorder recorder(5'000'000, logger); 
+    GridTrading grid_trading(1, grid_trading_config, logger);
+    
+    std::uint64_t iter = 86400;
+    while (hbt.elapse(1'000'000) && iter-- > 0) {
+        hbt.clear_inactive_orders();
+        grid_trading.on_elapse(hbt);
+        recorder.record(hbt, asset_id); 
+    }
 
-
+    recorder.plot(asset_id); 
 
     return 0;
 }

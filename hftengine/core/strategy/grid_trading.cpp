@@ -22,6 +22,7 @@
 #include "../types/order_status.h"
 #include "../types/usings.h"
 #include "grid_trading.h"
+#include "grid_trading_config.h"
 #include "strategy.h"
 
 GridTrading::GridTrading(int asset_id, int grid_num, Ticks grid_interval,
@@ -30,7 +31,18 @@ GridTrading::GridTrading(int asset_id, int grid_num, Ticks grid_interval,
                          std::shared_ptr<Logger> logger)
     : asset_id_(asset_id), grid_num_(grid_num), grid_interval_(grid_interval),
       half_spread_(half_spread), position_limit_(position_limit),
-      notional_order_qty_(notional_order_qty), logger_(logger) {}
+      notional_order_qty_(notional_order_qty), logger_(logger) {
+    initialize();
+}
+
+GridTrading::GridTrading(int asset_id, const GridTradingConfig &config,
+                         std::shared_ptr<Logger> logger)
+    : asset_id_(asset_id), grid_num_(config.grid_num_),
+      grid_interval_(config.grid_interval_), half_spread_(config.half_spread_),
+      position_limit_(config.position_limit_),
+      notional_order_qty_(config.notional_order_qty_), logger_(logger) {
+    initialize();
+}
 
 void GridTrading::initialize() {
     logger_->log("[GridTrading] - Strategy initialized for asset ID: " +
@@ -46,6 +58,16 @@ void GridTrading::on_elapse(BacktestEngine &hbt) {
     double lot_size = depth.lot_size_;
     Price best_bid = ticks_to_price(depth.best_bid_, tick_size);
     Price best_ask = ticks_to_price(depth.best_ask_, tick_size);
+
+    if (best_bid <= 0.0 || best_ask <= 0.0 || !std::isfinite(best_bid) ||
+        !std::isfinite(best_ask)) {
+        logger_->log("[GridTrading] - Skipping grid setup: invalid bid/ask "
+                     "prices for asset ID: " +
+                     std::to_string(asset_id_) +
+                     " (bid=" + std::to_string(best_bid) +
+                     ", ask=" + std::to_string(best_ask) + ")");
+        return;
+    }
 
     Price mid_price = (best_bid + best_ask) / 2.0;
 

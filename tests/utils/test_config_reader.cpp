@@ -6,11 +6,13 @@
  * License: Proprietary
  */
 
-# include <catch2/catch_test_macros.hpp>
-# include <filesystem>
-# include <fstream>
+#include <catch2/catch_test_macros.hpp>
+#include <filesystem>
+#include <fstream>
 
-# include "utils/config/config_reader.h"
+#include "core/strategy/grid_trading_config.h"
+#include "core/trading/asset_config.h"
+#include "utils/config/config_reader.h"
 
 /*TEST_CASE("[ConfigReader] - Edge Cases",
                "[config][edge]"){
@@ -80,18 +82,20 @@ TEST_CASE("[ConfigReader] - get_grid_trading_config returns correct "
             << "grid_num=3\n"
             << "grid_interval=10\n"
             << "half_spread=20\n"
-            << "position_limit=10.0\n";
+            << "position_limit=10.0\n"
+            << "notional_order_qty=100.0\n";
     }
 
     ConfigReader reader;
     GridTradingConfig config = reader.get_grid_trading_config(config_file);
 
-    REQUIRE(config.tick_size == 0.01);
-    REQUIRE(config.lot_size == 0.00001);
-    REQUIRE(config.grid_num == 3);
-    REQUIRE(config.grid_interval == 10);
-    REQUIRE(config.half_spread == 20);
-    REQUIRE(config.position_limit == 10.0);
+    REQUIRE(config.tick_size_ == 0.01);
+    REQUIRE(config.lot_size_ == 0.00001);
+    REQUIRE(config.grid_num_ == 3);
+    REQUIRE(config.grid_interval_ == 10);
+    REQUIRE(config.half_spread_ == 20);
+    REQUIRE(config.position_limit_ == 10.0);
+    REQUIRE(config.notional_order_qty_ == 100.0);
 
     std::filesystem::remove(config_file);
 }
@@ -129,11 +133,13 @@ TEST_CASE("[ConfigReader] - get_grid_trading_config throws on missing keys",
             << "grid_num=3\n"
             << "grid_interval=10\n"
             << "half_spread=20\n"
-            << "position_limit=10.0\n";
+            << "position_limit=10.0\n"
+            << "notional_order_qty=100.0\n";
     }
 
     ConfigReader reader;
-    REQUIRE_THROWS_AS(reader.get_grid_trading_config(config_file), std::runtime_error);
+    REQUIRE_THROWS_AS(reader.get_grid_trading_config(config_file),
+                      std::runtime_error);
 
     std::filesystem::remove(config_file);
 }
