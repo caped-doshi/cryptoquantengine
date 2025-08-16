@@ -8,6 +8,7 @@
  */
 
 #include <algorithm>
+#include <chrono>
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
@@ -232,6 +233,45 @@ double Recorder::max_drawdown() const {
     return max_dd;
 }
 
+/**
+ * @brief Prints the performance metrics of the recorded equities.
+ *
+ * This method outputs the Sharpe ratio, Sortino ratio, and maximum drawdown
+ * to the console, formatted to four decimal places for ratios and two decimal
+ * places for drawdown percentage.
+ */
+void Recorder::print_performance_metrics() const {
+    std::cout << "=== Performance Metrics ===\n";
+    try {
+        std::cout << "Sharpe Ratio   : " << std::fixed << std::setprecision(4)
+                  << sharpe() << "\n";
+    } catch (const std::exception &e) {
+        std::cout << "Sharpe Ratio   : Error (" << e.what() << ")\n";
+    }
+    try {
+        std::cout << "Sortino Ratio  : " << std::fixed << std::setprecision(4)
+                  << sortino() << "\n";
+    } catch (const std::exception &e) {
+        std::cout << "Sortino Ratio  : Error (" << e.what() << ")\n";
+    }
+    try {
+        std::cout << "Max Drawdown   : " << std::fixed << std::setprecision(2)
+                  << 100 * max_drawdown() << "%\n";
+    } catch (const std::exception &e) {
+        std::cout << "Max Drawdown   : Error (" << e.what() << ")\n";
+    }
+    std::cout << "==========================\n";
+}
+
+/**
+ * @brief Plots the recorded equity and position for a specific asset.
+ *
+ * This method generates a CSV file containing the equity, position, and mid
+ * price for the specified asset ID, and then calls an external Python script
+ * to plot the data.
+ *
+ * @param asset_id The ID of the asset to plot.
+ */
 void Recorder::plot(int asset_id) const {
     std::string csv_filename =
         "recorder_plot_" + std::to_string(asset_id) + ".csv";

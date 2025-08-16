@@ -54,6 +54,9 @@ void ExecutionEngine::add_asset(int asset_id, double tick_size,
     lot_sizes_[asset_id] = lot_size;
     orderbooks_.emplace(asset_id, OrderBook(tick_size, lot_size, logger_));
     active_orders_.emplace(asset_id, std::vector<std::shared_ptr<Order>>());
+    maker_books_.emplace(
+        asset_id, MakerBook{.bid_orders_ = std::unordered_map<Ticks, std::shared_ptr<Order>>(),
+                            .ask_orders_ = std::unordered_map<Ticks, std::shared_ptr<Order>>()});
     if (logger_) {
         logger_->log("[ExecutionEngine] - Added asset with ID: " +
                          std::to_string(asset_id) +
@@ -113,8 +116,8 @@ bool ExecutionEngine::clear_inactive_orders(int asset_id) {
         }
     };
     clear_from_container(active_orders_[asset_id]);
-    clear_from_container(maker_books_[asset_id].bid_orders_);
-    clear_from_container(maker_books_[asset_id].ask_orders_);
+    clear_from_container(maker_books_.at(asset_id).bid_orders_);
+    clear_from_container(maker_books_.at(asset_id).ask_orders_);
     clear_from_container(orders_);
     return true;
 }
@@ -569,9 +572,9 @@ bool ExecutionEngine::place_maker_order(int asset_id,
     order->queueEst_ =
         orderbooks_.at(asset_id).depth_at(order->side_, order_price_ticks);
     if (order->side_ == BookSide::Bid)
-        maker_books_[asset_id].bid_orders_[order_price_ticks] = order;
+        maker_books_.at(asset_id).bid_orders_[order_price_ticks] = order;
     else
-        maker_books_[asset_id].ask_orders_[order_price_ticks] = order;
+        maker_books_.at(asset_id).ask_orders_[order_price_ticks] = order;
     orders_[order->orderId_] = order;
     active_orders_[asset_id].push_back(order);
     order->orderStatus_ = OrderStatus::ACTIVE;
@@ -682,9 +685,9 @@ void ExecutionEngine::handle_book_update(int asset_id,
     Quantity deltaQ_n = book_update.quantity_ - Q_n;
     if (deltaQ_n < 0) {
         if (book_update.side_ == BookSide::Bid) {
-            auto it = maker_books_[asset_id].bid_orders_.find(
+            auto it = maker_books_.at(asset_id).bid_orders_.find(
                 book_update_price_ticks);
-            if (it != maker_books_[asset_id].bid_orders_.end()) {
+            if (it != maker_books_.at(asset_id).bid_orders_.end()) {
                 Quantity S =
                     it->second->quantity_ - it->second->filled_quantity_;
                 Quantity V_n = it->second->queueEst_;
@@ -696,9 +699,9 @@ void ExecutionEngine::handle_book_update(int asset_id,
                 it->second->queueEst_ = V_nplus1;
             }
         } else if (book_update.side_ == BookSide::Ask) {
-            auto it = maker_books_[asset_id].ask_orders_.find(
+            auto it = maker_books_.at(asset_id).ask_orders_.find(
                 book_update_price_ticks);
-            if (it != maker_books_[asset_id].ask_orders_.end()) {
+            if (it != maker_books_.at(asset_id).ask_orders_.end()) {
                 Quantity S =
                     it->second->quantity_ - it->second->filled_quantity_;
                 Quantity V_n = it->second->queueEst_;
@@ -743,11 +746,11 @@ void ExecutionEngine::handle_trade(int asset_id, const Trade &trade) {
     Ticks trade_price_ticks =
         price_to_ticks(trade.price_, tick_sizes_[asset_id]);
     auto it = (trade.side_ == TradeSide::Sell)
-                  ? maker_books_[asset_id].bid_orders_.find(trade_price_ticks)
-                  : maker_books_[asset_id].ask_orders_.find(trade_price_ticks);
+                  ? maker_books_.at(asset_id).bid_orders_.find(trade_price_ticks)
+                  : maker_books_.at(asset_id).ask_orders_.find(trade_price_ticks);
     auto end = (trade.side_ == TradeSide::Sell)
-                   ? maker_books_[asset_id].bid_orders_.end()
-                   : maker_books_[asset_id].ask_orders_.end();
+                   ? maker_books_.at(asset_id).bid_orders_.end()
+                   : maker_books_.at(asset_id).ask_orders_.end();
     if (it == end) {
         if (trade.side_ == TradeSide::Sell) {
             if (logger_) {
@@ -757,10 +760,10 @@ void ExecutionEngine::handle_trade(int asset_id, const Trade &trade) {
                         "us - no matching orders found at price " +
                         std::to_string(trade.price_) + " among " +
                         std::to_string(
-                            maker_books_[asset_id].bid_orders_.size()) +
+                            maker_books_.at(asset_id).bid_orders_.size()) +
                         " bid orders",
                     LogLevel::Debug);
-                for (const auto &kv : maker_books_[asset_id].bid_orders_) {
+                for (const auto &kv : maker_books_.at(asset_id).bid_orders_) {
                     logger_->log(std::to_string(ticks_to_price(
                                      kv.first, tick_sizes_[asset_id])),
                                  LogLevel::Debug);
@@ -774,10 +777,10 @@ void ExecutionEngine::handle_trade(int asset_id, const Trade &trade) {
                         "us - no matching orders found at price " +
                         std::to_string(trade.price_) + " among " +
                         std::to_string(
-                            maker_books_[asset_id].ask_orders_.size()) +
+                            maker_books_.at(asset_id).ask_orders_.size()) +
                         " ask orders",
                     LogLevel::Debug);
-                for (const auto &kv : maker_books_[asset_id].ask_orders_) {
+                for (const auto &kv : maker_books_.at(asset_id).ask_orders_) {
                     logger_->log(std::to_string(ticks_to_price(
                                      kv.first, tick_sizes_[asset_id])),
                                  LogLevel::Debug);
@@ -893,7 +896,7 @@ void ExecutionEngine::clear_fills() { fills_.clear(); }
  * @param qty The quantity (x) for which to compute log(1 + x).
  * @return The natural logarithm of (1 + qty).
  */
-double ExecutionEngine::f(const double x) { return std::log1p(x); }
+constexpr double ExecutionEngine::f(const double x) { return std::log1p(x); }
 
 /**
  * @brief Sets the order entry latency in microseconds

@@ -57,14 +57,14 @@ class ExecutionEngine {
     void clear_fills();
     void clear_order_updates();
 
-    double f(const double x);
+    constexpr double f(const double x);
 
     void set_order_entry_latency_us(const Microseconds latency_us);
     void set_order_response_latency_us(const Microseconds latency_us);
 
   private:
-    std::uint64_t order_entry_latency_us_ = 1000;
-    std::uint64_t order_response_latency_us_ = 1000;
+    Microseconds order_entry_latency_us_ = 25000;
+    Microseconds order_response_latency_us_ = 10000;
 
     std::unordered_map<int, double> tick_sizes_;
     std::unordered_map<int, double> lot_sizes_;
@@ -75,8 +75,8 @@ class ExecutionEngine {
     std::vector<Fill> fills_;
 
     struct MakerBook {
-        std::map<Ticks, std::shared_ptr<Order>, std::greater<>> bid_orders_;
-        std::map<Ticks, std::shared_ptr<Order>> ask_orders_;
+        std::unordered_map<Ticks, std::shared_ptr<Order>> bid_orders_;
+        std::unordered_map<Ticks, std::shared_ptr<Order>> ask_orders_;
     };
     std::unordered_map<int, MakerBook> maker_books_;
 

@@ -44,8 +44,8 @@
  */
 BacktestEngine::BacktestEngine(
     const std::unordered_map<int, AssetConfig> &asset_configs,
-    std::shared_ptr<Logger> logger)
-    : current_time_us_(0), cash_balance(0.0), logger_(logger) {
+    std::shared_ptr<Logger> logger, double cash)
+    : current_time_us_(0), local_cash_balance_(cash), logger_(logger) {
 
     execution_engine_ = ExecutionEngine(logger_);
     for (const auto &[asset_id, config] : asset_configs) {
@@ -476,12 +476,13 @@ void BacktestEngine::process_fill_local(int asset_id, const Fill &fill) {
     Quantity signed_qty =
         (fill.side_ == TradeSide::Buy) ? fill.quantity_ : -fill.quantity_;
     local_position_[asset_id] += signed_qty;
+    num_trades_[asset_id] += 1;
     trading_volume_[asset_id] += fill.quantity_;
     trading_value_[asset_id] += fill.quantity_ * fill.price_;
     double fee_rate = (fill.is_maker) ? assets_[asset_id].config().maker_fee_
                                       : assets_[asset_id].config().taker_fee_;
     double fee = fill.quantity_ * fill.price_ * fee_rate;
-    cash_balance += -signed_qty * fill.price_ - fee;
+    local_cash_balance_ += -signed_qty * fill.price_ - fee;
 }
 
 void BacktestEngine::process_book_update_local(int asset_id,
@@ -523,7 +524,7 @@ const std::vector<Order> BacktestEngine::orders(int asset_id) const {
  *
  * @return The current cash balance as a double.
  */
-const double BacktestEngine::cash() const { return cash_balance; }
+const double BacktestEngine::cash() const { return local_cash_balance_; }
 
 /**
  * @brief Returns the current equity value of the backtest portfolio.
@@ -534,7 +535,7 @@ const double BacktestEngine::cash() const { return cash_balance; }
  * @return The total equity as a double.
  */
 const double BacktestEngine::equity() const {
-    double value = cash_balance;
+    double value = local_cash_balance_;
     for (auto &[asset_id, pos] : local_position_) {
         value += pos * local_orderbooks_.at(asset_id).mid_price();
     }
@@ -573,23 +574,23 @@ const Depth BacktestEngine::depth(int asset_id) const {
     }
     // local_orderbooks_.at(asset_id).print_top_levels();
     std::unordered_map<Ticks, Quantity> bid_depth;
-    int bid_levels = local_orderbooks_.at(asset_id).bid_levels();
+    /* int bid_levels = local_orderbooks_.at(asset_id).bid_levels();
     for (int level = 0; level < bid_levels; level++) {
         Ticks bid_level_price_ticks =
             local_orderbooks_.at(asset_id).price_at_level(BookSide::Bid, level);
         double bid_level_depth =
             local_orderbooks_.at(asset_id).depth_at_level(BookSide::Bid, level);
         bid_depth[bid_level_price_ticks] = bid_level_depth;
-    }
+    }*/
     std::unordered_map<Ticks, Quantity> ask_depth;
-    int ask_levels = local_orderbooks_.at(asset_id).ask_levels();
+    /* int ask_levels = local_orderbooks_.at(asset_id).ask_levels();
     for (int level = 0; level < ask_levels; level++) {
         Ticks ask_level_price_ticks =
             local_orderbooks_.at(asset_id).price_at_level(BookSide::Ask, level);
         double ask_level_depth =
             local_orderbooks_.at(asset_id).depth_at_level(BookSide::Ask, level);
         ask_depth[ask_level_price_ticks] = ask_level_depth;
-    }
+    }*/
     return Depth{.best_bid_ = best_bid,
                  .bid_qty_ = bid_0_size,
                  .best_ask_ = best_ask,
@@ -598,6 +599,46 @@ const Depth BacktestEngine::depth(int asset_id) const {
                  .ask_depth_ = ask_depth,
                  .tick_size_ = tick_sizes_.at(asset_id),
                  .lot_size_ = lot_sizes_.at(asset_id)};
+}
+
+/**
+ * @brief Prints trading statistics for the specified asset.
+ *
+ * This method outputs the trading statistics for a given asset ID, including
+ * the number of trades, total trading volume, total trading value, and
+ * realized PnL. It retrieves these values from the internal maps that track
+ * per-asset statistics.
+ *
+ * @param asset_id The identifier of the asset for which to print statistics.
+ */ 
+void BacktestEngine::print_trading_stats(int asset_id) const {
+    auto num_trades_it = num_trades_.find(asset_id);
+    auto trading_volume_it = trading_volume_.find(asset_id);
+    auto trading_value_it = trading_value_.find(asset_id);
+    auto realized_pnl_it = realized_pnl_.find(asset_id);
+
+    std::cout << "=== Trading Statistics for Asset ID: " << asset_id
+              << " ===\n";
+    std::cout << "Number of Trades   : "
+              << (num_trades_it != num_trades_.end() ? num_trades_it->second
+                                                     : 0)
+              << "\n";
+    std::cout << "Trading Volume     : "
+              << (trading_volume_it != trading_volume_.end()
+                      ? trading_volume_it->second
+                      : 0.0)
+              << "\n";
+    std::cout << "Trading Value      : "
+              << (trading_value_it != trading_value_.end()
+                      ? trading_value_it->second
+                      : 0.0)
+              << "\n";
+    std::cout << "Realized PnL       : "
+              << (realized_pnl_it != realized_pnl_.end()
+                      ? realized_pnl_it->second
+                      : 0.0)
+              << "\n";
+    std::cout << "=============================================\n";
 }
 
 /**
