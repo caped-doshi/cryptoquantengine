@@ -27,16 +27,17 @@ int main() {
     std::unordered_map<int, AssetConfig> asset_configs;
     const int asset_id = 1; // Example asset ID
     asset_configs.insert({asset_id, asset_config});
-    auto logger = std::make_shared<Logger>("backtest.log", LogLevel::Error);
+    //auto logger = std::make_shared<Logger>("backtest.log", LogLevel::Error);
+    auto logger = nullptr;
 
     BacktestEngine hbt(asset_configs, logger);
-    Recorder recorder(5'000'000, logger); 
+    Recorder recorder(1'000'000, logger); 
     GridTrading grid_trading(1, grid_trading_config, logger);
     
     auto start = std::chrono::high_resolution_clock::now();
 
     std::uint64_t iter = 7200;
-    while (hbt.elapse(500'000) && iter-- > 0) {
+    while (hbt.elapse(10'000'000) && iter-- > 0) {
         hbt.clear_inactive_orders();
         grid_trading.on_elapse(hbt);
         recorder.record(hbt, asset_id); 
@@ -45,6 +46,11 @@ int main() {
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = end - start;
     std::cout << "Backtest wall time: " << elapsed.count() << " seconds\n";
+
+    std::cout << "Final equity: " << hbt.equity() << "\n";
+    std::cout << "Sharpe Ratio: " << recorder.sharpe() << "\n";
+    std::cout << "Sortino Ratio: " << recorder.sortino() << "\n";
+    std::cout << "Max Drawdown: " << recorder.max_drawdown() << "\n";
 
     recorder.plot(asset_id); 
 
