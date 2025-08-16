@@ -33,7 +33,7 @@ class BacktestEngine {
   public:
     explicit BacktestEngine(
         const std::unordered_map<int, AssetConfig> &asset_configs,
-        std::shared_ptr<Logger> logger = nullptr);
+        std::shared_ptr<Logger> logger = nullptr, double cash=0.0);
 
     // global methods
     bool elapse(std::uint64_t microseconds);
@@ -56,6 +56,10 @@ class BacktestEngine {
     const Depth depth(int asset_id) const;
     const Timestamp current_time() const;
 
+    void print_trading_stats(int asset_id) const;
+
+    void set_cash(double cash);
+
     void set_order_entry_latency(Microseconds latency_us);
     void set_order_response_latency(Microseconds latency_us);
     void set_market_feed_latency(Microseconds latency_us);
@@ -65,8 +69,8 @@ class BacktestEngine {
     const Microseconds market_feed_latency() const;
 
   private:
-    Microseconds order_entry_latency_us = 50000;
-    Microseconds order_response_latency_us = 50000;
+    Microseconds order_entry_latency_us = 25000;
+    Microseconds order_response_latency_us = 10000;
     Microseconds market_feed_latency_us = 50000;
 
     // backtest simulation methods
@@ -78,25 +82,27 @@ class BacktestEngine {
     void process_fill_local(int asset_id, const Fill &fill);
     void process_book_update_local(int asset_id, const BookUpdate &book_update);
 
-    Timestamp current_time_us_; // microseconds
+    Timestamp current_time_us_; 
     ExecutionEngine execution_engine_;
     MarketDataFeed market_data_feed_;
     OrderIdGenerator orderId_gen_;
     
-    std::unordered_map<int, OrderBook> local_orderbooks_;
-    std::unordered_map<int, Order> local_active_orders_;
+    // asset configurations
     std::unordered_map<int, BacktestAsset> assets_;
-
     std::unordered_map<int, double> tick_sizes_;
     std::unordered_map<int, double> lot_sizes_;
+    
+    // local state (updated with latency simulation)
+    double local_cash_balance_;
+    std::unordered_map<int, double> local_position_;
+    std::unordered_map<int, OrderBook> local_orderbooks_;
+    std::unordered_map<int, Order> local_active_orders_;
 
-    double cash_balance;
+    // trading statistics
     std::unordered_map<int, int> num_trades_;
     std::unordered_map<int, double> trading_volume_;
     std::unordered_map<int, double> trading_value_;
     std::unordered_map<int, double> realized_pnl_;
-
-    std::unordered_map<int, double> local_position_;
 
     struct DelayedAction {
         ActionType type_;
