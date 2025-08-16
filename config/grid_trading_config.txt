@@ -1,0 +1,7 @@
+tick_size=0.01
+lot_size=0.1
+grid_num=3
+grid_interval=10
+half_spread=20
+position_limit=10.0
+notional_order_qty=100.0

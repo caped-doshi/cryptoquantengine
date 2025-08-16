@@ -69,8 +69,18 @@ BacktestEngine::BacktestEngine(
         tick_sizes_[asset_id] = config.tick_size_;
         lot_sizes_[asset_id] = config.lot_size_;
     }
-    logger_->log("[BacktestEngine] - Initialized with " +
-                 std::to_string(assets_.size()) + " assets.");
+    auto first_event_us_opt = market_data_feed_.peek_timestamp();
+    if (first_event_us_opt.has_value()) {
+        std::uint64_t raw_start =
+            *first_event_us_opt > 1000000 ? *first_event_us_opt - 1000000 : 0;
+        current_time_us_ = (raw_start / 1000000) * 1000000;
+    } else {
+        current_time_us_ = 0;
+    }
+
+    logger_->log("[BacktestEngine] - " + std::to_string(current_time_us_) +
+                 "us - Initialized with " + std::to_string(assets_.size()) +
+                 " assets.");
 }
 
 /**
@@ -171,9 +181,10 @@ bool BacktestEngine::elapse(std::uint64_t microseconds) {
         }
     }
     current_time_us_ = next_interval_us;
-    return true;
+    logger_->log("[BacktestEngine] - " + std::to_string(current_time_us_) +
+                 "us - elapse complete");
+    return std::isfinite(current_time_us_);
 }
-
 
 bool BacktestEngine::order_inactive(const Order &order) {
     // Check if order is filled, cancelled, or expired
@@ -188,13 +199,14 @@ bool BacktestEngine::order_inactive(const Order &order) {
  * @brief Clears cancelled, filled, or expired orders.
  * @param asset_id
  */
-void BacktestEngine::clear_inactive_orders() { 
+void BacktestEngine::clear_inactive_orders() {
     logger_->log("[BacktestEngine] - " + std::to_string(current_time_us_) +
                  "us - clearing inactive orders");
     for (auto it = local_active_orders_.begin();
-        it != local_active_orders_.end();) {
+         it != local_active_orders_.end();) {
         if (order_inactive(it->second)) {
-            logger_->log("[BacktestEngine] - " + std::to_string(current_time_us_) +
+            logger_->log("[BacktestEngine] - " +
+                         std::to_string(current_time_us_) +
                          "us - clearing inactive order (" +
                          std::to_string(it->second.orderId_) + ")");
             it = local_active_orders_.erase(it);

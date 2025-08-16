@@ -1,7 +1,7 @@
 /*
  * File: hftengine/core/data/readers/book_stream_reader.h
  * Description: Class to read L2 data from tardis incremental_book_update csv
- * files. 
+ * files.
  * Author: Arvind Rathnashyam
  * Date: 2025-06-24
  * License: Proprietary
@@ -36,4 +36,5 @@ class BookStreamReader {
             : reader(filename) {}
     };
     std::unique_ptr<CSVReaderImpl> csv_reader_;
+    bool has_local_timestamp_ = false;
 };

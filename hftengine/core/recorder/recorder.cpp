@@ -76,9 +76,9 @@ void Recorder::record(const BacktestEngine &hbt, int asset_id) {
     records_.emplace_back(EquitySnapshot{current_time, equity});
     state_records_.emplace_back(StateSnapshot{current_time, equity, position});
     logger_->log("[Recorder] - " + std::to_string(current_time) +
-                 "us - equity : " + std::to_string(equity) +
-                 ", asset id : " + std::to_string(asset_id) +
-                 " position : " + std::to_string(position));
+                 "us - asset_id= " + std::to_string(asset_id) +
+                 ", equity=" + std::to_string(equity) +
+                 " position=" + std::to_string(position));
 }
 
 /**

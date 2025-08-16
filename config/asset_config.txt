@@ -1,0 +1,8 @@
+book_update_file=../data/book/XRP-USDC-PERP-binance-tardis_us.csv
+trade_file=../data/trade/XRP-USDC-PERP-binance-tardis_us.csv
+tick_size=0.0001
+lot_size=0.1
+contract_multiplier=1.0
+is_inverse=0
+maker_fee=0.0000
+taker_fee=0.0005

@@ -707,7 +707,7 @@ void ExecutionEngine::handle_trade(int asset_id, const Trade &trade) {
                 std::to_string(maker_books_[asset_id].bid_orders_.size()) +
                 " bid orders : ");
             for (const auto &kv : maker_books_[asset_id].bid_orders_) {
-                logger_->log(std::to_string(kv.first) + " ");
+                logger_->log("\t" + std::to_string(ticks_to_price(kv.first,tick_sizes_[asset_id])));
             }
         } else if (trade.side_ == TradeSide::Buy) {
             logger_->log(
@@ -717,7 +717,8 @@ void ExecutionEngine::handle_trade(int asset_id, const Trade &trade) {
                 std::to_string(maker_books_[asset_id].ask_orders_.size()) +
                 " ask orders : ");
             for (const auto &kv : maker_books_[asset_id].ask_orders_) {
-                logger_->log(std::to_string(kv.first) + " ");
+                logger_->log("\n" + std::to_string(
+                    ticks_to_price(kv.first, tick_sizes_[asset_id])));
             }
         }
         return;

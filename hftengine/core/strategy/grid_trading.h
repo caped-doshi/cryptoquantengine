@@ -16,6 +16,7 @@
 #include "../trading/backtest_engine.h"
 #include "../trading/depth.h"
 #include "../types/usings.h"
+#include "grid_trading_config.h"
 #include "strategy.h"
 
 class GridTrading : public Strategy {
@@ -24,6 +25,8 @@ class GridTrading : public Strategy {
                          Ticks half_spread, double position_limit,
                          double notional_order_qty,
                          std::shared_ptr<Logger> logger);
+    explicit GridTrading(int asset_id, const GridTradingConfig &config,
+                         std::shared_ptr<Logger> logger = nullptr);
 
     void initialize() override;
     void on_elapse(BacktestEngine &hbt) override;

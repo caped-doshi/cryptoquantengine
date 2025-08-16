@@ -6,8 +6,8 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Define executable
-add_executable(hftengine
-  hftengine/main.cpp
+add_executable(hftbacktest
+  hftengine/backtest_main.cpp
   hftengine/core/orderbook/orderbook.cpp
   hftengine/utils/config/config_reader.cpp
   hftengine/core/execution_engine/execution_engine.cpp
@@ -21,19 +21,19 @@ add_executable(hftengine
 )
 
 # THEN set properties
-target_include_directories(hftengine PRIVATE
+target_include_directories(hftbacktest PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/hftengine
   ${CMAKE_CURRENT_SOURCE_DIR}/external 
 )
 
 # Compiler flags
-target_compile_options(hftengine PRIVATE
+target_compile_options(hftbacktest PRIVATE
   $<$<CONFIG:Release>:-O3>
   $<$<CONFIG:Debug>:-O3 -Wall -Wextra -Wpedantic>
 )
 
 # Link pthreads to main executable (required for std::thread on Linux)
-target_link_libraries(hftengine PRIVATE Threads::Threads)
+target_link_libraries(hftbacktest PRIVATE Threads::Threads)
 
 # Catch2 test setup
 include(FetchContent)
@@ -59,7 +59,7 @@ target_include_directories(test_orderbook PRIVATE
 
 # 2. ConfigReader Tests
 add_executable(test_config_reader
-  tests/test_config_reader.cpp
+  tests/utils/test_config_reader.cpp
   hftengine/utils/config/config_reader.cpp
 )
 
