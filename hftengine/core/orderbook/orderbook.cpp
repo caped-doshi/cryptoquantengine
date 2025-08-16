@@ -249,7 +249,7 @@ void OrderBook::print_top_levels(int depth) const {
             << ticks_to_price(price, tick_size_) << " : " << qty << "\n";
     }
     if (logger_) {
-        logger_->log(oss.str());
+        logger_->log(oss.str(),LogLevel::Info);
     } else {
         std::cout << oss.str();
     }

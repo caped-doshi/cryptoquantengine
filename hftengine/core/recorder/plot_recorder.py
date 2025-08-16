@@ -32,7 +32,7 @@ asset_id = sys.argv[2]
 df = pd.read_csv(csv_filename)
 
 # Convert timestamp to a readable format if needed (optional)
-# df['timestamp'] = pd.to_datetime(df['timestamp'], unit='us')
+df['timestamp'] = pd.to_datetime(df['timestamp'], unit='us')
 
 fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, figsize=(14, 8))
 
@@ -54,8 +54,6 @@ ax1b.tick_params(axis='y')
 ax1b.legend(loc='upper right')
 
 # --- Bottom plot: Position ---
-color_position = 'tab:green'
-
 ax2.plot(df['timestamp'], df['position'], label='Position')
 ax2.set_ylabel('Position')
 ax2.tick_params(axis='y')
