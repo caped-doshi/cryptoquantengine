@@ -35,9 +35,11 @@
  */
 Recorder::Recorder(Microseconds interval_us, std::shared_ptr<Logger> logger)
     : interval_us_(interval_us), logger_(logger) {
-    logger_->log("[Recorder] - Initialized with interval: " +
-                     std::to_string(interval_us) + " microseconds"
-                 , LogLevel::Debug);
+    if (logger_) {
+        logger_->log("[Recorder] - Initialized with interval: " +
+                         std::to_string(interval_us) + " microseconds",
+                     LogLevel::Debug);
+    }
 }
 
 /**
@@ -86,13 +88,15 @@ void Recorder::record(const BacktestEngine &hbt, int asset_id) {
     records_.emplace_back(EquitySnapshot{current_time, equity});
     state_records_.emplace_back(
         StateSnapshot{current_time, equity, position, mid_price});
-
-    logger_->log("[Recorder] - " + std::to_string(current_time) +
-                 "us - asset_id= " + std::to_string(asset_id) +
-                 ", equity=" + std::to_string(equity) +
-                 ", position=" + std::to_string(position) +
-                     ", price=" + std::to_string(mid_price),
-                 LogLevel::Debug);
+    
+    if (logger_) {
+        logger_->log("[Recorder] - " + std::to_string(current_time) +
+                         "us - asset_id= " + std::to_string(asset_id) +
+                         ", equity=" + std::to_string(equity) +
+                         ", position=" + std::to_string(position) +
+                         ", price=" + std::to_string(mid_price),
+                     LogLevel::Debug);
+    }
 }
 
 /**
