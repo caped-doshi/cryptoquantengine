@@ -17,6 +17,8 @@
 #include <vector>
 
 #include "../../utils/logger/logger.h"
+#include "../../utils/logger/log_level.h"
+#include "../../utils/math/math_utils.h"
 #include "../../utils/stat/stat_utils.h"
 #include "../types/usings.h"
 #include "recorder.h"
@@ -34,7 +36,8 @@
 Recorder::Recorder(Microseconds interval_us, std::shared_ptr<Logger> logger)
     : interval_us_(interval_us), logger_(logger) {
     logger_->log("[Recorder] - Initialized with interval: " +
-                 std::to_string(interval_us) + " microseconds");
+                     std::to_string(interval_us) + " microseconds"
+                 , LogLevel::Debug);
 }
 
 /**
@@ -73,12 +76,23 @@ void Recorder::record(const BacktestEngine &hbt, int asset_id) {
     Timestamp current_time = hbt.current_time();
     double equity = hbt.equity();
     Quantity position = hbt.position(asset_id);
+    Depth depth = hbt.depth(asset_id);
+    double tick_size = depth.tick_size_;
+    Price mid_price = (ticks_to_price(depth.best_bid_, tick_size) +
+                       ticks_to_price(depth.best_ask_, tick_size)) /
+                      2.0;
+    if (!std::isfinite(mid_price)) mid_price = 0.0;
+
     records_.emplace_back(EquitySnapshot{current_time, equity});
-    state_records_.emplace_back(StateSnapshot{current_time, equity, position});
+    state_records_.emplace_back(
+        StateSnapshot{current_time, equity, position, mid_price});
+
     logger_->log("[Recorder] - " + std::to_string(current_time) +
                  "us - asset_id= " + std::to_string(asset_id) +
                  ", equity=" + std::to_string(equity) +
-                 " position=" + std::to_string(position));
+                 ", position=" + std::to_string(position) +
+                     ", price=" + std::to_string(mid_price),
+                 LogLevel::Debug);
 }
 
 /**
@@ -220,12 +234,14 @@ void Recorder::plot(int asset_id) const {
     std::ofstream csv(csv_filename);
     csv << "timestamp,equity,position,mid_price\n";
     for (const auto &state : state_records_) {
+        if (state.price_ <= 0) continue;
         csv << state.timestamp_ << "," << state.equity_ << ","
             << state.position_ << "," << state.price_ << "\n";
     }
     csv.close();
 
-    std::string command = "python ../hftengine/core/recorder/plot_recorder.py " + csv_filename + " " +
-                          std::to_string(asset_id);
+    std::string command =
+        "python ../hftengine/core/recorder/plot_recorder.py " + csv_filename +
+        " " + std::to_string(asset_id);
     std::system(command.c_str());
 }

@@ -14,11 +14,13 @@
 #include <memory>
 
 #include "../hftengine/core/recorder/recorder.h"
+#include "../hftengine/utils/logger/log_level.h"
 #include "../hftengine/utils/logger/logger.h"
 #include "../hftengine/utils/stat/stat_utils.h"
 
 TEST_CASE("[Recorder] - recorder interval returns", "[recorder][initial]") {
-    auto logger = std::make_shared<Logger>("test_recorder_initial.log");
+    auto logger =
+        std::make_shared<Logger>("test_recorder_initial.log", LogLevel::Debug);
     Recorder recorder(1'000'000, logger);
     SECTION("Empty recorder returns empty vectors") {
         REQUIRE(recorder.interval_returns().empty());
@@ -32,7 +34,8 @@ TEST_CASE("[Recorder] - recorder interval returns", "[recorder][initial]") {
 }
 
 TEST_CASE("[Recorder] - interval returns calculation", "[recorder][returns]") {
-    auto logger = std::make_shared<Logger>("test_recorder_returns.log");
+    auto logger =
+        std::make_shared<Logger>("test_recorder_returns.log", LogLevel::Debug);
     Recorder recorder(1'000'000, logger);
     SECTION("Process multiple returns") {
         recorder.record(0, 100.0);
@@ -50,7 +53,8 @@ TEST_CASE("[Recorder] - interval returns calculation", "[recorder][returns]") {
 }
 
 TEST_CASE("[Recorder] - Risk-adjusted metrics edge cases", "[recorder][edge]") {
-    auto logger = std::make_shared<Logger>("test_recorder_edge.log");
+    auto logger =
+        std::make_shared<Logger>("test_recorder_edge.log", LogLevel::Debug);
     Recorder recorder(1'000'000, logger); // 1 second interval
 
     SECTION("Sharpe ratio calculation") {
@@ -88,7 +92,8 @@ TEST_CASE("[Recorder] - Risk-adjusted metrics edge cases", "[recorder][edge]") {
 
 TEST_CASE("[Recorder] - Risk adjusted metrics correctness",
           "[recorder][correctness]") {
-    auto logger = std::make_shared<Logger>("test_recorder_correctness.log");
+    auto logger = std::make_shared<Logger>("test_recorder_correctness.log",
+                                           LogLevel::Debug);
     Recorder recorder(60'000'000, logger);
 
     recorder.record(0, 100.0);
@@ -144,22 +149,23 @@ TEST_CASE("[Recorder] - Risk adjusted metrics correctness",
 
 TEST_CASE("[Recorder] - Max drawdown edge cases", "[recorder][drawdown]") {
     SECTION("Empty recorder throws") {
-        auto logger = std::make_shared<Logger>("test_recorder_drawdown_throws.log");
+        auto logger = std::make_shared<Logger>(
+            "test_recorder_drawdown_throws.log", LogLevel::Debug);
         Recorder recorder(60'000'000, logger);
         REQUIRE_THROWS_AS(recorder.max_drawdown(), std::runtime_error);
     }
 
     SECTION("Single record gives zero drawdown") {
-        auto logger =
-            std::make_shared<Logger>("test_recorder_drawdown_single.log");
+        auto logger = std::make_shared<Logger>(
+            "test_recorder_drawdown_single.log", LogLevel::Debug);
         Recorder recorder(60'000'000, logger);
         recorder.record(0, 100.0);
         REQUIRE(recorder.max_drawdown() == 0.0);
     }
 
     SECTION("All increasing values gives zero drawdown") {
-        auto logger =
-            std::make_shared<Logger>("test_recorder_drawdown_increasing.log");
+        auto logger = std::make_shared<Logger>(
+            "test_recorder_drawdown_increasing.log", LogLevel::Debug);
         Recorder recorder(60'000'000, logger);
         recorder.record(0, 100.0);
         recorder.record(60'000'000, 110.0);
@@ -168,8 +174,8 @@ TEST_CASE("[Recorder] - Max drawdown edge cases", "[recorder][drawdown]") {
     }
 
     SECTION("All decreasing values gives max drawdown") {
-        auto logger =
-            std::make_shared<Logger>("test_recorder_drawdown_decreasing.log");
+        auto logger = std::make_shared<Logger>(
+            "test_recorder_drawdown_decreasing.log", LogLevel::Debug);
         Recorder recorder(60'000'000, logger);
         recorder.record(0, 100.0);
         recorder.record(60'000'000, 90.0);
@@ -212,7 +218,8 @@ TEST_CASE("[Recorder] - record(BacktestEngine, int) with limit orders"
                                .is_inverse_ = false,
                                .maker_fee_ = 0.0,
                                .taker_fee_ = 0.0}}};
-    auto logger = std::make_shared<Logger>("test_recorder_limit_order.log");
+    auto logger = std::make_shared<Logger>("test_recorder_limit_order.log",
+                                           LogLevel::Debug);
     BacktestEngine engine(asset_configs, logger);
     engine.set_order_entry_latency(1000);
     engine.set_order_response_latency(1000);

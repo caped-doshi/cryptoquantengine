@@ -16,12 +16,14 @@
 #include <thread>
 
 #include "logger.h"
+#include "log_level.h"
 
 /*
  * @brief Constructs a Logger that writes to the specified file.
  */
-Logger::Logger(const std::string &filename)
-    : exit_flag_(false), log_file_(filename, std::ios::out) {
+Logger::Logger(const std::string &filename, LogLevel level)
+    : exit_flag_(false), log_level_(level) {
+    log_file_.open(filename, std::ios::out | std::ios::app);
     logging_thread_ = std::thread(&Logger::process, this);
 }
 /*
@@ -40,11 +42,10 @@ Logger::~Logger() {
  * @brief Logs a message by adding it to the queue and notifying the logging
  * thread.
  */
-void Logger::log(const std::string &message) {
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        messages_.push(message);
-    }
+void Logger::log(const std::string &message, LogLevel level) {
+    if (level < log_level_) return;
+    std::lock_guard<std::mutex> lock(mutex_);
+    messages_.push(message);
     cond_var_.notify_one();
 }
 /*
@@ -81,3 +82,8 @@ void Logger::process() {
         if (exit_flag_ && messages_.empty()) break;
     }
 }
+
+/*
+ * @brief 
+ */
+void Logger::set_level(LogLevel level) { log_level_ = level; }

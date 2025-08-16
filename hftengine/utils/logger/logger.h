@@ -17,16 +17,15 @@
 #include <string>
 #include <thread>
 
+#include "log_level.h"
+
 class Logger {
   public:
-    // Construct logger with output file
-    explicit Logger(const std::string &filename);
-    // Destructor ensures all messages are flushed and thread is joined
+    explicit Logger(const std::string &filename, LogLevel level);
     ~Logger();
-    // Thread-safe log method
-    void log(const std::string &message);
-    // Optionally, flush remaining messages immediately
+    void log(const std::string &message, LogLevel level);
     void flush();
+    void set_level(LogLevel level);
 
   private:
     void process(); // Logging thread function
@@ -37,4 +36,5 @@ class Logger {
     std::thread logging_thread_;
     std::ofstream log_file_;
     std::atomic<bool> exit_flag_;
+    std::atomic<LogLevel> log_level_;
 };

@@ -21,6 +21,8 @@
 #include "core/types/time_in_force.h"
 #include "core/types/update_type.h"
 #include "core/types/usings.h"
+#include "utils/logger/log_level.h"
+#include "utils/logger/logger.h"
 #include "utils/math/math_utils.h"
 
 namespace TestHelpers {
@@ -62,8 +64,9 @@ TEST_CASE("[BacktestEngine] - initializes correctly with valid input",
                                .is_inverse_ = false,
                                .maker_fee_ = 0.0,
                                .taker_fee_ = 0.00045}}};
-    // Logger    
-    auto logger = std::make_shared<Logger>("test_backtest_engine_init.log");
+    // Logger
+    auto logger = std::make_shared<Logger>("test_backtest_engine_init.log",
+                                           LogLevel::Debug);
 
     SECTION("Construct BacktestEngine with valid file inputs") {
         bool threw = false;
@@ -100,7 +103,8 @@ TEST_CASE("[BacktestEngine] - rejects invalid orders",
                                .is_inverse_ = false,
                                .maker_fee_ = 0.0,
                                .taker_fee_ = 0.00045}}};
-    auto logger = std::make_shared<Logger>("test_backtest_engine_invalid.log");
+    auto logger = std::make_shared<Logger>("test_backtest_engine_invalid.log",
+                                           LogLevel::Debug);
     BacktestEngine hbt(asset_configs, logger);
     hbt.set_order_entry_latency(1000);
     hbt.set_order_response_latency(1000);
@@ -144,7 +148,8 @@ TEST_CASE("[BacktestEngine] - elapse", "[backtest-engine][elapse]") {
                                .taker_fee_ = 0.00045}}};
 
     SECTION("Current timestamp elapses correctly") {
-        auto logger = std::make_shared<Logger>("test_backtest_engine_elapse_correct.log");
+        auto logger = std::make_shared<Logger>(
+            "test_backtest_engine_elapse_correct.log", LogLevel::Debug);
         BacktestEngine hbt(asset_configs, logger);
         hbt.set_order_entry_latency(1000);
         hbt.set_order_response_latency(1000);
@@ -157,7 +162,8 @@ TEST_CASE("[BacktestEngine] - elapse", "[backtest-engine][elapse]") {
         logger->flush();
     }
     SECTION("local orderbook updated with latency") {
-        auto logger = std::make_shared<Logger>("test_backtest_engine_elapse_latency.log");
+        auto logger = std::make_shared<Logger>(
+            "test_backtest_engine_elapse_latency.log", LogLevel::Debug);
         BacktestEngine hbt(asset_configs, logger);
         hbt.set_order_entry_latency(1000);
         hbt.set_order_response_latency(1000);
@@ -166,12 +172,12 @@ TEST_CASE("[BacktestEngine] - elapse", "[backtest-engine][elapse]") {
         REQUIRE(hbt.current_time() == 50000);
 
         depth = hbt.depth(asset_id);
-        REQUIRE(depth.best_ask_ == price_to_ticks(50001.0,tick_size));
-        REQUIRE(depth.best_bid_ == price_to_ticks(50000.5,tick_size));
+        REQUIRE(depth.best_ask_ == price_to_ticks(50001.0, tick_size));
+        REQUIRE(depth.best_bid_ == price_to_ticks(50000.5, tick_size));
         REQUIRE(depth.ask_qty_ == 1.5);
         REQUIRE(depth.bid_qty_ == 2.0);
-        REQUIRE(depth.bid_depth_[price_to_ticks(50000.5,tick_size)] == 2.0);
-        REQUIRE(depth.ask_depth_[price_to_ticks(50001.0,tick_size)] == 1.5);
+        REQUIRE(depth.bid_depth_[price_to_ticks(50000.5, tick_size)] == 2.0);
+        REQUIRE(depth.ask_depth_[price_to_ticks(50001.0, tick_size)] == 1.5);
 
         REQUIRE(hbt.elapse(2000) == true);
         REQUIRE(hbt.current_time() == 52000);
@@ -182,7 +188,8 @@ TEST_CASE("[BacktestEngine] - elapse", "[backtest-engine][elapse]") {
         logger->flush();
     }
     SECTION("Market order executed in correct schedule") {
-        auto logger = std::make_shared<Logger>("test_backtest_engine_elapse_market_schedule.log");
+        auto logger = std::make_shared<Logger>(
+            "test_backtest_engine_elapse_market_schedule.log", LogLevel::Debug);
         BacktestEngine hbt(asset_configs, logger);
         hbt.set_order_entry_latency(1000);
         hbt.set_order_response_latency(1000);
@@ -194,7 +201,7 @@ TEST_CASE("[BacktestEngine] - elapse", "[backtest-engine][elapse]") {
         REQUIRE(hbt.current_time() == 29500);
 
         depth = hbt.depth(asset_id);
-        REQUIRE(depth.best_bid_ == price_to_ticks(50000.0,tick_size));
+        REQUIRE(depth.best_bid_ == price_to_ticks(50000.0, tick_size));
         REQUIRE(depth.bid_qty_ == 2.0);
         // Submit a buy order that will be delayed and scheduled
         OrderId order_id = hbt.submit_sell_order(
@@ -216,7 +223,7 @@ TEST_CASE("[BacktestEngine] - elapse", "[backtest-engine][elapse]") {
     }
     SECTION("Limit order executed in correct schedule") {
         auto logger = std::make_shared<Logger>(
-            "test_backtest_engine_elapse_limit_schedule.log");
+            "test_backtest_engine_elapse_limit_schedule.log", LogLevel::Debug);
         BacktestEngine hbt(asset_configs, logger);
         hbt.set_order_entry_latency(1000);
         hbt.set_order_response_latency(1000);
@@ -243,8 +250,8 @@ TEST_CASE("[BacktestEngine] - elapse", "[backtest-engine][elapse]") {
 
     SECTION("Complex multi-limit order execution with partial fills and "
             "cancellations") {
-        auto logger =
-            std::make_shared<Logger>("test_backtest_engine_elapse_complex.log");
+        auto logger = std::make_shared<Logger>(
+            "test_backtest_engine_elapse_complex.log", LogLevel::Debug);
         BacktestEngine hbt(asset_configs, logger);
         hbt.set_order_entry_latency(1000);
         hbt.set_order_response_latency(1000);
@@ -268,7 +275,8 @@ TEST_CASE("[BacktestEngine] - elapse", "[backtest-engine][elapse]") {
         REQUIRE(hbt.current_time() == 18000);
         REQUIRE(hbt.position(asset_id) == -1.0); // Partially filled
         hbt.clear_inactive_orders();
-        REQUIRE(hbt.orders(asset_id).size() == 1); // order1 fully filled and removed
+        REQUIRE(hbt.orders(asset_id).size() ==
+                1); // order1 fully filled and removed
 
         // Cancel order2 before it's filled
         hbt.cancel_order(asset_id, order2);
@@ -284,7 +292,7 @@ TEST_CASE("[BacktestEngine] - elapse", "[backtest-engine][elapse]") {
     }
     SECTION("Handles partial fills correctly") {
         auto logger = std::make_shared<Logger>(
-            "test_backtest_engine_elapse_partial_fills.log");
+            "test_backtest_engine_elapse_partial_fills.log", LogLevel::Debug);
         BacktestEngine hbt(asset_configs, logger);
         hbt.set_order_entry_latency(1000);
         hbt.set_order_response_latency(1000);

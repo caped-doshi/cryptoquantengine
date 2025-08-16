@@ -56,9 +56,10 @@ void ExecutionEngine::add_asset(int asset_id, double tick_size,
     active_orders_.emplace(asset_id, std::vector<std::shared_ptr<Order>>());
     if (logger_) {
         logger_->log("[ExecutionEngine] - Added asset with ID: " +
-                     std::to_string(asset_id) +
-                     ", Tick Size: " + std::to_string(tick_size) +
-                     ", Lot Size: " + std::to_string(lot_size));
+                         std::to_string(asset_id) +
+                         ", Tick Size: " + std::to_string(tick_size) +
+                         ", Lot Size: " + std::to_string(lot_size),
+                     LogLevel::Debug);
     }
 }
 
@@ -225,11 +226,13 @@ void ExecutionEngine::execute_market_order(int asset_id, TradeSide side,
                             .order_ = *order});
             logger_->log(
                 "[ExecutionEngine] - " +
-                std::to_string(order->exch_timestamp_) + "us - Market " +
-                ((side == TradeSide::Buy) ? "buy" : "sell") +
-                " order fully filled : id=" + std::to_string(order->orderId_) +
-                ", price=" + std::to_string(level_price) + ", qty=" +
-                std::to_string(order->quantity_ - order->filled_quantity_));
+                    std::to_string(order->exch_timestamp_) + "us - Market " +
+                    ((side == TradeSide::Buy) ? "buy" : "sell") +
+                    " order fully filled : id=" +
+                    std::to_string(order->orderId_) +
+                    ", price=" + std::to_string(level_price) + ", qty=" +
+                    std::to_string(order->quantity_ - order->filled_quantity_),
+                LogLevel::Debug);
         } else {
             fills_.emplace_back(
                 Fill{.asset_id_ = asset_id,
@@ -305,9 +308,10 @@ bool ExecutionEngine::execute_fok_order(int asset_id, TradeSide side,
     if (available_qty < order->quantity_) {
         order->orderStatus_ = OrderStatus::REJECTED;
         logger_->log("[ExecutionEngine] - " +
-                     std::to_string(order->exch_timestamp_) + "us - FOK " +
-                     ((side == TradeSide::Buy) ? "buy" : "sell") +
-                     " order rejected, insufficient liquidity\n ");
+                         std::to_string(order->exch_timestamp_) + "us - FOK " +
+                         ((side == TradeSide::Buy) ? "buy" : "sell") +
+                         " order rejected, insufficient liquidity",
+                     LogLevel::Debug);
         return false;
     }
     level = -1;
@@ -367,10 +371,11 @@ bool ExecutionEngine::execute_fok_order(int asset_id, TradeSide side,
         order->orderStatus_ = OrderStatus::FILLED;
         logger_->log(
             "[ExecutionEngine] - " + std::to_string(order->exch_timestamp_) +
-            "us - FOK " + ((side == TradeSide::Buy) ? "buy" : "sell") +
-            " order fully filled : id=" + std::to_string(order->orderId_) +
-            ", price=" + std::to_string(order->price_) +
-            ", qty=" + std::to_string(order->filled_quantity_));
+                "us - FOK " + ((side == TradeSide::Buy) ? "buy" : "sell") +
+                " order fully filled : id=" + std::to_string(order->orderId_) +
+                ", price=" + std::to_string(order->price_) +
+                ", qty=" + std::to_string(order->filled_quantity_),
+            LogLevel::Debug);
     }
     return true;
 }
@@ -404,9 +409,10 @@ bool ExecutionEngine::execute_ioc_order(int asset_id, TradeSide side,
                                         std::shared_ptr<Order> order) {
     if (order->orderStatus_ != OrderStatus::NEW) {
         logger_->log("[ExecutionEngine] - " +
-                     std::to_string(order->exch_timestamp_) + " - IOC " +
-                     ((side == TradeSide::Buy) ? "buy" : "sell") +
-                     " order not NEW, skipping\n ");
+                         std::to_string(order->exch_timestamp_) + " - IOC " +
+                         ((side == TradeSide::Buy) ? "buy" : "sell") +
+                         " order not NEW, skipping",
+                     LogLevel::Debug);
         return false;
     }
     int level = 0;
@@ -447,13 +453,15 @@ bool ExecutionEngine::execute_ioc_order(int asset_id, TradeSide side,
                             .orderId_ = order->orderId_,
                             .event_type_ = OrderEventType::FILL,
                             .order_ = *order});
-            logger_->log(
-                "[ExecutionEngine] - " +
-                std::to_string(order->exch_timestamp_) + "us - IOC " +
-                ((side == TradeSide::Buy) ? "buy" : "sell") +
-                " order fully filled : id=" + std::to_string(order->orderId_) +
-                ", price=" + std::to_string(order->price_) +
-                ", qty=" + std::to_string(order->filled_quantity_));
+            logger_->log("[ExecutionEngine] - " +
+                             std::to_string(order->exch_timestamp_) +
+                             "us - IOC " +
+                             ((side == TradeSide::Buy) ? "buy" : "sell") +
+                             " order fully filled : id=" +
+                             std::to_string(order->orderId_) +
+                             ", price=" + std::to_string(order->price_) +
+                             ", qty=" + std::to_string(order->filled_quantity_),
+                         LogLevel::Debug);
         } else {
             order->filled_quantity_ += level_depth;
             order->orderStatus_ = OrderStatus::PARTIALLY_FILLED;
@@ -476,12 +484,14 @@ bool ExecutionEngine::execute_ioc_order(int asset_id, TradeSide side,
                             .event_type_ = OrderEventType::FILL,
                             .order_ = *order});
             logger_->log("[ExecutionEngine] - " +
-                         std::to_string(order->exch_timestamp_) + "us - IOC " +
-                         ((side == TradeSide::Buy) ? "buy" : "sell") +
-                         " order partially filled: id=" +
-                         std::to_string(order->orderId_) +
-                         ", price=" + std::to_string(order->price_) +
-                         ", qty=" + std::to_string(order->filled_quantity_));
+                             std::to_string(order->exch_timestamp_) +
+                             "us - IOC " +
+                             ((side == TradeSide::Buy) ? "buy" : "sell") +
+                             " order partially filled: id=" +
+                             std::to_string(order->orderId_) +
+                             ", price=" + std::to_string(order->price_) +
+                             ", qty=" + std::to_string(order->filled_quantity_),
+                         LogLevel::Debug);
         }
         level++;
     }
@@ -528,9 +538,10 @@ bool ExecutionEngine::place_maker_order(int asset_id,
          order->price_ <= best_bid)) {
         order->orderStatus_ = OrderStatus::REJECTED;
         logger_->log("[ExecutionEngine] - " +
-                     std::to_string(order->exch_timestamp_) + " - maker " +
-                     ((order->side_ == BookSide::Bid) ? "BID" : "ASK") +
-                     " order rejected\n");
+                         std::to_string(order->exch_timestamp_) + " - maker " +
+                         ((order->side_ == BookSide::Bid) ? "BID" : "ASK") +
+                         " order rejected",
+                     LogLevel::Debug);
         return false;
     }
     Ticks order_price_ticks =
@@ -545,11 +556,12 @@ bool ExecutionEngine::place_maker_order(int asset_id,
     active_orders_[asset_id].push_back(order);
     order->orderStatus_ = OrderStatus::ACTIVE;
     logger_->log("[ExecutionEngine] - " +
-                 std::to_string(order->exch_timestamp_) + "us - maker " +
-                 ((order->side_ == BookSide::Bid) ? "BID" : "ASK") +
-                 " order placed : id=" + std::to_string(order->orderId_) +
-                 ", price=" + std::to_string(order->price_) +
-                 ", qty=" + std::to_string(order->quantity_));
+                     std::to_string(order->exch_timestamp_) + "us - maker " +
+                     ((order->side_ == BookSide::Bid) ? "BID" : "ASK") +
+                     " order placed : id=" + std::to_string(order->orderId_) +
+                     ", price=" + std::to_string(order->price_) +
+                     ", qty=" + std::to_string(order->quantity_),
+                 LogLevel::Debug);
     order_updates_.emplace_back(OrderUpdate{
         .exch_timestamp_ = order->exch_timestamp_,
         .local_timestamp_ = order->exch_timestamp_ + order_response_latency_us_,
@@ -576,6 +588,17 @@ bool ExecutionEngine::place_maker_order(int asset_id,
  */
 bool ExecutionEngine::execute_order(int asset_id, TradeSide side,
                                     const Order &order) {
+    logger_->log("[ExecutionEngine] - " +
+                     std::to_string(order.exch_timestamp_) + "us - " +
+                     ((side == TradeSide::Buy) ? "BUY" : "SELL") +
+                     " order received: id=" + std::to_string(order.orderId_) +
+                     ", price=" + std::to_string(order.price_) +
+                     ", qty=" + std::to_string(order.quantity_),
+                 LogLevel::Debug);
+    logger_->log("[ExecutionEngine] - " +
+                     std::to_string(order.exch_timestamp_) +
+                     "us - total orders=" + std::to_string(orders_.size()),
+                 LogLevel::Debug);
     auto order_ptr = std::make_shared<Order>(order);
     if (order.orderType_ == OrderType::MARKET) {
         execute_market_order(asset_id, side, order_ptr);
@@ -702,24 +725,27 @@ void ExecutionEngine::handle_trade(int asset_id, const Trade &trade) {
         if (trade.side_ == TradeSide::Sell) {
             logger_->log(
                 "[ExecutionEngine] - " + std::to_string(trade.exch_timestamp_) +
-                "us - no matching orders found at price " +
-                std::to_string(trade.price_) + " among " +
-                std::to_string(maker_books_[asset_id].bid_orders_.size()) +
-                " bid orders : ");
-            for (const auto &kv : maker_books_[asset_id].bid_orders_) {
-                logger_->log("\t" + std::to_string(ticks_to_price(kv.first,tick_sizes_[asset_id])));
-            }
+                    "us - no matching orders found at price " +
+                    std::to_string(trade.price_) + " among " +
+                    std::to_string(maker_books_[asset_id].bid_orders_.size()) +
+                    " bid orders",
+                LogLevel::Debug);
+            /*for (const auto &kv : maker_books_[asset_id].bid_orders_) {
+                logger_->log(std::to_string(ticks_to_price(
+                                        kv.first, tick_sizes_[asset_id])));
+            }*/
         } else if (trade.side_ == TradeSide::Buy) {
             logger_->log(
                 "[ExecutionEngine] - " + std::to_string(trade.exch_timestamp_) +
-                "us - no matching orders found at price " +
-                std::to_string(trade.price_) + " among " +
-                std::to_string(maker_books_[asset_id].ask_orders_.size()) +
-                " ask orders : ");
-            for (const auto &kv : maker_books_[asset_id].ask_orders_) {
-                logger_->log("\n" + std::to_string(
-                    ticks_to_price(kv.first, tick_sizes_[asset_id])));
-            }
+                    "us - no matching orders found at price " +
+                    std::to_string(trade.price_) + " among " +
+                    std::to_string(maker_books_[asset_id].ask_orders_.size()) +
+                    " ask orders",
+                LogLevel::Debug);
+            /*for (const auto &kv : maker_books_[asset_id].ask_orders_) {
+                logger_->log("\n" + std::to_string(ticks_to_price(
+                                        kv.first, tick_sizes_[asset_id])));
+            } */
         }
         return;
     }
@@ -727,9 +753,10 @@ void ExecutionEngine::handle_trade(int asset_id, const Trade &trade) {
 
     if (order->exch_timestamp_ >= trade.exch_timestamp_) return;
     logger_->log("[ExecutionEngine] - " +
-                 std::to_string(trade.exch_timestamp_) + "us - order (" +
-                 std::to_string(order->orderId_) + ") found at trade price " +
-                 std::to_string(order->price_));
+                     std::to_string(trade.exch_timestamp_) + "us - order (" +
+                     std::to_string(order->orderId_) +
+                     ") found at trade price " + std::to_string(order->price_),
+                 LogLevel::Debug);
 
     if (order->queueEst_ == 0.0 && order->filled_quantity_ < order->quantity_) {
         Quantity fill_qty = std::min(
@@ -739,16 +766,19 @@ void ExecutionEngine::handle_trade(int asset_id, const Trade &trade) {
             order->orderStatus_ = OrderStatus::FILLED;
             logger_->log(
                 "[ExecutionEngine] - " + std::to_string(trade.exch_timestamp_) +
-                "us - order (" + std::to_string(order->orderId_) +
-                ") filled at price=" + std::to_string(order->price_) +
-                ", qty=" + std::to_string(order->filled_quantity_));
+                    "us - order (" + std::to_string(order->orderId_) +
+                    ") filled at price=" + std::to_string(order->price_) +
+                    ", qty=" + std::to_string(order->filled_quantity_),
+                LogLevel::Debug);
         } else {
             order->orderStatus_ = OrderStatus::PARTIALLY_FILLED;
-            logger_->log(
-                "[ExecutionEngine] - " + std::to_string(trade.exch_timestamp_) +
-                "us - order (" + std::to_string(order->orderId_) +
-                ") partially filled at price=" + std::to_string(order->price_) +
-                ", qty=" + std::to_string(order->filled_quantity_));
+            logger_->log("[ExecutionEngine] - " +
+                             std::to_string(trade.exch_timestamp_) +
+                             "us - order (" + std::to_string(order->orderId_) +
+                             ") partially filled at price=" +
+                             std::to_string(order->price_) +
+                             ", qty=" + std::to_string(order->filled_quantity_),
+                         LogLevel::Debug);
         }
         order_updates_.emplace_back(
             OrderUpdate{.exch_timestamp_ = trade.exch_timestamp_,

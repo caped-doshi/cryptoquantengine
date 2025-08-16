@@ -65,8 +65,8 @@ class BacktestEngine {
     const Microseconds market_feed_latency() const;
 
   private:
-    Microseconds order_entry_latency_us = 1000;
-    Microseconds order_response_latency_us = 1000;
+    Microseconds order_entry_latency_us = 50000;
+    Microseconds order_response_latency_us = 50000;
     Microseconds market_feed_latency_us = 50000;
 
     // backtest simulation methods
