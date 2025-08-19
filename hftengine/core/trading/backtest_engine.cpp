@@ -572,31 +572,12 @@ const Depth BacktestEngine::depth(int asset_id) const {
                          std::to_string(asset_id),
                      LogLevel::Debug);
     }
-    // local_orderbooks_.at(asset_id).print_top_levels();
-    std::unordered_map<Ticks, Quantity> bid_depth;
-    /* int bid_levels = local_orderbooks_.at(asset_id).bid_levels();
-    for (int level = 0; level < bid_levels; level++) {
-        Ticks bid_level_price_ticks =
-            local_orderbooks_.at(asset_id).price_at_level(BookSide::Bid, level);
-        double bid_level_depth =
-            local_orderbooks_.at(asset_id).depth_at_level(BookSide::Bid, level);
-        bid_depth[bid_level_price_ticks] = bid_level_depth;
-    }*/
-    std::unordered_map<Ticks, Quantity> ask_depth;
-    /* int ask_levels = local_orderbooks_.at(asset_id).ask_levels();
-    for (int level = 0; level < ask_levels; level++) {
-        Ticks ask_level_price_ticks =
-            local_orderbooks_.at(asset_id).price_at_level(BookSide::Ask, level);
-        double ask_level_depth =
-            local_orderbooks_.at(asset_id).depth_at_level(BookSide::Ask, level);
-        ask_depth[ask_level_price_ticks] = ask_level_depth;
-    }*/
     return Depth{.best_bid_ = best_bid,
                  .bid_qty_ = bid_0_size,
                  .best_ask_ = best_ask,
                  .ask_qty_ = ask_0_size,
-                 .bid_depth_ = bid_depth,
-                 .ask_depth_ = ask_depth,
+                 .bid_depth_ = local_orderbooks_.at(asset_id).bid_book(),
+                 .ask_depth_ = local_orderbooks_.at(asset_id).ask_book(),
                  .tick_size_ = tick_sizes_.at(asset_id),
                  .lot_size_ = lot_sizes_.at(asset_id)};
 }
@@ -632,13 +613,8 @@ void BacktestEngine::print_trading_stats(int asset_id) const {
               << (trading_value_it != trading_value_.end()
                       ? trading_value_it->second
                       : 0.0)
-              << "\n";
-    std::cout << "Realized PnL       : "
-              << (realized_pnl_it != realized_pnl_.end()
-                      ? realized_pnl_it->second
-                      : 0.0)
-              << "\n";
-    std::cout << "=============================================\n";
+              << " USDT\n";
+    std::cout << "==========================================\n";
 }
 
 /**

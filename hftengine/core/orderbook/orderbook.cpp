@@ -33,6 +33,28 @@ OrderBook::OrderBook(double tick_size, double lot_size,
 }
 
 /**
+ * @brief Returns the bid book as a map of price levels to quantities.
+ *
+ * The bid book is sorted in descending order of price.
+ *
+ * @return A map of price levels (Ticks) to quantities (Quantity) for asks.
+ */
+std::map<Ticks, Quantity, std::greater<>> OrderBook::bid_book() const {
+    return bid_book_;
+}
+
+/**
+ * @brief Returns the ask book as a map of price levels to quantities.
+ *
+ * The ask book is sorted in ascending order of price.
+ *
+ * @return A map of price levels (Ticks) to quantities (Quantity) for asks.
+ */
+std::map<Ticks, Quantity> OrderBook::ask_book() const {
+    return ask_book_; 
+}
+
+/**
  * @brief Clears the order book by removing all bids and asks.
  *
  */
