@@ -128,3 +128,16 @@ ConfigReader::get_grid_trading_config(const std::string &filename) {
     config.notional_order_qty_ = get_double("notional_order_qty");
     return config;
 }
+
+BacktestEngineConfig
+ConfigReader::get_backtest_engine_config(const std::string &filename) {
+    clear();
+    load(filename);
+    // read the backtest engine config from the file
+    BacktestEngineConfig config;
+    config.initial_cash_ = get_double("initial_cash");
+    config.order_entry_latency_us_ = get_int("order_entry_latency_us");
+    config.order_response_latency_us_ = get_int("order_response_latency_us");
+    config.market_feed_latency_us_ = get_int("market_feed_latency_us");
+    return config;
+}

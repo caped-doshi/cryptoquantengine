@@ -32,6 +32,7 @@ TEST_CASE("[BookStreamReader] - CSV Parsing", "[book][csv]") {
 
         REQUIRE(reader.parse_next(update));
         REQUIRE(update.exch_timestamp_ == 123456789);
+        REQUIRE(update.local_timestamp_ == 123456791);
         REQUIRE(update.update_type_ == UpdateType::Snapshot);
         REQUIRE(update.side_ == BookSide::Bid);
         REQUIRE(update.price_ == 100.5);
@@ -44,6 +45,7 @@ TEST_CASE("[BookStreamReader] - CSV Parsing", "[book][csv]") {
 
         REQUIRE(reader.parse_next(update));
         REQUIRE(update.exch_timestamp_ == 123456790);
+        REQUIRE(update.local_timestamp_ == 123456792);
         REQUIRE(update.update_type_ == UpdateType::Incremental);
         REQUIRE(update.side_ == BookSide::Ask);
         REQUIRE(update.price_ == 101.0);

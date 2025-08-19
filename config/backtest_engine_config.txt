@@ -1,0 +1,4 @@
+initial_cash=1000.0
+order_entry_latency_us=25000
+order_response_latency_us=10000
+market_feed_latency_us=50000

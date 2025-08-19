@@ -67,8 +67,6 @@ bool BookStreamReader::parse_next(BookUpdate &update) {
                                           quantity)) {
             return false; // EOF or read error
         }
-        // If local_timestamp column is missing, set local_timestamp to
-        // timestamp + 10000
         if (!has_local_timestamp_) {
             local_timestamp = timestamp + 10000;
         }
