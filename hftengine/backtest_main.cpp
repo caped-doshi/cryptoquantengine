@@ -21,34 +21,36 @@
 int main() {
 
     ConfigReader config_reader;
-    auto asset_config =
+    const auto asset_config =
         config_reader.get_asset_config("../config/asset_config.txt");
-    auto grid_trading_config = config_reader.get_grid_trading_config(
+    const auto grid_trading_config = config_reader.get_grid_trading_config(
         "../config/grid_trading_config.txt");
-    auto backtest_engine_config = config_reader.get_backtest_engine_config(
+    const auto backtest_engine_config = config_reader.get_backtest_engine_config(
         "../config/backtest_engine_config.txt");
+    const auto recorder_config =
+        config_reader.get_recorder_config("../config/recorder_config.txt");
+    const auto backtest_config =
+        config_reader.get_backtest_config("../config/backtest_config.txt");
     std::unordered_map<int, AssetConfig> asset_configs;
     const int asset_id = 1;
     asset_configs.insert({asset_id, asset_config});
-    // auto logger = std::make_shared<Logger>("backtest.log", LogLevel::Warning);
     auto logger = nullptr;
 
-    double initial_cash = 1'000.0;
     BacktestEngine hbt(asset_configs, backtest_engine_config, logger);
-    Recorder recorder(100'000, logger);
+    Recorder recorder(recorder_config.interval_us, logger);
     GridTrading grid_trading(1, grid_trading_config, logger);
 
-    auto start = std::chrono::high_resolution_clock::now();
+    const auto start = std::chrono::high_resolution_clock::now();
 
-    std::uint64_t iter = 86400;
-    while (hbt.elapse(100'000) && iter-- > 0) {
+    std::uint64_t iter = backtest_config.iterations;
+    while (hbt.elapse(backtest_config.elapse_us) && iter-- > 0) {
         hbt.clear_inactive_orders();
         grid_trading.on_elapse(hbt);
         recorder.record(hbt, asset_id);
     }
 
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed = end - start;
+    const auto end = std::chrono::high_resolution_clock::now();
+    const std::chrono::duration<double> elapsed = end - start;
     std::cout << "Backtest wall time: " << elapsed.count() << " seconds\n";
 
     std::cout << "Final equity: " << std::fixed << std::setprecision(2)

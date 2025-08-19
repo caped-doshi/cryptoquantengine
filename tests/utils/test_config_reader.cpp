@@ -10,8 +10,10 @@
 #include <filesystem>
 #include <fstream>
 
+#include "core/recorder/recorder_config.h"
 #include "core/strategy/grid_trading_config.h"
 #include "core/trading/asset_config.h"
+#include "core/trading/backtest_config.h"
 #include "core/trading/backtest_engine_config.h"
 #include "utils/config/config_reader.h"
 
@@ -157,6 +159,78 @@ TEST_CASE("[ConfigReader] - get_backtest_engine_config throws on missing keys",
     ConfigReader reader;
     REQUIRE_THROWS_AS(reader.get_backtest_engine_config(config_file),
                       std::runtime_error);
+
+    std::filesystem::remove(config_file);
+}
+
+TEST_CASE("[ConfigReader] - get_recorder_config returns correct RecorderConfig",
+          "[config][recorder_config]") {
+    const std::string config_file = "test_recorder_config.tmp";
+    {
+        std::ofstream out(config_file);
+        out << "interval_us=500000\n"
+            << "output_file=test_output.csv\n";
+    }
+
+    ConfigReader reader;
+    RecorderConfig config = reader.get_recorder_config(config_file);
+
+    REQUIRE(config.interval_us == 500000);
+    REQUIRE(config.output_file == "test_output.csv");
+
+    std::filesystem::remove(config_file);
+}
+
+TEST_CASE("[ConfigReader] - get_recorder_config uses defaults if missing",
+          "[config][recorder_config][defaults]") {
+    const std::string config_file = "test_recorder_config_defaults.tmp";
+    {
+        std::ofstream out(config_file);
+        // Only provide interval_us
+        out << "interval_us=250000\n";
+    }
+
+    ConfigReader reader;
+    RecorderConfig config = reader.get_recorder_config(config_file);
+
+    REQUIRE(config.interval_us == 250000);
+    REQUIRE(config.output_file == "recorder_output.csv");
+
+    std::filesystem::remove(config_file);
+}
+
+TEST_CASE("[ConfigReader] - get_backtest_config returns correct BacktestConfig",
+          "[config][backtest_config]") {
+    const std::string config_file = "test_backtest_config.tmp";
+    {
+        std::ofstream out(config_file);
+        out << "elapse_us=2000000\n"
+            << "iterations=12345\n";
+    }
+
+    ConfigReader reader;
+    BacktestConfig config = reader.get_backtest_config(config_file);
+
+    REQUIRE(config.elapse_us == 2000000);
+    REQUIRE(config.iterations == 12345);
+
+    std::filesystem::remove(config_file);
+}
+
+TEST_CASE("[ConfigReader] - get_backtest_config uses defaults if missing",
+          "[config][backtest_config][defaults]") {
+    const std::string config_file = "test_backtest_config_defaults.tmp";
+    {
+        std::ofstream out(config_file);
+        // Only provide elapse_us
+        out << "elapse_us=500000\n";
+    }
+
+    ConfigReader reader;
+    BacktestConfig config = reader.get_backtest_config(config_file);
+
+    REQUIRE(config.elapse_us == 500000);
+    REQUIRE(config.iterations == 86400); // default value
 
     std::filesystem::remove(config_file);
 }
