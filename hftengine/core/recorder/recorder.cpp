@@ -260,7 +260,7 @@ void Recorder::print_performance_metrics() const {
     } catch (const std::exception &e) {
         std::cout << "Max Drawdown   : Error (" << e.what() << ")\n";
     }
-    std::cout << "==========================\n";
+    std::cout << "===========================\n";
 }
 
 /**

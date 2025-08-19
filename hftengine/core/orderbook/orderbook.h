@@ -46,6 +46,9 @@ class OrderBook {
     int bid_levels() const;
     int ask_levels() const;
 
+    std::map<Ticks, Quantity, std::greater<>> bid_book() const;
+    std::map<Ticks, Quantity> ask_book() const;
+
     // Clear book (e.g., on snapshot)
     void clear();
 
