@@ -29,7 +29,7 @@ class OrderBook {
   public:
     // Constructor
     OrderBook(double tick_size, double lot_size,
-              std::shared_ptr<Logger> logger = nullptr);
+              std::shared_ptr<utils::logger::Logger> logger = nullptr);
 
     // Apply incoming L2 book update (price-level based)
     void apply_book_update(const BookUpdate &update);
@@ -63,5 +63,5 @@ class OrderBook {
     std::map<Ticks, Quantity> ask_book_;
     UpdateType last_update_;
 
-    std::shared_ptr<Logger> logger_;
+    std::shared_ptr<utils::logger::Logger> logger_;
 };

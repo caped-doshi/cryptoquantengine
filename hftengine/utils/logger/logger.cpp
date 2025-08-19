@@ -18,12 +18,12 @@
 #include "logger.h"
 #include "log_level.h"
 
-
-namespace utils::logger {
+namespace utils {
+namespace logger {
 /*
  * @brief Constructs a Logger that writes to the specified file.
  */
-Logger::Logger(const std::string &filename, LogLevel level)
+Logger::Logger(const std::string &filename, utils::logger::LogLevel level)
     : exit_flag_(false), log_level_(level) {
     log_file_.open(filename, std::ios::out | std::ios::app);
     logging_thread_ = std::thread(&Logger::process, this);
@@ -44,7 +44,7 @@ Logger::~Logger() {
  * @brief Logs a message by adding it to the queue and notifying the logging
  * thread.
  */
-void Logger::log(const std::string &message, LogLevel level) {
+void Logger::log(const std::string &message, utils::logger::LogLevel level) {
     if (level < log_level_) return;
     std::lock_guard<std::mutex> lock(mutex_);
     messages_.push(message);
@@ -88,6 +88,7 @@ void Logger::process() {
 /*
  * @brief
  */
-void Logger::set_level(LogLevel level) { log_level_ = level; }
+void Logger::set_level(utils::logger::LogLevel level) { log_level_ = level; }
 
-} // namespace utils::logger
+} // namespace logger
+} // namespace utils

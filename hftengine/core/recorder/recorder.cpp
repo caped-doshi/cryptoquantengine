@@ -34,12 +34,12 @@
  * snapshots.
  * @param logger Optional shared pointer to a Logger instance for logging
  */
-Recorder::Recorder(Microseconds interval_us, std::shared_ptr<Logger> logger)
+Recorder::Recorder(Microseconds interval_us, std::shared_ptr<utils::logger::Logger> logger)
     : interval_us_(interval_us), logger_(logger) {
     if (logger_) {
         logger_->log("[Recorder] - Initialized with interval: " +
                          std::to_string(interval_us) + " microseconds",
-                     LogLevel::Debug);
+                     utils::logger::LogLevel::Debug);
     }
 }
 
@@ -96,7 +96,7 @@ void Recorder::record(const BacktestEngine &hbt, int asset_id) {
                          ", equity=" + std::to_string(equity) +
                          ", position=" + std::to_string(position) +
                          ", price=" + std::to_string(mid_price),
-                     LogLevel::Debug);
+                     utils::logger::LogLevel::Debug);
     }
 }
 

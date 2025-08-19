@@ -1,9 +1,9 @@
 /*
  * File: hftengine/utils/logger/logger.h
  * Description: Thread-safe logger that writes log messages on a separate
- * thread. 
- * Author: Arvind Rathnashyam 
- * Date: 2025-08-14 
+ * thread.
+ * Author: Arvind Rathnashyam
+ * Date: 2025-08-14
  * License: Proprietary
  */
 
@@ -18,14 +18,15 @@
 #include <thread>
 
 #include "log_level.h"
-namespace utils::logger {
+namespace utils {
+namespace logger {
 class Logger {
   public:
-    explicit Logger(const std::string &filename, LogLevel level);
+    explicit Logger(const std::string &filename, utils::logger::LogLevel level);
     ~Logger();
-    void log(const std::string &message, LogLevel level);
+    void log(const std::string &message, utils::logger::LogLevel level);
     void flush();
-    void set_level(LogLevel level);
+    void set_level(utils::logger::LogLevel level);
 
   private:
     void process(); // Logging thread function
@@ -38,4 +39,5 @@ class Logger {
     std::atomic<bool> exit_flag_;
     std::atomic<LogLevel> log_level_;
 };
-} // namespace utils::logger
+} // namespace logger
+} // namespace utils

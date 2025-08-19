@@ -1,6 +1,6 @@
 /*
  * File: tests/utils/test_logger.cpp
- * Description: Unit tests for the thread-safe Logger class.
+ * Description: Unit tests for the thread-safe logger class.
  * Author: Arvind Rathnashyam
  * Date: 2025-08-14
  * License: Proprietary
@@ -17,9 +17,11 @@
 #include "utils/logger/log_level.h"
 
 TEST_CASE("[Logger] - single-threaded logging", "[logger][single]") {
+    using namespace utils::logger;
+
     const std::string log_file = "test_logger_single.log";
     {
-        Logger logger(log_file, LogLevel::Debug);
+        Logger logger(log_file,LogLevel::Debug);
         logger.log("First log message", LogLevel::Info);
         logger.log("Second log message", LogLevel::Info);
         logger.flush();
@@ -42,6 +44,8 @@ TEST_CASE("[Logger] - single-threaded logging", "[logger][single]") {
 }
 
 TEST_CASE("[Logger] - multi-threaded logging", "[logger][multi]") {
+    using namespace utils::logger;
+
     const std::string log_file = "test_logger_multi.log";
     {
         Logger logger(log_file, LogLevel::Debug);
@@ -84,8 +88,9 @@ TEST_CASE("[Logger] - multi-threaded logging", "[logger][multi]") {
 }
 
 TEST_CASE("[Logger] - log level filtering", "[logger][level]") {
+    using namespace utils::logger;
+
     const std::string log_file = "test_logger_levels.log";
-    // Create logger with Info level
     auto logger = std::make_shared<Logger>(log_file, LogLevel::Info);
 
     logger->log("Debug message", LogLevel::Debug);
@@ -111,6 +116,8 @@ TEST_CASE("[Logger] - log level filtering", "[logger][level]") {
 }
 
 TEST_CASE("[Logger] - set_level changes filtering", "[logger][level]") {
+    using namespace utils::logger;
+
     const std::string log_file = "test_logger_setlevel.log";
     auto logger = std::make_shared<Logger>(log_file, LogLevel::Error);
 

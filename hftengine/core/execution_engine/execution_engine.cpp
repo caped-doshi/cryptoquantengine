@@ -35,7 +35,7 @@
  * internal data structures. The order books, order tracking, and asset-related
  * state will need to be set up through subsequent calls.
  */
-ExecutionEngine::ExecutionEngine(std::shared_ptr<Logger> logger)
+ExecutionEngine::ExecutionEngine(std::shared_ptr<utils::logger::Logger> logger)
     : logger_(logger) {}
 
 /**
@@ -65,7 +65,7 @@ void ExecutionEngine::add_asset(int asset_id, double tick_size,
                          std::to_string(asset_id) +
                          ", Tick Size: " + std::to_string(tick_size) +
                          ", Lot Size: " + std::to_string(lot_size),
-                     LogLevel::Debug);
+                     utils::logger::LogLevel::Debug);
     }
 }
 
@@ -240,7 +240,7 @@ void ExecutionEngine::execute_market_order(int asset_id, TradeSide side,
                                  std::to_string(level_price) + ", qty=" +
                                  std::to_string(order->quantity_ -
                                                 order->filled_quantity_),
-                             LogLevel::Debug);
+                             utils::logger::LogLevel::Debug);
             }
         } else {
             fills_.emplace_back(
@@ -322,7 +322,7 @@ bool ExecutionEngine::execute_fok_order(int asset_id, TradeSide side,
                              "us - FOK " +
                              ((side == TradeSide::Buy) ? "buy" : "sell") +
                              " order rejected, insufficient liquidity",
-                         LogLevel::Debug);
+                         utils::logger::LogLevel::Debug);
         }
         return false;
     }
@@ -390,7 +390,7 @@ bool ExecutionEngine::execute_fok_order(int asset_id, TradeSide side,
                              std::to_string(order->orderId_) +
                              ", price=" + std::to_string(order->price_) +
                              ", qty=" + std::to_string(order->filled_quantity_),
-                         LogLevel::Debug);
+                         utils::logger::LogLevel::Debug);
         }
     }
     return true;
@@ -430,7 +430,7 @@ bool ExecutionEngine::execute_ioc_order(int asset_id, TradeSide side,
                              " - IOC " +
                              ((side == TradeSide::Buy) ? "buy" : "sell") +
                              " order not NEW, skipping",
-                         LogLevel::Debug);
+                         utils::logger::LogLevel::Debug);
         }
         return false;
     }
@@ -481,7 +481,7 @@ bool ExecutionEngine::execute_ioc_order(int asset_id, TradeSide side,
                         std::to_string(order->orderId_) +
                         ", price=" + std::to_string(order->price_) +
                         ", qty=" + std::to_string(order->filled_quantity_),
-                    LogLevel::Debug);
+                    utils::logger::LogLevel::Debug);
             }
         } else {
             order->filled_quantity_ += level_depth;
@@ -515,7 +515,7 @@ bool ExecutionEngine::execute_ioc_order(int asset_id, TradeSide side,
                         ", qty=" + std::to_string(order->filled_quantity_) +
                         ", local recieves at " +
                         std::to_string(order->local_timestamp_) + "us",
-                    LogLevel::Debug);
+                    utils::logger::LogLevel::Debug);
             }
         }
         level++;
@@ -568,7 +568,7 @@ bool ExecutionEngine::place_maker_order(int asset_id,
                              " - maker " +
                              ((order->side_ == BookSide::Bid) ? "BID" : "ASK") +
                              " order rejected",
-                         LogLevel::Debug);
+                         utils::logger::LogLevel::Debug);
         }
         return false;
     }
@@ -591,7 +591,7 @@ bool ExecutionEngine::place_maker_order(int asset_id,
                 " order placed : id=" + std::to_string(order->orderId_) +
                 ", price=" + std::to_string(order->price_) +
                 ", qty=" + std::to_string(order->quantity_),
-            LogLevel::Debug);
+            utils::logger::LogLevel::Debug);
     }
     order_updates_.emplace_back(OrderUpdate{
         .exch_timestamp_ = order->exch_timestamp_,
@@ -626,13 +626,13 @@ bool ExecutionEngine::execute_order(int asset_id, TradeSide side,
                 " order received: id=" + std::to_string(order.orderId_) +
                 ", price=" + std::to_string(order.price_) +
                 ", qty=" + std::to_string(order.quantity_),
-            LogLevel::Debug);
+            utils::logger::LogLevel::Debug);
     }
     if (logger_) {
         logger_->log("[ExecutionEngine] - " +
                          std::to_string(order.exch_timestamp_) +
                          "us - total orders=" + std::to_string(orders_.size()),
-                     LogLevel::Debug);
+                     utils::logger::LogLevel::Debug);
     }
     auto order_ptr = std::make_shared<Order>(order);
     if (order.orderType_ == OrderType::MARKET) {
@@ -768,11 +768,11 @@ void ExecutionEngine::handle_trade(int asset_id, const Trade &trade) {
                         std::to_string(
                             maker_books_.at(asset_id).bid_orders_.size()) +
                         " bid orders",
-                    LogLevel::Debug);
+                    utils::logger::LogLevel::Debug);
                 for (const auto &kv : maker_books_.at(asset_id).bid_orders_) {
                     logger_->log(std::to_string(ticks_to_price(
                                      kv.first, tick_sizes_[asset_id])),
-                                 LogLevel::Debug);
+                                 utils::logger::LogLevel::Debug);
                 }
             }
         } else if (trade.side_ == TradeSide::Buy) {
@@ -785,11 +785,11 @@ void ExecutionEngine::handle_trade(int asset_id, const Trade &trade) {
                         std::to_string(
                             maker_books_.at(asset_id).ask_orders_.size()) +
                         " ask orders",
-                    LogLevel::Debug);
+                    utils::logger::LogLevel::Debug);
                 for (const auto &kv : maker_books_.at(asset_id).ask_orders_) {
                     logger_->log(std::to_string(ticks_to_price(
                                      kv.first, tick_sizes_[asset_id])),
-                                 LogLevel::Debug);
+                                 utils::logger::LogLevel::Debug);
                 }
             }
         }
@@ -803,7 +803,7 @@ void ExecutionEngine::handle_trade(int asset_id, const Trade &trade) {
             "[ExecutionEngine] - " + std::to_string(trade.exch_timestamp_) +
                 "us - order (" + std::to_string(order->orderId_) +
                 ") found at trade price " + std::to_string(order->price_),
-            LogLevel::Debug);
+            utils::logger::LogLevel::Debug);
     }
     if (order->queueEst_ == 0.0 && order->filled_quantity_ < order->quantity_) {
         Quantity fill_qty = std::min(
@@ -818,7 +818,7 @@ void ExecutionEngine::handle_trade(int asset_id, const Trade &trade) {
                         std::to_string(order->orderId_) +
                         ") filled at price=" + std::to_string(order->price_) +
                         ", qty=" + std::to_string(order->filled_quantity_),
-                    LogLevel::Debug);
+                    utils::logger::LogLevel::Debug);
             }
         } else {
             order->orderStatus_ = OrderStatus::PARTIALLY_FILLED;
@@ -833,7 +833,7 @@ void ExecutionEngine::handle_trade(int asset_id, const Trade &trade) {
                         ", local recieves at " +
                         std::to_string(trade.exch_timestamp_ +
                                        order_response_latency_us_),
-                    LogLevel::Debug);
+                    utils::logger::LogLevel::Debug);
             }
         }
         order_updates_.emplace_back(

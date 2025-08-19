@@ -19,7 +19,7 @@
 #include "orderbook.h"
 
 OrderBook::OrderBook(double tick_size, double lot_size,
-                     std::shared_ptr<Logger> logger)
+                     std::shared_ptr<utils::logger::Logger> logger)
     : tick_size_(tick_size), lot_size_(lot_size), logger_(logger),
       last_update_(UpdateType::Snapshot) {
     if (tick_size <= 0.0) {
@@ -271,7 +271,7 @@ void OrderBook::print_top_levels(int depth) const {
             << ticks_to_price(price, tick_size_) << " : " << qty << "\n";
     }
     if (logger_) {
-        logger_->log(oss.str(),LogLevel::Info);
+        logger_->log(oss.str(),utils::logger::LogLevel::Info);
     } else {
         std::cout << oss.str();
     }

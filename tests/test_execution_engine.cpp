@@ -31,8 +31,8 @@ TEST_CASE("[ExecutionEngine] - multi-asset handling",
     double tick_size_2 = 0.01;
     double lot_size_2 = 0.00001;
 
-    auto logger = std::make_shared<Logger>(
-        "test_execution_engine_multiasset.log", LogLevel::Debug);
+    auto logger = std::make_shared<utils::logger::Logger>(
+        "test_execution_engine_multiasset.log", utils::logger::LogLevel::Debug);
     ExecutionEngine engine(logger);
     engine.add_asset(asset1, tick_size_1, lot_size_1);
     engine.add_asset(asset2, tick_size_2, lot_size_2);
@@ -140,8 +140,8 @@ TEST_CASE("[ExecutionEngine] - multi-asset handling",
 }
 
 TEST_CASE("[ExecutionEngine] - cancel_order", "[execution][cancel]") {
-    auto logger = std::make_shared<Logger>("test_execution_engine_cancel.log",
-                                           LogLevel::Debug);
+    auto logger = std::make_shared<utils::logger::Logger>("test_execution_engine_cancel.log",
+                                           utils::logger::LogLevel::Debug);
     ExecutionEngine engine(logger);
 
     const int asset_id = 1;
@@ -180,8 +180,8 @@ TEST_CASE("[ExecutionEngine] - cancel_order", "[execution][cancel]") {
 
 TEST_CASE("[ExecutionEngine] - executes market buy and sell orders",
           "[execution-engine][market]") {
-    auto logger = std::make_shared<Logger>("test_execution_engine_market.log",
-                                           LogLevel::Debug);
+    auto logger = std::make_shared<utils::logger::Logger>("test_execution_engine_market.log",
+                                           utils::logger::LogLevel::Debug);
     ExecutionEngine engine(logger);
 
     const int asset_id = 1;
@@ -273,8 +273,8 @@ TEST_CASE("[ExecutionEngine] - executes limit fill-or-kill buy and sell orders",
     const double tick_size = 0.01;
     const double lot_size = 0.00001;
 
-    auto logger = std::make_shared<Logger>("test_execution_engine_FOK.log",
-                                           LogLevel::Debug);
+    auto logger = std::make_shared<utils::logger::Logger>("test_execution_engine_FOK.log",
+                                           utils::logger::LogLevel::Debug);
     ExecutionEngine engine(logger);
     engine.add_asset(asset_id, tick_size, lot_size);
 
@@ -354,8 +354,8 @@ TEST_CASE(
     const double tick_size = 0.01;
     const double lot_size = 0.00001;
 
-    auto logger = std::make_shared<Logger>("test_execution_engine_IOC.log",
-                                           LogLevel::Debug);
+    auto logger = std::make_shared<utils::logger::Logger>("test_execution_engine_IOC.log",
+                                           utils::logger::LogLevel::Debug);
     ExecutionEngine engine(logger);
     engine.add_asset(asset_id, tick_size, lot_size);
 
@@ -436,8 +436,8 @@ TEST_CASE("[ExecutionEngine] - places limit GTC orders ",
     const double tick_size = 0.01;
     const double lot_size = 0.00001;
 
-    auto logger = std::make_shared<Logger>("test_execution_engine_gtc.log",
-                                           LogLevel::Debug);
+    auto logger = std::make_shared<utils::logger::Logger>("test_execution_engine_gtc.log",
+                                           utils::logger::LogLevel::Debug);
     ExecutionEngine engine(logger);
     engine.add_asset(asset_id, tick_size, lot_size);
 
@@ -539,8 +539,8 @@ TEST_CASE("[ExecutionEngine] - submit_order routes correctly",
     const double tick_size = 0.01;
     const double lot_size = 0.00001;
 
-    auto logger = std::make_shared<Logger>("test_execution_engine_routing.log",
-                                           LogLevel::Debug);
+    auto logger = std::make_shared<utils::logger::Logger>("test_execution_engine_routing.log",
+                                           utils::logger::LogLevel::Debug);
     ExecutionEngine engine(logger);
     engine.add_asset(asset_id, tick_size, lot_size);
 
@@ -720,8 +720,8 @@ TEST_CASE("[ExecutionEngine] - queue estimation", "[execution-engine][queue]") {
     double tick_size = 0.01;
     double lot_size = 0.00001;
 
-    auto logger = std::make_shared<Logger>("test_execution_engine_queue.log",
-                                           LogLevel::Debug);
+    auto logger = std::make_shared<utils::logger::Logger>("test_execution_engine_queue.log",
+                                           utils::logger::LogLevel::Debug);
     ExecutionEngine engine(logger);
     engine.add_asset(asset_id, tick_size, lot_size);
 
@@ -821,8 +821,8 @@ TEST_CASE("[ExecutionEngine] - processes trades", "[execution-engine][trade]") {
         double tick_size = 0.01;
         double lot_size = 0.00001;
 
-        auto logger = std::make_shared<Logger>(
-            "test_execution_engine_trade_s1.log", LogLevel::Debug);
+        auto logger = std::make_shared<utils::logger::Logger>(
+            "test_execution_engine_trade_s1.log", utils::logger::LogLevel::Debug);
         ExecutionEngine engine(logger);
         engine.add_asset(asset_id, tick_size, lot_size);
 
@@ -891,8 +891,8 @@ TEST_CASE("[ExecutionEngine] - processes trades", "[execution-engine][trade]") {
         double tick_size = 0.01;
         double lot_size = 0.00001;
 
-        auto logger = std::make_shared<Logger>(
-            "test_execution_engine_trade_s1.log", LogLevel::Debug);
+        auto logger = std::make_shared<utils::logger::Logger>(
+            "test_execution_engine_trade_s1.log", utils::logger::LogLevel::Debug);
         ExecutionEngine engine(logger);
         engine.add_asset(asset_id, tick_size, lot_size);
 
@@ -948,8 +948,8 @@ TEST_CASE("[ExecutionEngine] - processes trades", "[execution-engine][trade]") {
         double tick_size = 0.01;
         double lot_size = 0.00001;
 
-        auto logger = std::make_shared<Logger>(
-            "test_execution_engine_trade_s3.log", LogLevel::Debug);
+        auto logger = std::make_shared<utils::logger::Logger>(
+            "test_execution_engine_trade_s3.log", utils::logger::LogLevel::Debug);
         ExecutionEngine engine(logger);
         engine.add_asset(asset_id, tick_size, lot_size);
 

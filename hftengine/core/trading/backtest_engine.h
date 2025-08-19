@@ -35,7 +35,7 @@ class BacktestEngine {
     explicit BacktestEngine(
         const std::unordered_map<int, AssetConfig> &asset_configs,
         const BacktestEngineConfig &engine_config,
-        std::shared_ptr<Logger> logger = nullptr);
+        std::shared_ptr<utils::logger::Logger> logger = nullptr);
 
     // global methods
     bool elapse(std::uint64_t microseconds);
@@ -119,5 +119,5 @@ class BacktestEngine {
 
     std::multimap<Timestamp, DelayedAction> delayed_actions_;
 
-    std::shared_ptr<Logger> logger_;
+    std::shared_ptr<utils::logger::Logger> logger_;
 };

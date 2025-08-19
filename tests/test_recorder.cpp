@@ -20,7 +20,8 @@
 
 TEST_CASE("[Recorder] - recorder interval returns", "[recorder][initial]") {
     auto logger =
-        std::make_shared<Logger>("test_recorder_initial.log", LogLevel::Debug);
+        std::make_shared<utils::logger::Logger>("test_recorder_initial.log",
+            utils::logger::LogLevel::Debug);
     Recorder recorder(1'000'000, logger);
     SECTION("Empty recorder returns empty vectors") {
         REQUIRE(recorder.interval_returns().empty());
@@ -35,7 +36,7 @@ TEST_CASE("[Recorder] - recorder interval returns", "[recorder][initial]") {
 
 TEST_CASE("[Recorder] - interval returns calculation", "[recorder][returns]") {
     auto logger =
-        std::make_shared<Logger>("test_recorder_returns.log", LogLevel::Debug);
+        std::make_shared<utils::logger::Logger>("test_recorder_returns.log", utils::logger::LogLevel::Debug);
     Recorder recorder(1'000'000, logger);
     SECTION("Process multiple returns") {
         recorder.record(0, 100.0);
@@ -54,7 +55,7 @@ TEST_CASE("[Recorder] - interval returns calculation", "[recorder][returns]") {
 
 TEST_CASE("[Recorder] - Risk-adjusted metrics edge cases", "[recorder][edge]") {
     auto logger =
-        std::make_shared<Logger>("test_recorder_edge.log", LogLevel::Debug);
+        std::make_shared<utils::logger::Logger>("test_recorder_edge.log", utils::logger::LogLevel::Debug);
     Recorder recorder(1'000'000, logger); // 1 second interval
 
     SECTION("Sharpe ratio calculation") {
@@ -92,8 +93,8 @@ TEST_CASE("[Recorder] - Risk-adjusted metrics edge cases", "[recorder][edge]") {
 
 TEST_CASE("[Recorder] - Risk adjusted metrics correctness",
           "[recorder][correctness]") {
-    auto logger = std::make_shared<Logger>("test_recorder_correctness.log",
-                                           LogLevel::Debug);
+    auto logger = std::make_shared<utils::logger::Logger>("test_recorder_correctness.log",
+                                           utils::logger::LogLevel::Debug);
     Recorder recorder(60'000'000, logger);
 
     recorder.record(0, 100.0);
@@ -149,23 +150,23 @@ TEST_CASE("[Recorder] - Risk adjusted metrics correctness",
 
 TEST_CASE("[Recorder] - Max drawdown edge cases", "[recorder][drawdown]") {
     SECTION("Empty recorder throws") {
-        auto logger = std::make_shared<Logger>(
-            "test_recorder_drawdown_throws.log", LogLevel::Debug);
+        auto logger = std::make_shared<utils::logger::Logger>(
+            "test_recorder_drawdown_throws.log", utils::logger::LogLevel::Debug);
         Recorder recorder(60'000'000, logger);
         REQUIRE_THROWS_AS(recorder.max_drawdown(), std::runtime_error);
     }
 
     SECTION("Single record gives zero drawdown") {
-        auto logger = std::make_shared<Logger>(
-            "test_recorder_drawdown_single.log", LogLevel::Debug);
+        auto logger = std::make_shared<utils::logger::Logger>(
+            "test_recorder_drawdown_single.log", utils::logger::LogLevel::Debug);
         Recorder recorder(60'000'000, logger);
         recorder.record(0, 100.0);
         REQUIRE(recorder.max_drawdown() == 0.0);
     }
 
     SECTION("All increasing values gives zero drawdown") {
-        auto logger = std::make_shared<Logger>(
-            "test_recorder_drawdown_increasing.log", LogLevel::Debug);
+        auto logger = std::make_shared<utils::logger::Logger>(
+            "test_recorder_drawdown_increasing.log", utils::logger::LogLevel::Debug);
         Recorder recorder(60'000'000, logger);
         recorder.record(0, 100.0);
         recorder.record(60'000'000, 110.0);
@@ -174,8 +175,8 @@ TEST_CASE("[Recorder] - Max drawdown edge cases", "[recorder][drawdown]") {
     }
 
     SECTION("All decreasing values gives max drawdown") {
-        auto logger = std::make_shared<Logger>(
-            "test_recorder_drawdown_decreasing.log", LogLevel::Debug);
+        auto logger = std::make_shared<utils::logger::Logger>(
+            "test_recorder_drawdown_decreasing.log", utils::logger::LogLevel::Debug);
         Recorder recorder(60'000'000, logger);
         recorder.record(0, 100.0);
         recorder.record(60'000'000, 90.0);
@@ -221,8 +222,8 @@ TEST_CASE("[Recorder] - record(BacktestEngine, int) with limit orders",
                              .order_entry_latency_us_ = 1000,
                              .order_response_latency_us_ = 1000,
                              .market_feed_latency_us_ = 1000};
-    auto logger = std::make_shared<Logger>("test_recorder_limit_order.log",
-                                           LogLevel::Debug);
+    auto logger = std::make_shared<utils::logger::Logger>("test_recorder_limit_order.log",
+                                           utils::logger::LogLevel::Debug);
     BacktestEngine engine(asset_configs, backtest_engine_config, logger);
 
     Recorder recorder(10'000, logger);

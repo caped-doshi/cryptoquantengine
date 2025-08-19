@@ -27,7 +27,7 @@
 
 class ExecutionEngine {
   public:
-    ExecutionEngine(std::shared_ptr<Logger> logger = nullptr);
+    ExecutionEngine(std::shared_ptr<utils::logger::Logger> logger = nullptr);
 
     void add_asset(int asset_id, double tick_size, double lot_size);
 
@@ -83,5 +83,5 @@ class ExecutionEngine {
     std::unordered_map<int, std::vector<std::shared_ptr<Order>>> active_orders_;
     std::unordered_map<OrderId, std::shared_ptr<Order>> orders_;
 
-    std::shared_ptr<Logger> logger_;
+    std::shared_ptr<utils::logger::Logger> logger_;
 };

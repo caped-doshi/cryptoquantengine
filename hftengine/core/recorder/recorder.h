@@ -21,7 +21,7 @@
 class Recorder {
   public:
     Recorder(Microseconds interval_us,
-             std::shared_ptr<Logger> logger = nullptr);
+             std::shared_ptr<utils::logger::Logger> logger = nullptr);
 
     void record(const EquitySnapshot &snapshot);
     void record(Timestamp timestamp, double equity);
@@ -41,5 +41,5 @@ class Recorder {
     std::vector<EquitySnapshot> records_;
     std::vector<StateSnapshot> state_records_;
 
-    std::shared_ptr<Logger> logger_;
+    std::shared_ptr<utils::logger::Logger> logger_;
 };

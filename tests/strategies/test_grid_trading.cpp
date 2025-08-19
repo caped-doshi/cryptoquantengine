@@ -75,8 +75,7 @@ TEST_CASE("[GridTrading] - does not submit orders when notional too small",
         .order_entry_latency_us_ = order_entry_latency_us,
         .order_response_latency_us_ = order_response_latency_us,
         .market_feed_latency_us_ = 1000};
-    auto logger = std::make_shared<Logger>("test_grid_trading_notional.log",
-                                           LogLevel::Debug);
+    auto logger = std::make_shared<utils::logger::Logger>("test_grid_trading_notional.log",utils::logger::LogLevel::Debug);
     BacktestEngine hbt(asset_configs, backtest_engine_config, logger);
 
     GridTrading strat(asset_id, grid_num, grid_interval, half_spread,
@@ -127,8 +126,8 @@ TEST_CASE("[GridTrading] - cancels orders not in new grid",
         .order_entry_latency_us_ = order_entry_latency_us,
         .order_response_latency_us_ = order_response_latency_us,
         .market_feed_latency_us_ = 1000};
-    auto logger = std::make_shared<Logger>("test_grid_trading_cancel.log",
-                                           LogLevel::Debug);
+    auto logger = std::make_shared<utils::logger::Logger>("test_grid_trading_cancel.log",
+                                           utils::logger::LogLevel::Debug);
     BacktestEngine hbt(asset_configs, backtest_engine_config, logger);
     hbt.set_order_entry_latency(order_entry_latency_us);
     hbt.set_order_response_latency(order_response_latency_us);
@@ -187,8 +186,8 @@ TEST_CASE("[GridTrading] - on_elapse submits correct grid orders",
         .order_entry_latency_us_ = order_entry_latency_us,
         .order_response_latency_us_ = order_response_latency_us,
         .market_feed_latency_us_ = 1000};
-    auto logger = std::make_shared<Logger>("test_grid_trading_elapse.log",
-                                           LogLevel::Debug);
+    auto logger = std::make_shared<utils::logger::Logger>("test_grid_trading_elapse.log",
+                                           utils::logger::LogLevel::Debug);
 
     BacktestEngine hbt(asset_configs, backtest_engine_config, logger);
     hbt.set_order_entry_latency(order_entry_latency_us);
@@ -256,8 +255,8 @@ TEST_CASE("[GridTrading] - handles position limits correctly",
         .order_entry_latency_us_ = order_entry_latency_us,
         .order_response_latency_us_ = order_response_latency_us,
         .market_feed_latency_us_ = 1000};
-    auto logger = std::make_shared<Logger>(
-        "test_grid_trading_position_limit.log", LogLevel::Debug);
+    auto logger = std::make_shared<utils::logger::Logger>(
+        "test_grid_trading_position_limit.log", utils::logger::LogLevel::Debug);
 
     BacktestEngine hbt(asset_configs, backtest_engine_config, logger);
     GridTrading strat(asset_id, grid_num, grid_interval, half_spread,
