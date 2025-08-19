@@ -1,0 +1,2 @@
+elapse_us=1000000
+iterations=43200

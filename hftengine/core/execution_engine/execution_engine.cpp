@@ -55,8 +55,11 @@ void ExecutionEngine::add_asset(int asset_id, double tick_size,
     orderbooks_.emplace(asset_id, OrderBook(tick_size, lot_size, logger_));
     active_orders_.emplace(asset_id, std::vector<std::shared_ptr<Order>>());
     maker_books_.emplace(
-        asset_id, MakerBook{.bid_orders_ = std::unordered_map<Ticks, std::shared_ptr<Order>>(),
-                            .ask_orders_ = std::unordered_map<Ticks, std::shared_ptr<Order>>()});
+        asset_id,
+        MakerBook{.bid_orders_ =
+                      std::unordered_map<Ticks, std::shared_ptr<Order>>(),
+                  .ask_orders_ =
+                      std::unordered_map<Ticks, std::shared_ptr<Order>>()});
     if (logger_) {
         logger_->log("[ExecutionEngine] - Added asset with ID: " +
                          std::to_string(asset_id) +
@@ -509,7 +512,9 @@ bool ExecutionEngine::execute_ioc_order(int asset_id, TradeSide side,
                         " order partially filled: id=" +
                         std::to_string(order->orderId_) +
                         ", price=" + std::to_string(order->price_) +
-                        ", qty=" + std::to_string(order->filled_quantity_),
+                        ", qty=" + std::to_string(order->filled_quantity_) +
+                        ", local recieves at " +
+                        std::to_string(order->local_timestamp_) + "us",
                     LogLevel::Debug);
             }
         }
@@ -745,9 +750,10 @@ void ExecutionEngine::handle_book_update(int asset_id,
 void ExecutionEngine::handle_trade(int asset_id, const Trade &trade) {
     Ticks trade_price_ticks =
         price_to_ticks(trade.price_, tick_sizes_[asset_id]);
-    auto it = (trade.side_ == TradeSide::Sell)
-                  ? maker_books_.at(asset_id).bid_orders_.find(trade_price_ticks)
-                  : maker_books_.at(asset_id).ask_orders_.find(trade_price_ticks);
+    auto it =
+        (trade.side_ == TradeSide::Sell)
+            ? maker_books_.at(asset_id).bid_orders_.find(trade_price_ticks)
+            : maker_books_.at(asset_id).ask_orders_.find(trade_price_ticks);
     auto end = (trade.side_ == TradeSide::Sell)
                    ? maker_books_.at(asset_id).bid_orders_.end()
                    : maker_books_.at(asset_id).ask_orders_.end();
@@ -823,7 +829,10 @@ void ExecutionEngine::handle_trade(int asset_id, const Trade &trade) {
                         std::to_string(order->orderId_) +
                         ") partially filled at price=" +
                         std::to_string(order->price_) +
-                        ", qty=" + std::to_string(order->filled_quantity_),
+                        ", qty=" + std::to_string(order->filled_quantity_) +
+                        ", local recieves at " +
+                        std::to_string(trade.exch_timestamp_ +
+                                       order_response_latency_us_),
                     LogLevel::Debug);
             }
         }

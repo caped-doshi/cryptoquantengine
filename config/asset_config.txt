@@ -6,3 +6,4 @@ contract_multiplier=1.0
 is_inverse=0
 maker_fee=0.0000
 taker_fee=0.0005
+name=XRP-USDC-PERP

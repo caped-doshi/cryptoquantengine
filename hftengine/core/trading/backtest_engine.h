@@ -26,6 +26,7 @@
 #include "../types/time_in_force.h"
 #include "../types/usings.h"
 #include "backtest_asset.h"
+#include "backtest_engine_config.h"
 #include "depth.h"
 #include "orderId_generator.h"
 
@@ -33,7 +34,8 @@ class BacktestEngine {
   public:
     explicit BacktestEngine(
         const std::unordered_map<int, AssetConfig> &asset_configs,
-        std::shared_ptr<Logger> logger = nullptr, double cash=0.0);
+        const BacktestEngineConfig &engine_config,
+        std::shared_ptr<Logger> logger = nullptr);
 
     // global methods
     bool elapse(std::uint64_t microseconds);

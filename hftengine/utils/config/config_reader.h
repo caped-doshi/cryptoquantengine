@@ -10,8 +10,11 @@
 #include <string>
 #include <unordered_map>
 
+#include "../../core/recorder/recorder_config.h"
 #include "../../core/strategy/grid_trading_config.h"
 #include "../../core/trading/asset_config.h"
+#include "../../core/trading/backtest_config.h"
+#include "../../core/trading/backtest_engine_config.h"
 
 class ConfigReader {
   public:
@@ -19,6 +22,10 @@ class ConfigReader {
 
     AssetConfig get_asset_config(const std::string &filename);
     GridTradingConfig get_grid_trading_config(const std::string &filename);
+    BacktestEngineConfig
+    get_backtest_engine_config(const std::string &filename);
+    RecorderConfig get_recorder_config(const std::string &filename);
+    BacktestConfig get_backtest_config(const std::string &filename);
 
   private:
     std::unordered_map<std::string, std::string> constants;

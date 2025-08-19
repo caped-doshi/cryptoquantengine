@@ -64,6 +64,11 @@ TEST_CASE("[BacktestEngine] - initializes correctly with valid input",
                                .is_inverse_ = false,
                                .maker_fee_ = 0.0,
                                .taker_fee_ = 0.00045}}};
+    auto backtest_engine_config =
+        BacktestEngineConfig{.initial_cash_ = 1000.0,
+                             .order_entry_latency_us_ = 1000,
+                             .order_response_latency_us_ = 1000,
+                             .market_feed_latency_us_ = 1000};
     // Logger
     auto logger = std::make_shared<Logger>("test_backtest_engine_init.log",
                                            LogLevel::Debug);
@@ -71,7 +76,8 @@ TEST_CASE("[BacktestEngine] - initializes correctly with valid input",
     SECTION("Construct BacktestEngine with valid file inputs") {
         bool threw = false;
         try {
-            BacktestEngine engine(asset_configs, logger);
+            BacktestEngine engine(asset_configs, backtest_engine_config,
+                                  logger);
         } catch (...) {
             threw = true;
         }
@@ -103,11 +109,14 @@ TEST_CASE("[BacktestEngine] - rejects invalid orders",
                                .is_inverse_ = false,
                                .maker_fee_ = 0.0,
                                .taker_fee_ = 0.00045}}};
+    auto backtest_engine_config =
+        BacktestEngineConfig{.initial_cash_ = 1000.0,
+                             .order_entry_latency_us_ = 1000,
+                             .order_response_latency_us_ = 1000,
+                             .market_feed_latency_us_ = 1000};
     auto logger = std::make_shared<Logger>("test_backtest_engine_invalid.log",
                                            LogLevel::Debug);
-    BacktestEngine hbt(asset_configs, logger);
-    hbt.set_order_entry_latency(1000);
-    hbt.set_order_response_latency(1000);
+    BacktestEngine hbt(asset_configs, backtest_engine_config, logger);
 
     // Invalid price (0 or negative)
     REQUIRE_THROWS_AS(hbt.submit_buy_order(asset_id, 0.0, 1.0, TimeInForce::GTC,
@@ -146,13 +155,16 @@ TEST_CASE("[BacktestEngine] - elapse", "[backtest-engine][elapse]") {
                                .is_inverse_ = false,
                                .maker_fee_ = 0.0,
                                .taker_fee_ = 0.00045}}};
+    auto backtest_engine_config =
+        BacktestEngineConfig{.initial_cash_ = 0.0,
+                             .order_entry_latency_us_ = 1000,
+                             .order_response_latency_us_ = 1000,
+                             .market_feed_latency_us_ = 1000};
 
     SECTION("Current timestamp elapses correctly") {
         auto logger = std::make_shared<Logger>(
             "test_backtest_engine_elapse_correct.log", LogLevel::Debug);
-        BacktestEngine hbt(asset_configs, logger);
-        hbt.set_order_entry_latency(1000);
-        hbt.set_order_response_latency(1000);
+        BacktestEngine hbt(asset_configs, backtest_engine_config, logger);
 
         REQUIRE(hbt.elapse(100) == true);
         REQUIRE(hbt.current_time() == 100);
@@ -164,9 +176,7 @@ TEST_CASE("[BacktestEngine] - elapse", "[backtest-engine][elapse]") {
     SECTION("local orderbook updated with latency") {
         auto logger = std::make_shared<Logger>(
             "test_backtest_engine_elapse_latency.log", LogLevel::Debug);
-        BacktestEngine hbt(asset_configs, logger);
-        hbt.set_order_entry_latency(1000);
-        hbt.set_order_response_latency(1000);
+        BacktestEngine hbt(asset_configs, backtest_engine_config, logger);
 
         REQUIRE(hbt.elapse(50000) == true);
         REQUIRE(hbt.current_time() == 50000);
@@ -190,12 +200,7 @@ TEST_CASE("[BacktestEngine] - elapse", "[backtest-engine][elapse]") {
     SECTION("Market order executed in correct schedule") {
         auto logger = std::make_shared<Logger>(
             "test_backtest_engine_elapse_market_schedule.log", LogLevel::Debug);
-        BacktestEngine hbt(asset_configs, logger);
-        hbt.set_order_entry_latency(1000);
-        hbt.set_order_response_latency(1000);
-
-        REQUIRE(hbt.order_entry_latency() == 1000);
-        REQUIRE(hbt.order_response_latency() == 1000);
+        BacktestEngine hbt(asset_configs, backtest_engine_config, logger);
 
         REQUIRE(hbt.elapse(29500));
         REQUIRE(hbt.current_time() == 29500);
@@ -224,9 +229,7 @@ TEST_CASE("[BacktestEngine] - elapse", "[backtest-engine][elapse]") {
     SECTION("Limit order executed in correct schedule") {
         auto logger = std::make_shared<Logger>(
             "test_backtest_engine_elapse_limit_schedule.log", LogLevel::Debug);
-        BacktestEngine hbt(asset_configs, logger);
-        hbt.set_order_entry_latency(1000);
-        hbt.set_order_response_latency(1000);
+        BacktestEngine hbt(asset_configs, backtest_engine_config, logger);
 
         REQUIRE(hbt.elapse(5000));
         REQUIRE(hbt.current_time() == 5000);
@@ -252,9 +255,7 @@ TEST_CASE("[BacktestEngine] - elapse", "[backtest-engine][elapse]") {
             "cancellations") {
         auto logger = std::make_shared<Logger>(
             "test_backtest_engine_elapse_complex.log", LogLevel::Debug);
-        BacktestEngine hbt(asset_configs, logger);
-        hbt.set_order_entry_latency(1000);
-        hbt.set_order_response_latency(1000);
+        BacktestEngine hbt(asset_configs, backtest_engine_config, logger);
 
         REQUIRE(hbt.elapse(5000));
         REQUIRE(hbt.current_time() == 5000);
@@ -293,18 +294,14 @@ TEST_CASE("[BacktestEngine] - elapse", "[backtest-engine][elapse]") {
     SECTION("Handles partial fills correctly") {
         auto logger = std::make_shared<Logger>(
             "test_backtest_engine_elapse_partial_fills.log", LogLevel::Debug);
-        BacktestEngine hbt(asset_configs, logger);
-        hbt.set_order_entry_latency(1000);
-        hbt.set_order_response_latency(1000);
+        BacktestEngine hbt(asset_configs, backtest_engine_config, logger);
 
         hbt.elapse(5000);
-
         // Submit order larger than available liquidity
         OrderId big_order = hbt.submit_sell_order(
             asset_id, 50000.5, 5.0, TimeInForce::GTC, OrderType::LIMIT);
 
         hbt.elapse(7001);
-
         // Should partially fill available quantity (2.0)
         REQUIRE(hbt.position(asset_id) == -1.0);
         REQUIRE(hbt.orders(asset_id).size() == 1); // Remainder still active

@@ -5,14 +5,18 @@
  * Date: 2025-06-23
  * License: Proprietary
  */
+#include <cstdint>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
 #include <string>
 
+#include "../../core/recorder/recorder_config.h"
 #include "../../core/strategy/grid_trading_config.h"
 #include "../../core/trading/asset_config.h"
+#include "../../core/trading/backtest_config.h"
+#include "../../core/trading/backtest_engine_config.h"
 #include "config_reader.h"
 
 ConfigReader::ConfigReader() {}
@@ -96,11 +100,14 @@ int ConfigReader::get_int(const std::string &key) const {
 bool ConfigReader::has(const std::string &key) const {
     return constants.find(key) != constants.end();
 }
-
+/*
+ * @brief Reads the asset configuration from a file.
+ * @param filename The name of the configuration file.
+ * @return An AssetConfig object containing the asset configuration.*
+ */
 AssetConfig ConfigReader::get_asset_config(const std::string &filename) {
     clear();
     load(filename);
-    // read the asset config from the file
     AssetConfig config;
     config.book_update_file_ = get_string("book_update_file");
     config.trade_file_ = get_string("trade_file");
@@ -112,7 +119,9 @@ AssetConfig ConfigReader::get_asset_config(const std::string &filename) {
     config.taker_fee_ = get_double("taker_fee");
     return config;
 }
-
+/*
+ * @brief Reads the grid trading configuration from a file.
+ */
 GridTradingConfig
 ConfigReader::get_grid_trading_config(const std::string &filename) {
     clear();
@@ -126,5 +135,43 @@ ConfigReader::get_grid_trading_config(const std::string &filename) {
     config.half_spread_ = static_cast<Ticks>(get_int("half_spread"));
     config.position_limit_ = get_double("position_limit");
     config.notional_order_qty_ = get_double("notional_order_qty");
+    return config;
+}
+/*
+ * @brief Reads the backtest engine configuration from a file.
+ */
+BacktestEngineConfig
+ConfigReader::get_backtest_engine_config(const std::string &filename) {
+    clear();
+    load(filename);
+    // read the backtest engine config from the file
+    BacktestEngineConfig config;
+    config.initial_cash_ = get_double("initial_cash");
+    config.order_entry_latency_us_ = get_int("order_entry_latency_us");
+    config.order_response_latency_us_ = get_int("order_response_latency_us");
+    config.market_feed_latency_us_ = get_int("market_feed_latency_us");
+    return config;
+}
+/*
+ * @brief Reads the recorder configuration from a file.
+ */
+RecorderConfig ConfigReader::get_recorder_config(const std::string &filename) {
+    clear();
+    load(filename);
+    RecorderConfig config;
+    config.interval_us = has("interval_us") ? get_int("interval_us") : 1000000;
+    config.output_file =
+        has("output_file") ? get_string("output_file") : "recorder_output.csv";
+    return config;
+}
+/*
+ * @brief Reads the backtest configuration from a file.
+ */
+BacktestConfig ConfigReader::get_backtest_config(const std::string &filename) {
+    clear();
+    load(filename);
+    BacktestConfig config;
+    config.elapse_us = has("elapse_us") ? get_int("elapse_us") : 1000000;
+    config.iterations = has("iterations") ? get_int("iterations") : 86400;
     return config;
 }

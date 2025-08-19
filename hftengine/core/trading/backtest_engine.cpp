@@ -44,29 +44,33 @@
  */
 BacktestEngine::BacktestEngine(
     const std::unordered_map<int, AssetConfig> &asset_configs,
-    std::shared_ptr<Logger> logger, double cash)
-    : current_time_us_(0), local_cash_balance_(cash), logger_(logger) {
+    const BacktestEngineConfig &engine_config, std::shared_ptr<Logger> logger)
+    : current_time_us_(0), local_cash_balance_(engine_config.initial_cash_),
+      logger_(logger) {
+
+    order_entry_latency_us = engine_config.order_entry_latency_us_;
+    order_response_latency_us = engine_config.order_response_latency_us_;
+    market_feed_latency_us = engine_config.market_feed_latency_us_;
 
     execution_engine_ = ExecutionEngine(logger_);
+    execution_engine_.set_order_entry_latency_us(order_entry_latency_us);
+    execution_engine_.set_order_response_latency_us(order_response_latency_us);
+
     for (const auto &[asset_id, config] : asset_configs) {
-        // Initialize BacktestAsset
         assets_.emplace(asset_id, BacktestAsset(config));
-        // Initialize execution engine with tick and lot sizes
         execution_engine_.add_asset(asset_id, config.tick_size_,
                                     config.lot_size_);
-        // Initialize MarketDataFeed streams
         market_data_feed_.add_stream(asset_id, config.book_update_file_,
                                      config.trade_file_);
-        // Initialize local orderbooks
         local_orderbooks_.emplace(
             asset_id, OrderBook(config.tick_size_, config.lot_size_, logger_));
-        // Initialize per-asset tracking state
+
         num_trades_[asset_id] = 0;
         trading_volume_[asset_id] = 0.0;
         trading_value_[asset_id] = 0.0;
         realized_pnl_[asset_id] = 0.0;
         local_position_[asset_id] = 0.0;
-        // tick and lot sizes
+
         tick_sizes_[asset_id] = config.tick_size_;
         lot_sizes_[asset_id] = config.lot_size_;
     }
@@ -79,10 +83,15 @@ BacktestEngine::BacktestEngine(
         current_time_us_ = 0;
     }
     if (logger_) {
-        logger_->log("[BacktestEngine] - " + std::to_string(current_time_us_) +
-                         "us - Initialized with " +
-                         std::to_string(assets_.size()) + " assets.",
-                     LogLevel::Debug);
+        logger_->log("[BacktestEngine] - Initialization: assets=" +
+                         std::to_string(assets_.size()) +
+                         ", order_entry_latency_us=" +
+                         std::to_string(order_entry_latency_us) +
+                         ", order_response_latency_us=" +
+                         std::to_string(order_response_latency_us) +
+                         ", market_feed_latency_us=" +
+                         std::to_string(market_feed_latency_us),
+                     LogLevel::Info);
     }
 }
 
@@ -535,9 +544,22 @@ const double BacktestEngine::cash() const { return local_cash_balance_; }
  * @return The total equity as a double.
  */
 const double BacktestEngine::equity() const {
+    if (logger_) {
+        logger_->log("[BacktestEngine] - " + std::to_string(current_time_us_) +
+                         "us - calculating equity",
+                     LogLevel::Debug);
+    }
     double value = local_cash_balance_;
     for (auto &[asset_id, pos] : local_position_) {
         value += pos * local_orderbooks_.at(asset_id).mid_price();
+        if (logger_) {
+            logger_->log(
+                "[BacktestEngine] - " + std::to_string(current_time_us_) +
+                    "us - asset " + std::to_string(asset_id) +
+                    " position: " + std::to_string(pos) + ", mid price: " +
+                    std::to_string(local_orderbooks_.at(asset_id).mid_price()),
+                LogLevel::Debug);
+        }
     }
     return value;
 }
@@ -591,7 +613,7 @@ const Depth BacktestEngine::depth(int asset_id) const {
  * per-asset statistics.
  *
  * @param asset_id The identifier of the asset for which to print statistics.
- */ 
+ */
 void BacktestEngine::print_trading_stats(int asset_id) const {
     auto num_trades_it = num_trades_.find(asset_id);
     auto trading_volume_it = trading_volume_.find(asset_id);
@@ -628,6 +650,19 @@ void BacktestEngine::print_trading_stats(int asset_id) const {
  */
 const Timestamp BacktestEngine::current_time() const {
     return current_time_us_;
+}
+
+void BacktestEngine::set_cash(double cash) {
+    if (cash < 0.0) {
+        throw std::invalid_argument("Cash balance cannot be negative");
+    }
+    local_cash_balance_ = cash;
+    if (logger_) {
+        logger_->log("[BacktestEngine] - " + std::to_string(current_time_us_) +
+                         "us - Cash balance set to " +
+                         std::to_string(local_cash_balance_),
+                     LogLevel::Info);
+    }
 }
 
 /**

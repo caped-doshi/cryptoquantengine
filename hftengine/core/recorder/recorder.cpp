@@ -17,8 +17,8 @@
 #include <stdexcept>
 #include <vector>
 
-#include "../../utils/logger/logger.h"
 #include "../../utils/logger/log_level.h"
+#include "../../utils/logger/logger.h"
 #include "../../utils/math/math_utils.h"
 #include "../../utils/stat/stat_utils.h"
 #include "../types/usings.h"
@@ -76,11 +76,11 @@ void Recorder::record(Timestamp timestamp, double equity) {
  * @param asset_id The ID of the asset to record.
  */
 void Recorder::record(const BacktestEngine &hbt, int asset_id) {
-    Timestamp current_time = hbt.current_time();
-    double equity = hbt.equity();
-    Quantity position = hbt.position(asset_id);
-    Depth depth = hbt.depth(asset_id);
-    double tick_size = depth.tick_size_;
+    const Timestamp current_time = hbt.current_time();
+    const double equity = hbt.equity();
+    const Quantity position = hbt.position(asset_id);
+    const Depth depth = hbt.depth(asset_id);
+    const double tick_size = depth.tick_size_;
     Price mid_price = (ticks_to_price(depth.best_bid_, tick_size) +
                        ticks_to_price(depth.best_ask_, tick_size)) /
                       2.0;
@@ -89,7 +89,7 @@ void Recorder::record(const BacktestEngine &hbt, int asset_id) {
     records_.emplace_back(EquitySnapshot{current_time, equity});
     state_records_.emplace_back(
         StateSnapshot{current_time, equity, position, mid_price});
-    
+
     if (logger_) {
         logger_->log("[Recorder] - " + std::to_string(current_time) +
                          "us - asset_id= " + std::to_string(asset_id) +
