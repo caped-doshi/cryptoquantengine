@@ -32,7 +32,7 @@ TEST_CASE("[ConfigReader] - get_asset_config returns correct AssetConfig",
             << "taker_fee=0.0002\n";
     }
 
-    ConfigReader reader;
+    utils::config::ConfigReader reader;
     AssetConfig config = reader.get_asset_config(config_file);
 
     REQUIRE(config.book_update_file_ == "test_book.csv");
@@ -62,7 +62,7 @@ TEST_CASE("[ConfigReader] - get_grid_trading_config returns correct "
             << "notional_order_qty=100.0\n";
     }
 
-    ConfigReader reader;
+    utils::config::ConfigReader reader;
     GridTradingConfig config = reader.get_grid_trading_config(config_file);
 
     REQUIRE(config.tick_size_ == 0.01);
@@ -92,7 +92,7 @@ TEST_CASE("[ConfigReader] - get_asset_config throws on missing keys",
             << "taker_fee=0.0002\n";
     }
 
-    ConfigReader reader;
+    utils::config::ConfigReader reader;
     REQUIRE_THROWS_AS(reader.get_asset_config(config_file), std::runtime_error);
 
     std::filesystem::remove(config_file);
@@ -113,7 +113,7 @@ TEST_CASE("[ConfigReader] - get_grid_trading_config throws on missing keys",
             << "notional_order_qty=100.0\n";
     }
 
-    ConfigReader reader;
+    utils::config::ConfigReader reader;
     REQUIRE_THROWS_AS(reader.get_grid_trading_config(config_file),
                       std::runtime_error);
 
@@ -132,7 +132,7 @@ TEST_CASE("[ConfigReader] - get_backtest_engine_config returns correct "
             << "market_feed_latency_us=34567\n";
     }
 
-    ConfigReader reader;
+    utils::config::ConfigReader reader;
     BacktestEngineConfig config =
         reader.get_backtest_engine_config(config_file);
 
@@ -156,7 +156,7 @@ TEST_CASE("[ConfigReader] - get_backtest_engine_config throws on missing keys",
             << "market_feed_latency_us=34567\n";
     }
 
-    ConfigReader reader;
+    utils::config::ConfigReader reader;
     REQUIRE_THROWS_AS(reader.get_backtest_engine_config(config_file),
                       std::runtime_error);
 
@@ -172,7 +172,7 @@ TEST_CASE("[ConfigReader] - get_recorder_config returns correct RecorderConfig",
             << "output_file=test_output.csv\n";
     }
 
-    ConfigReader reader;
+    utils::config::ConfigReader reader;
     RecorderConfig config = reader.get_recorder_config(config_file);
 
     REQUIRE(config.interval_us == 500000);
@@ -190,7 +190,7 @@ TEST_CASE("[ConfigReader] - get_recorder_config uses defaults if missing",
         out << "interval_us=250000\n";
     }
 
-    ConfigReader reader;
+    utils::config::ConfigReader reader;
     RecorderConfig config = reader.get_recorder_config(config_file);
 
     REQUIRE(config.interval_us == 250000);
@@ -208,7 +208,7 @@ TEST_CASE("[ConfigReader] - get_backtest_config returns correct BacktestConfig",
             << "iterations=12345\n";
     }
 
-    ConfigReader reader;
+    utils::config::ConfigReader reader;
     BacktestConfig config = reader.get_backtest_config(config_file);
 
     REQUIRE(config.elapse_us == 2000000);
@@ -226,7 +226,7 @@ TEST_CASE("[ConfigReader] - get_backtest_config uses defaults if missing",
         out << "elapse_us=500000\n";
     }
 
-    ConfigReader reader;
+    utils::config::ConfigReader reader;
     BacktestConfig config = reader.get_backtest_config(config_file);
 
     REQUIRE(config.elapse_us == 500000);

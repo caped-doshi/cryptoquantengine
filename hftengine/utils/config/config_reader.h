@@ -16,6 +16,9 @@
 #include "../../core/trading/backtest_config.h"
 #include "../../core/trading/backtest_engine_config.h"
 
+namespace utils {
+namespace config {
+
 class ConfigReader {
   public:
     ConfigReader();
@@ -38,3 +41,5 @@ class ConfigReader {
     void load(const std::string &filename);
     void clear();
 };
+} // namespace config
+} // namespace utils

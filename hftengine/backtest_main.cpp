@@ -20,7 +20,7 @@
 
 int main() {
 
-    ConfigReader config_reader;
+    utils::config::ConfigReader config_reader;
     const auto asset_config =
         config_reader.get_asset_config("../config/asset_config.txt");
     const auto grid_trading_config = config_reader.get_grid_trading_config(

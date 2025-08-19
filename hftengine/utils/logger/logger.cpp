@@ -18,6 +18,8 @@
 #include "logger.h"
 #include "log_level.h"
 
+
+namespace utils::logger {
 /*
  * @brief Constructs a Logger that writes to the specified file.
  */
@@ -64,8 +66,8 @@ void Logger::flush() {
 }
 /*
  * @brief The logging thread function that processes messages from the queue.
- * 
- * Listens for new messages and writes them to the log file until the exit. 
+ *
+ * Listens for new messages and writes them to the log file until the exit.
  */
 void Logger::process() {
     while (true) {
@@ -84,6 +86,8 @@ void Logger::process() {
 }
 
 /*
- * @brief 
+ * @brief
  */
 void Logger::set_level(LogLevel level) { log_level_ = level; }
+
+} // namespace utils::logger

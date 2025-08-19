@@ -18,7 +18,7 @@
 #include <thread>
 
 #include "log_level.h"
-
+namespace utils::logger {
 class Logger {
   public:
     explicit Logger(const std::string &filename, LogLevel level);
@@ -38,3 +38,4 @@ class Logger {
     std::atomic<bool> exit_flag_;
     std::atomic<LogLevel> log_level_;
 };
+} // namespace utils::logger

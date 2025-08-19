@@ -19,6 +19,9 @@
 #include "../../core/trading/backtest_engine_config.h"
 #include "config_reader.h"
 
+namespace utils {
+namespace config {
+
 ConfigReader::ConfigReader() {}
 
 /*
@@ -175,3 +178,6 @@ BacktestConfig ConfigReader::get_backtest_config(const std::string &filename) {
     config.iterations = has("iterations") ? get_int("iterations") : 86400;
     return config;
 }
+
+} // namespace config
+} // namespace utils
