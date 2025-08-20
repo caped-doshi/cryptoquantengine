@@ -126,8 +126,8 @@ TEST_CASE("[Recorder] - Risk adjusted metrics correctness",
     std::vector<double> downside_returns = {-0.1, -0.2};
 
     SECTION("Sharpe ratio calculation") {
-        double mean_return = mean(expected_returns);
-        double stddev_return = stddev(expected_returns);
+        double mean_return = utils::stat::mean(expected_returns);
+        double stddev_return = utils::stat::stddev(expected_returns);
         double expected_sharpe =
             annualization_factor * mean_return / stddev_return;
 
@@ -136,8 +136,8 @@ TEST_CASE("[Recorder] - Risk adjusted metrics correctness",
     }
 
     SECTION("Sortino ratio calculation") {
-        double mean_return = mean(expected_returns);
-        double downside_stddev = stddev(downside_returns);
+        double mean_return = utils::stat::mean(expected_returns);
+        double downside_stddev = utils::stat::stddev(downside_returns);
         double expected_sortino =
             annualization_factor * mean_return / downside_stddev;
 

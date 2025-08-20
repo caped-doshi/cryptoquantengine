@@ -581,7 +581,7 @@ bool ExecutionEngine::place_maker_order(
         return false;
     }
     Ticks order_price_ticks =
-        price_to_ticks(order->price_, tick_sizes_[asset_id]);
+        utils::math::price_to_ticks(order->price_, tick_sizes_[asset_id]);
     order->queueEst_ =
         orderbooks_.at(asset_id).depth_at(order->side_, order_price_ticks);
     if (order->side_ == BookSide::Bid)
@@ -694,7 +694,7 @@ void ExecutionEngine::handle_book_update(int asset_id,
     using namespace core::orderbook;
     using namespace core::market_data;
     Ticks book_update_price_ticks =
-        price_to_ticks(book_update.price_, tick_sizes_[asset_id]);
+        utils::math::price_to_ticks(book_update.price_, tick_sizes_[asset_id]);
     // update queue position estimationsO
     Quantity Q_n = orderbooks_.at(asset_id).depth_at(book_update.side_,
                                                      book_update_price_ticks);
@@ -762,7 +762,7 @@ void ExecutionEngine::handle_trade(int asset_id, const core::market_data::Trade 
     using namespace core::trading;
     using namespace core::market_data;
     const auto trade_price_ticks =
-        price_to_ticks(trade.price_, tick_sizes_[asset_id]);
+        utils::math::price_to_ticks(trade.price_, tick_sizes_[asset_id]);
     auto it =
         (trade.side_ == TradeSide::Sell)
             ? maker_books_.at(asset_id).bid_orders_.find(trade_price_ticks)
@@ -783,7 +783,7 @@ void ExecutionEngine::handle_trade(int asset_id, const core::market_data::Trade 
                         " bid orders",
                     utils::logger::LogLevel::Debug);
                 for (const auto &kv : maker_books_.at(asset_id).bid_orders_) {
-                    logger_->log(std::to_string(ticks_to_price(
+                    logger_->log(std::to_string(utils::math::ticks_to_price(
                                      kv.first, tick_sizes_[asset_id])),
                                  utils::logger::LogLevel::Debug);
                 }
@@ -800,7 +800,7 @@ void ExecutionEngine::handle_trade(int asset_id, const core::market_data::Trade 
                         " ask orders",
                     utils::logger::LogLevel::Debug);
                 for (const auto &kv : maker_books_.at(asset_id).ask_orders_) {
-                    logger_->log(std::to_string(ticks_to_price(
+                    logger_->log(std::to_string(utils::math::ticks_to_price(
                                      kv.first, tick_sizes_[asset_id])),
                                  utils::logger::LogLevel::Debug);
                 }

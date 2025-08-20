@@ -190,12 +190,12 @@ TEST_CASE("[BacktestEngine] - elapse", "[backtest-engine][elapse]") {
         REQUIRE(hbt.current_time() == 50000);
 
         depth = hbt.depth(asset_id);
-        REQUIRE(depth.best_ask_ == price_to_ticks(50001.0, tick_size));
-        REQUIRE(depth.best_bid_ == price_to_ticks(50000.5, tick_size));
+        REQUIRE(depth.best_ask_ == utils::math::price_to_ticks(50001.0, tick_size));
+        REQUIRE(depth.best_bid_ == utils::math::price_to_ticks(50000.5, tick_size));
         REQUIRE(depth.ask_qty_ == 1.5);
         REQUIRE(depth.bid_qty_ == 2.0);
-        REQUIRE(depth.bid_depth_[price_to_ticks(50000.5, tick_size)] == 2.0);
-        REQUIRE(depth.ask_depth_[price_to_ticks(50001.0, tick_size)] == 1.5);
+        REQUIRE(depth.bid_depth_[utils::math::price_to_ticks(50000.5, tick_size)] == 2.0);
+        REQUIRE(depth.ask_depth_[utils::math::price_to_ticks(50001.0, tick_size)] == 1.5);
 
         REQUIRE(hbt.elapse(2000) == true);
         REQUIRE(hbt.current_time() == 52000);
@@ -214,7 +214,7 @@ TEST_CASE("[BacktestEngine] - elapse", "[backtest-engine][elapse]") {
         REQUIRE(hbt.current_time() == 29500);
 
         depth = hbt.depth(asset_id);
-        REQUIRE(depth.best_bid_ == price_to_ticks(50000.0, tick_size));
+        REQUIRE(depth.best_bid_ == utils::math::price_to_ticks(50000.0, tick_size));
         REQUIRE(depth.bid_qty_ == 2.0);
         // Submit a buy order that will be delayed and scheduled
         OrderId order_id = hbt.submit_sell_order(
@@ -243,7 +243,7 @@ TEST_CASE("[BacktestEngine] - elapse", "[backtest-engine][elapse]") {
         REQUIRE(hbt.current_time() == 5000);
 
         depth = hbt.depth(asset_id);
-        REQUIRE(depth.best_ask_ == price_to_ticks(50001.0, tick_size));
+        REQUIRE(depth.best_ask_ == utils::math::price_to_ticks(50001.0, tick_size));
 
         OrderId order_id = hbt.submit_sell_order(
             asset_id, 50000.5, 1.0, TimeInForce::GTC, OrderType::LIMIT);

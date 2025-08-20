@@ -45,7 +45,7 @@ TEST_CASE("[OrderBook] - Book Update Processing", "[orderbook][updates]") {
         REQUIRE(book.best_bid() == 100.0);
         REQUIRE(book.best_ask() == 0.0);
         REQUIRE(book.depth_at(BookSide::Bid,
-                              price_to_ticks(100.0, tick_size)) == 500.0);
+                              utils::math::price_to_ticks(100.0, tick_size)) == 500.0);
         REQUIRE(book.depth_at_level(BookSide::Bid, 0) == 500.0);
     }
 
@@ -59,7 +59,7 @@ TEST_CASE("[OrderBook] - Book Update Processing", "[orderbook][updates]") {
             {20, 110, UpdateType::Incremental, BookSide::Ask, 101.0, 150.0});
 
         REQUIRE(book.depth_at(BookSide::Ask,
-                              price_to_ticks(101.0, tick_size)) == 150.0);
+                              utils::math::price_to_ticks(101.0, tick_size)) == 150.0);
         REQUIRE(book.depth_at_level(BookSide::Ask, 0) == 150.0);
     }
 

@@ -85,8 +85,8 @@ void Recorder::record(const core::backtest::BacktestEngine &hbt, int asset_id) {
     const Quantity position = hbt.position(asset_id);
     const Depth depth = hbt.depth(asset_id);
     const double tick_size = depth.tick_size_;
-    Price mid_price = (ticks_to_price(depth.best_bid_, tick_size) +
-                       ticks_to_price(depth.best_ask_, tick_size)) /
+    Price mid_price = (utils::math::ticks_to_price(depth.best_bid_, tick_size) +
+                       utils::math::ticks_to_price(depth.best_ask_, tick_size)) /
                       2.0;
     if (!std::isfinite(mid_price)) mid_price = 0.0;
 
@@ -161,14 +161,14 @@ double Recorder::sharpe() const {
 
     long double ann_factor =
         sqrt((365 * 24 * 60 * 60) / (interval_us_ / 1'000'000.0));
-    double ret_mean = mean(returns);
-    double ret_stddev = stddev(returns);
+    double ret_mean = utils::stat::mean(returns);
+    double ret_stddev = utils::stat::stddev(returns);
 
     if (std::abs(ret_stddev) <= 1e-9) {
         throw std::runtime_error("Cannot calculate Sharpe ratio: standard "
                                  "deviation too close to zero");
     }
-    return ann_factor * mean(returns) / stddev(returns);
+    return ann_factor * utils::stat::mean(returns) / utils::stat::stddev(returns);
 }
 
 /**
@@ -195,15 +195,15 @@ double Recorder::sortino() const {
 
     long double ann_factor =
         sqrt((365 * 24 * 60 * 60) / (interval_us_ / 1'000'000.0));
-    double ret_mean = mean(returns);
-    double ret_stddev_neg = stddev(returns_neg);
+    double ret_mean = utils::stat::mean(returns);
+    double ret_stddev_neg = utils::stat::stddev(returns_neg);
 
     if (std::abs(ret_stddev_neg) <= 1e-9) {
         throw std::runtime_error(
             "Cannot calculate Sortino ratio : downside deviation is zero");
     }
 
-    return ann_factor * mean(returns) / stddev(returns_neg);
+    return ann_factor * utils::stat::mean(returns) / utils::stat::stddev(returns_neg);
 }
 
 /**

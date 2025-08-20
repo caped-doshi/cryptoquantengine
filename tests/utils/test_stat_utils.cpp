@@ -18,6 +18,7 @@
 #include "../hftengine/utils/stat/stat_utils.h"
 
 TEST_CASE("[StatUtils] - mean() computes arithmetic mean", "[statutils][mean]") {
+    using namespace utils::stat;
     SECTION("basic cases") {
         REQUIRE(mean({1.0, 2.0, 3.0, 4.0, 5.0}) ==
                 Catch::Approx(3.0).margin(1e-8));
@@ -46,6 +47,7 @@ TEST_CASE("[StatUtils] - mean() computes arithmetic mean", "[statutils][mean]") 
 
 TEST_CASE("[StatUtils] - stddev() computes population standard deviation",
           "[statutils][stddev]") {
+    using namespace utils::stat;
     SECTION("basic cases") {
         REQUIRE(stddev({1.0, 1.0, 1.0, 1.0}) ==
                 Catch::Approx(0.0).margin(1e-8));

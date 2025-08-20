@@ -62,8 +62,8 @@ void GridTrading::on_elapse(core::backtest::BacktestEngine &hbt) {
 
     double tick_size = depth.tick_size_;
     double lot_size = depth.lot_size_;
-    Price best_bid = ticks_to_price(depth.best_bid_, tick_size);
-    Price best_ask = ticks_to_price(depth.best_ask_, tick_size);
+    Price best_bid = utils::math::ticks_to_price(depth.best_bid_, tick_size);
+    Price best_ask = utils::math::ticks_to_price(depth.best_ask_, tick_size);
 
     if (best_bid <= 0.0 || best_ask <= 0.0 || !std::isfinite(best_bid) ||
         !std::isfinite(best_ask)) {

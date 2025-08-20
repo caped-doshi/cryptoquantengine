@@ -89,7 +89,7 @@ void OrderBook::apply_book_update(const core::market_data::BookUpdate &update) {
         last_update_ == UpdateType::Incremental) {
         clear();
     }
-    Ticks price_ticks = price_to_ticks(update.price_, tick_size_);
+    Ticks price_ticks = utils::math::price_to_ticks(update.price_, tick_size_);
     if (update.quantity_ == 0.0) {
         (update.side_ == BookSide::Bid) ? bid_book_.erase(price_ticks)
                                         : ask_book_.erase(price_ticks);
@@ -109,7 +109,7 @@ void OrderBook::apply_book_update(const core::market_data::BookUpdate &update) {
 Price OrderBook::best_bid() const {
     return bid_book_.empty()
                ? 0.0
-               : ticks_to_price(bid_book_.begin()->first, tick_size_);
+               : utils::math::ticks_to_price(bid_book_.begin()->first, tick_size_);
 }
 
 /**
@@ -120,7 +120,7 @@ Price OrderBook::best_bid() const {
 Price OrderBook::best_ask() const {
     return ask_book_.empty()
                ? 0.0
-               : ticks_to_price(ask_book_.begin()->first, tick_size_);
+               : utils::math::ticks_to_price(ask_book_.begin()->first, tick_size_);
 }
 
 /**
@@ -262,14 +262,14 @@ void OrderBook::print_top_levels(int depth) const {
     for (const auto &[price, qty] : bid_book_) {
         if (count++ >= depth) break;
         oss << "  " << std::fixed << std::setprecision(8)
-            << ticks_to_price(price, tick_size_) << " : " << qty << "\n";
+            << utils::math::ticks_to_price(price, tick_size_) << " : " << qty << "\n";
     }
     oss << "Asks:\n";
     count = 0;
     for (const auto &[price, qty] : ask_book_) {
         if (count++ >= depth) break;
         oss << "  " << std::fixed << std::setprecision(8)
-            << ticks_to_price(price, tick_size_) << " : " << qty << "\n";
+            << utils::math::ticks_to_price(price, tick_size_) << " : " << qty << "\n";
     }
     if (logger_) {
         logger_->log(oss.str(), utils::logger::LogLevel::Info);

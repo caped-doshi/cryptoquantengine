@@ -17,7 +17,6 @@
 #include "../../core/backtest_engine/backtest_engine_config.h"
 
 namespace utils::config {
-
 class ConfigReader {
   public:
     ConfigReader();
