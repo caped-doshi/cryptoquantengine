@@ -53,7 +53,7 @@ void GridTrading::initialize() {
     }
 }
 
-void GridTrading::on_elapse(BacktestEngine &hbt) {
+void GridTrading::on_elapse(core::backtest::BacktestEngine &hbt) {
     using namespace core::trading;
     Depth depth = hbt.depth(asset_id_);
     Quantity position = hbt.position(asset_id_);

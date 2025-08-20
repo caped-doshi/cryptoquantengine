@@ -12,15 +12,14 @@
 #include <stdexcept>
 #include <string>
 
+#include "../../core/backtest_engine/backtest_config.h"
+#include "../../core/backtest_engine/backtest_engine_config.h"
 #include "../../core/recorder/recorder_config.h"
 #include "../../core/strategy/grid_trading_config.h"
 #include "../../core/trading/asset_config.h"
-#include "../../core/backtest_engine/backtest_config.h"
-#include "../../core/backtest_engine/backtest_engine_config.h"
 #include "config_reader.h"
 
-namespace utils {
-namespace config {
+namespace utils::config {
 
 ConfigReader::ConfigReader() {}
 
@@ -108,7 +107,8 @@ bool ConfigReader::has(const std::string &key) const {
  * @param filename The name of the configuration file.
  * @return An AssetConfig object containing the asset configuration.*
  */
-core::trading::AssetConfig ConfigReader::get_asset_config(const std::string &filename) {
+core::trading::AssetConfig
+ConfigReader::get_asset_config(const std::string &filename) {
     using namespace core::trading;
     clear();
     load(filename);
@@ -144,12 +144,12 @@ ConfigReader::get_grid_trading_config(const std::string &filename) {
 /*
  * @brief Reads the backtest engine configuration from a file.
  */
-BacktestEngineConfig
+core::backtest::BacktestEngineConfig
 ConfigReader::get_backtest_engine_config(const std::string &filename) {
     clear();
     load(filename);
     // read the backtest engine config from the file
-    BacktestEngineConfig config;
+    core::backtest::BacktestEngineConfig config;
     config.initial_cash_ = get_double("initial_cash");
     config.order_entry_latency_us_ = get_int("order_entry_latency_us");
     config.order_response_latency_us_ = get_int("order_response_latency_us");
@@ -171,14 +171,14 @@ RecorderConfig ConfigReader::get_recorder_config(const std::string &filename) {
 /*
  * @brief Reads the backtest configuration from a file.
  */
-BacktestConfig ConfigReader::get_backtest_config(const std::string &filename) {
+core::backtest::BacktestConfig
+ConfigReader::get_backtest_config(const std::string &filename) {
     clear();
     load(filename);
-    BacktestConfig config;
+    core::backtest::BacktestConfig config;
     config.elapse_us = has("elapse_us") ? get_int("elapse_us") : 1000000;
     config.iterations = has("iterations") ? get_int("iterations") : 86400;
     return config;
 }
 
-} // namespace config
-} // namespace utils
+} // namespace utils::config

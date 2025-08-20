@@ -23,6 +23,7 @@
 #include "backtest_asset.h"
 #include "backtest_engine.h"
 
+namespace core::backtest {
 /**
  * @brief Constructs a BacktestEngine with per-asset book/trade streams and
  * configurations.
@@ -44,11 +45,12 @@
  */
 BacktestEngine::BacktestEngine(
     const std::unordered_map<int, core::trading::AssetConfig> &asset_configs,
-    const BacktestEngineConfig &engine_config,
+    const core::backtest::BacktestEngineConfig &engine_config,
     std::shared_ptr<utils::logger::Logger> logger)
     : current_time_us_(0), local_cash_balance_(engine_config.initial_cash_),
       logger_(logger) {
     using namespace core::market_data;
+    using namespace core::backtest;
     order_entry_latency_us = engine_config.order_entry_latency_us_;
     order_response_latency_us = engine_config.order_response_latency_us_;
     market_feed_latency_us = engine_config.market_feed_latency_us_;
@@ -58,7 +60,7 @@ BacktestEngine::BacktestEngine(
     execution_engine_.set_order_response_latency_us(order_response_latency_us);
 
     for (const auto &[asset_id, config] : asset_configs) {
-        using namespace core::orderbook; 
+        using namespace core::orderbook;
 
         assets_.emplace(asset_id, BacktestAsset(config));
         execution_engine_.add_asset(asset_id, config.tick_size_,
@@ -206,7 +208,7 @@ bool BacktestEngine::elapse(std::uint64_t microseconds) {
 }
 
 bool BacktestEngine::order_inactive(const core::trading::Order &order) {
-    //using namespace core::trading;
+    // using namespace core::trading;
     if (order.orderStatus_ == OrderStatus::FILLED ||
         order.orderStatus_ == OrderStatus::CANCELLED ||
         order.orderStatus_ == OrderStatus::EXPIRED) {
@@ -391,8 +393,9 @@ void BacktestEngine::process_exchange_order_updates() {
  * Order updates that were processed in the exchange have not reached the
  * local system and are updated in this method after order response latency.
  */
-void BacktestEngine::process_order_update_local(OrderEventType event_type,
-                                                OrderId orderId, const core::trading::Order order) {
+void BacktestEngine::process_order_update_local(
+    OrderEventType event_type, OrderId orderId,
+    const core::trading::Order order) {
     if (event_type == OrderEventType::ACKNOWLEDGED) {
         local_active_orders_[orderId] = order;
         if (logger_) {
@@ -485,7 +488,8 @@ void BacktestEngine::process_exchange_fills() {
  * @note Assumes `fill.price_` is in quote currency. For inverse contracts,
  *       additional logic may be needed.
  */
-void BacktestEngine::process_fill_local(int asset_id, const core::trading::Fill &fill) {
+void BacktestEngine::process_fill_local(int asset_id,
+                                        const core::trading::Fill &fill) {
     using namespace core::trading;
     if (logger_) {
         logger_->log("[BacktestEngine] - " +
@@ -507,8 +511,8 @@ void BacktestEngine::process_fill_local(int asset_id, const core::trading::Fill 
     local_cash_balance_ += -signed_qty * fill.price_ - fee;
 }
 
-void BacktestEngine::process_book_update_local(int asset_id,
-                                               const core::market_data::BookUpdate &book_update) {
+void BacktestEngine::process_book_update_local(
+    int asset_id, const core::market_data::BookUpdate &book_update) {
     using namespace core::orderbook;
     local_orderbooks_.at(asset_id).apply_book_update(book_update);
 }
@@ -523,7 +527,8 @@ void BacktestEngine::process_book_update_local(int asset_id,
  * @param asset_id The identifier of the asset for which to retrieve orders.
  * @return A vector containing all active orders for the specified asset.
  */
-const std::vector<core::trading::Order> BacktestEngine::orders(int asset_id) const {
+const std::vector<core::trading::Order>
+BacktestEngine::orders(int asset_id) const {
     if (logger_) {
         logger_->log("[BacktestEngine] - " + std::to_string(current_time_us_) +
                          "us - retrieving " +
@@ -747,3 +752,4 @@ const Microseconds BacktestEngine::order_response_latency() const {
 const Microseconds BacktestEngine::market_feed_latency() const {
     return market_feed_latency_us;
 }
+} // namespace core::backtest

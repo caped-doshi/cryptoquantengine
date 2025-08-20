@@ -49,6 +49,7 @@ void create_book_update_csv(const std::string &filename) {
 TEST_CASE("[BacktestEngine] - initializes correctly with valid input",
           "[backtest][init]") {
     using namespace core::trading;
+    using namespace core::backtest;
 
     const std::string book_file = "test_book.csv";
     const std::string trade_file = "test_trade.csv";
@@ -95,6 +96,7 @@ TEST_CASE("[BacktestEngine] - initializes correctly with valid input",
 TEST_CASE("[BacktestEngine] - rejects invalid orders",
           "[backtest-engine][invalid]") {
     using namespace core::trading;
+    using namespace core::backtest;
 
     const std::string book_file = "test_book.csv";
     const std::string trade_file = "test_trade.csv";
@@ -140,6 +142,7 @@ TEST_CASE("[BacktestEngine] - rejects invalid orders",
 
 TEST_CASE("[BacktestEngine] - elapse", "[backtest-engine][elapse]") {
     using namespace core::trading;
+    using namespace core::backtest;
 
     const std::string book_file = "test_book.csv";
     const std::string trade_file = "test_trade.csv";

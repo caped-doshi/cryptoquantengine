@@ -22,7 +22,7 @@ class Strategy {
     virtual ~Strategy() = default;
 
     virtual void initialize() = 0;
-    virtual void on_elapse(BacktestEngine &hbt) = 0;
+    virtual void on_elapse(core::backtest::BacktestEngine &hbt) = 0;
 
   private:
 };

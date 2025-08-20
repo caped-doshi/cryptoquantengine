@@ -29,7 +29,7 @@ class GridTrading : public Strategy {
                          std::shared_ptr<utils::logger::Logger> logger = nullptr);
 
     void initialize() override;
-    void on_elapse(BacktestEngine &hbt) override;
+    void on_elapse(core::backtest::BacktestEngine &hbt) override;
 
   private:
     int asset_id_;

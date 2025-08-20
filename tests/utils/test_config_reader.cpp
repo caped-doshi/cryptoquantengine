@@ -132,6 +132,7 @@ TEST_CASE("[ConfigReader] - get_backtest_engine_config returns correct "
           "BacktestEngineConfig",
           "[config][backtest_engine_config]") {
     using namespace utils::config;
+    using namespace core::backtest;
 
     const std::string config_file = "test_backtest_engine_config.tmp";
     {
@@ -157,6 +158,7 @@ TEST_CASE("[ConfigReader] - get_backtest_engine_config returns correct "
 TEST_CASE("[ConfigReader] - get_backtest_engine_config throws on missing keys",
           "[config][backtest_engine_config][missing]") {
     using namespace utils::config;
+    using namespace core::backtest;
 
     const std::string config_file = "test_backtest_engine_config_missing.tmp";
     // Omit some required keys
@@ -227,7 +229,8 @@ TEST_CASE("[ConfigReader] - get_backtest_config returns correct BacktestConfig",
     }
 
     ConfigReader reader;
-    BacktestConfig config = reader.get_backtest_config(config_file);
+    core::backtest::BacktestConfig config =
+        reader.get_backtest_config(config_file);
 
     REQUIRE(config.elapse_us == 2000000);
     REQUIRE(config.iterations == 12345);
@@ -247,7 +250,8 @@ TEST_CASE("[ConfigReader] - get_backtest_config uses defaults if missing",
     }
 
     ConfigReader reader;
-    BacktestConfig config = reader.get_backtest_config(config_file);
+    core::backtest::BacktestConfig config =
+        reader.get_backtest_config(config_file);
 
     REQUIRE(config.elapse_us == 500000);
     REQUIRE(config.iterations == 86400); // default value

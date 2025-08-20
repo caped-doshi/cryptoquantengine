@@ -17,6 +17,7 @@
 #include "../types/trade_side.h"
 #include "../types/usings.h"
 
+namespace core::backtest {
 class BacktestAsset {
   public:
     BacktestAsset() = default;
@@ -28,3 +29,4 @@ class BacktestAsset {
   private:
     core::trading::AssetConfig config_;
 };
+} // namespace core::backtest

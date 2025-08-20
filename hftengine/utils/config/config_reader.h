@@ -16,8 +16,7 @@
 #include "../../core/backtest_engine/backtest_config.h"
 #include "../../core/backtest_engine/backtest_engine_config.h"
 
-namespace utils {
-namespace config {
+namespace utils::config {
 
 class ConfigReader {
   public:
@@ -25,10 +24,10 @@ class ConfigReader {
 
     core::trading::AssetConfig get_asset_config(const std::string &filename);
     GridTradingConfig get_grid_trading_config(const std::string &filename);
-    BacktestEngineConfig
+    core::backtest::BacktestEngineConfig
     get_backtest_engine_config(const std::string &filename);
     RecorderConfig get_recorder_config(const std::string &filename);
-    BacktestConfig get_backtest_config(const std::string &filename);
+    core::backtest::BacktestConfig get_backtest_config(const std::string &filename);
 
   private:
     std::unordered_map<std::string, std::string> constants;
@@ -41,5 +40,4 @@ class ConfigReader {
     void load(const std::string &filename);
     void clear();
 };
-} // namespace config
-} // namespace utils
+}

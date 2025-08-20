@@ -78,7 +78,7 @@ void Recorder::record(Timestamp timestamp, double equity) {
  * @param hbt The BacktestEngine instance containing the current state.
  * @param asset_id The ID of the asset to record.
  */
-void Recorder::record(const BacktestEngine &hbt, int asset_id) {
+void Recorder::record(const core::backtest::BacktestEngine &hbt, int asset_id) {
     using namespace core::trading;
     const Timestamp current_time = hbt.current_time();
     const double equity = hbt.equity();

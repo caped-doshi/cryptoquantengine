@@ -15,8 +15,8 @@
 #include <vector>
 
 #include "../../utils/logger/logger.h"
-#include "../market_data/market_data_feed.h"
 #include "../execution_engine/execution_engine.h"
+#include "../market_data/market_data_feed.h"
 #include "../orderbook/orderbook.h"
 #include "../trading/depth.h"
 #include "../trading/fill.h"
@@ -30,11 +30,13 @@
 #include "backtest_asset.h"
 #include "backtest_engine_config.h"
 
+namespace core::backtest {
 class BacktestEngine {
   public:
     explicit BacktestEngine(
-        const std::unordered_map<int, core::trading::AssetConfig> &asset_configs,
-        const BacktestEngineConfig &engine_config,
+        const std::unordered_map<int, core::trading::AssetConfig>
+            &asset_configs,
+        const core::backtest::BacktestEngineConfig &engine_config,
         std::shared_ptr<utils::logger::Logger> logger = nullptr);
 
     // global methods
@@ -82,24 +84,23 @@ class BacktestEngine {
     void process_order_update_local(OrderEventType event_type, OrderId orderId,
                                     const core::trading::Order order);
     void process_fill_local(int asset_id, const core::trading::Fill &fill);
-    void process_book_update_local(int asset_id, const core::market_data::BookUpdate &book_update);
+    void
+    process_book_update_local(int asset_id,
+                              const core::market_data::BookUpdate &book_update);
 
     Timestamp current_time_us_;
     core::execution_engine::ExecutionEngine execution_engine_;
     core::market_data::MarketDataFeed market_data_feed_;
     core::trading::OrderIdGenerator orderId_gen_;
-
     // asset configurations
-    std::unordered_map<int, BacktestAsset> assets_;
+    std::unordered_map<int, core::backtest::BacktestAsset> assets_;
     std::unordered_map<int, double> tick_sizes_;
     std::unordered_map<int, double> lot_sizes_;
-
     // local state (updated with latency simulation)
     double local_cash_balance_;
     std::unordered_map<int, double> local_position_;
     std::unordered_map<int, core::orderbook::OrderBook> local_orderbooks_;
     std::unordered_map<int, core::trading::Order> local_active_orders_;
-
     // trading statistics
     std::unordered_map<int, int> num_trades_;
     std::unordered_map<int, double> trading_volume_;
@@ -121,3 +122,4 @@ class BacktestEngine {
 
     std::shared_ptr<utils::logger::Logger> logger_;
 };
+} // namespace core::backtest

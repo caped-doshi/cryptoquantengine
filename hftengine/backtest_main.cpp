@@ -22,6 +22,7 @@ int main() {
     using namespace utils::config;
     using namespace core::recorder;
     using namespace core::trading;
+    using namespace core::backtest;
 
     ConfigReader config_reader;
     const auto asset_config =

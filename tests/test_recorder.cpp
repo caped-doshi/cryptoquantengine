@@ -199,6 +199,7 @@ TEST_CASE("[Recorder] - record(BacktestEngine, int) with limit orders",
     using namespace core::recorder;
     using namespace core::trading;
     using namespace utils::logger;
+    using namespace core::backtest;
     // Create a minimal trade file
     const std::string trade_file = "test_recorder_trade.csv";
     std::ofstream tf(trade_file);
