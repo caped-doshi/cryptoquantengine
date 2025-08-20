@@ -10,7 +10,9 @@
 #pragma once
 
 #include <deque>
+#include <functional>
 #include <memory>
+#include <type_traits>
 #include <unordered_map>
 #include <vector>
 
@@ -90,5 +92,11 @@ class ExecutionEngine {
     std::unordered_map<OrderId, std::shared_ptr<core::trading::Order>> orders_;
 
     std::shared_ptr<utils::logger::Logger> logger_;
+
+    template <typename Container>
+    static void clear_from_container(
+        Container &container,
+        const std::function<bool(const std::shared_ptr<core::trading::Order> &)>
+            &order_inactive);
 };
 }

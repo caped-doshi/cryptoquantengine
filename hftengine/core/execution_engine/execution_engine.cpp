@@ -11,9 +11,12 @@
 
 #include <algorithm>
 #include <cmath>
+#include <functional>
+#include <future>
 #include <iomanip>
 #include <iostream>
 #include <memory>
+#include <type_traits>
 #include <unordered_map>
 #include <vector>
 
@@ -82,6 +85,37 @@ bool ExecutionEngine::order_inactive(
 }
 
 /**
+ * @brief Clears inactive orders from a container.
+ *
+ * This function removes all orders from the specified container that are
+ * considered inactive based on the provided `order_inactive` predicate.
+ * It supports both vector and unordered_map containers.
+ *
+ * @tparam Container The type of the container (e.g., vector or unordered_map).
+ * @param container The container from which to clear inactive orders.
+ * @param order_inactive A predicate function that returns true for inactive
+ * orders.
+ */
+template <typename Container>
+void ExecutionEngine::clear_from_container(
+    Container &container,
+    const std::function<bool(const std::shared_ptr<core::trading::Order> &)>
+        &order_inactive) {
+    if constexpr (std::is_same_v<Container,
+                      std::vector<std::shared_ptr<core::trading::Order>>>) {
+        container.erase(
+            std::remove_if(container.begin(), container.end(), order_inactive),
+            container.end());
+    } else {
+        for (auto it = container.begin(); it != container.end();) {
+            if (order_inactive(it->second))
+                it = container.erase(it);
+            else
+                ++it;
+        }
+    }
+}
+/**
  * @brief Registers a new asset in the execution engine.
  *
  * Initializes internal data structures (such as the order book and active
@@ -94,33 +128,31 @@ bool ExecutionEngine::clear_inactive_orders(int asset_id) {
     if (asset_it == active_orders_.end()) {
         return false; // Asset not found
     }
-    auto clear_from_container = [&](auto &container) {
-        using ContainerType = std::decay_t<decltype(container)>;
-
-        if constexpr (std::is_same_v<
-                          ContainerType,
-                          std::vector<std::shared_ptr<core::trading::Order>>>) {
-            // Vector version
-            container.erase(std::remove_if(container.begin(), container.end(),
-                                           [&](const auto &order) {
-                                               return order_inactive(order);
-                                           }),
-                            container.end());
-        } else {
-            // Map version
-            for (auto it = container.begin(); it != container.end();) {
-                if (order_inactive(it->second)) {
-                    it = container.erase(it);
-                } else {
-                    ++it;
-                }
-            }
-        }
-    };
-    clear_from_container(active_orders_[asset_id]);
-    clear_from_container(maker_books_.at(asset_id).bid_orders_);
-    clear_from_container(maker_books_.at(asset_id).ask_orders_);
-    clear_from_container(orders_);
+    auto order_inactive_fn =
+        [this](const std::shared_ptr<core::trading::Order> &order) {
+            return order_inactive(order);
+        };
+    std::vector<std::future<void>> futures;
+    futures.push_back(std::async(std::launch::async, [this, &asset_id,
+                                                      &order_inactive_fn]() {
+        clear_from_container(active_orders_.at(asset_id), order_inactive_fn);
+    }));
+    futures.push_back(
+        std::async(std::launch::async, [this, &asset_id, &order_inactive_fn]() {
+            clear_from_container(maker_books_.at(asset_id).bid_orders_,
+                                 order_inactive_fn);
+        }));
+    futures.push_back(
+        std::async(std::launch::async, [this, &asset_id, &order_inactive_fn]() {
+            clear_from_container(maker_books_.at(asset_id).ask_orders_,
+                                 order_inactive_fn);
+        }));
+    futures.push_back(
+        std::async(std::launch::async, [this, &order_inactive_fn]() {
+            clear_from_container(orders_, order_inactive_fn);
+        }));
+    for (auto &fut : futures)
+        fut.get();
     return true;
 }
 
