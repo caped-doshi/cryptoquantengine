@@ -15,7 +15,7 @@
 #include "../../utils/logger/log_level.h"
 #include "../../utils/logger/logger.h"
 #include "../../utils/math/math_utils.h"
-#include "../data/market_data_feed.h"
+#include "../market_data/market_data_feed.h"
 #include "../trading/asset_config.h"
 #include "../trading/depth.h"
 #include "../types/action_type.h"
@@ -48,7 +48,7 @@ BacktestEngine::BacktestEngine(
     std::shared_ptr<utils::logger::Logger> logger)
     : current_time_us_(0), local_cash_balance_(engine_config.initial_cash_),
       logger_(logger) {
-
+    using namespace core::market_data;
     order_entry_latency_us = engine_config.order_entry_latency_us_;
     order_response_latency_us = engine_config.order_response_latency_us_;
     market_feed_latency_us = engine_config.market_feed_latency_us_;
@@ -118,6 +118,7 @@ BacktestEngine::BacktestEngine(
  * @throws std::invalid_argument If an unknown action type is encountered.
  */
 bool BacktestEngine::elapse(std::uint64_t microseconds) {
+    using namespace core::market_data;
     EventType event_type;
     BookUpdate book_update;
     Trade trade;
@@ -205,7 +206,7 @@ bool BacktestEngine::elapse(std::uint64_t microseconds) {
 }
 
 bool BacktestEngine::order_inactive(const core::trading::Order &order) {
-    using namespace core::trading;
+    //using namespace core::trading;
     if (order.orderStatus_ == OrderStatus::FILLED ||
         order.orderStatus_ == OrderStatus::CANCELLED ||
         order.orderStatus_ == OrderStatus::EXPIRED) {
@@ -507,7 +508,7 @@ void BacktestEngine::process_fill_local(int asset_id, const core::trading::Fill 
 }
 
 void BacktestEngine::process_book_update_local(int asset_id,
-                                               const BookUpdate &book_update) {
+                                               const core::market_data::BookUpdate &book_update) {
     using namespace core::orderbook;
     local_orderbooks_.at(asset_id).apply_book_update(book_update);
 }

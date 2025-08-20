@@ -10,9 +10,9 @@ add_executable(hftbacktest
   hftengine/utils/config/config_reader.cpp
   hftengine/core/execution_engine/execution_engine.cpp
   hftengine/core/backtest_engine/backtest_engine.cpp
-  hftengine/core/data/market_data_feed.cpp
-  hftengine/core/data/readers/book_stream_reader.cpp
-  hftengine/core/data/readers/trade_stream_reader.cpp
+  hftengine/core/market_data/market_data_feed.cpp
+  hftengine/core/market_data/readers/book_stream_reader.cpp
+  hftengine/core/market_data/readers/trade_stream_reader.cpp
   hftengine/core/recorder/recorder.cpp
   hftengine/core/strategy/grid_trading.cpp
   hftengine/utils/logger/logger.cpp
@@ -62,7 +62,7 @@ target_include_directories(test_config_reader PRIVATE
 
 add_executable(test_book_stream_reader
   tests/test_book_stream_reader.cpp
-  hftengine/core/data/readers/book_stream_reader.cpp
+  hftengine/core/market_data/readers/book_stream_reader.cpp
   hftengine/core/orderbook/orderbook.cpp
   hftengine/utils/logger/logger.cpp
 )
@@ -73,7 +73,7 @@ target_include_directories(test_book_stream_reader PRIVATE
 
 add_executable(test_trade_stream_reader
   tests/test_trade_stream_reader.cpp
-  hftengine/core/data/readers/trade_stream_reader.cpp
+  hftengine/core/market_data/readers/trade_stream_reader.cpp
   hftengine/core/orderbook/orderbook.cpp
   hftengine/utils/logger/logger.cpp
 )
@@ -84,9 +84,9 @@ target_include_directories(test_trade_stream_reader PRIVATE
 
 add_executable(test_market_data_feed
   tests/test_market_data_feed.cpp
-  hftengine/core/data/market_data_feed.cpp
-  hftengine/core/data/readers/trade_stream_reader.cpp
-  hftengine/core/data/readers/book_stream_reader.cpp
+  hftengine/core/market_data/market_data_feed.cpp
+  hftengine/core/market_data/readers/trade_stream_reader.cpp
+  hftengine/core/market_data/readers/book_stream_reader.cpp
 )
 
 target_include_directories(test_market_data_feed PRIVATE
@@ -109,9 +109,9 @@ add_executable(test_backtest_engine
   hftengine/core/backtest_engine/backtest_engine.cpp
   hftengine/core/execution_engine/execution_engine.cpp
   hftengine/core/orderbook/orderbook.cpp
-  hftengine/core/data/market_data_feed.cpp
-  hftengine/core/data/readers/trade_stream_reader.cpp
-  hftengine/core/data/readers/book_stream_reader.cpp
+  hftengine/core/market_data/market_data_feed.cpp
+  hftengine/core/market_data/readers/trade_stream_reader.cpp
+  hftengine/core/market_data/readers/book_stream_reader.cpp
   hftengine/utils/logger/logger.cpp
 )
 
@@ -133,9 +133,9 @@ add_executable(test_recorder
   hftengine/core/backtest_engine/backtest_engine.cpp
   hftengine/core/orderbook/orderbook.cpp
   hftengine/core/execution_engine/execution_engine.cpp
-  hftengine/core/data/market_data_feed.cpp
-  hftengine/core/data/readers/trade_stream_reader.cpp
-  hftengine/core/data/readers/book_stream_reader.cpp
+  hftengine/core/market_data/market_data_feed.cpp
+  hftengine/core/market_data/readers/trade_stream_reader.cpp
+  hftengine/core/market_data/readers/book_stream_reader.cpp
   hftengine/utils/logger/logger.cpp
 )
 
@@ -149,9 +149,9 @@ add_executable(test_grid_trading
   hftengine/core/execution_engine/execution_engine.cpp
   hftengine/core/backtest_engine/backtest_engine.cpp
   hftengine/core/orderbook/orderbook.cpp
-  hftengine/core/data/market_data_feed.cpp
-  hftengine/core/data/readers/trade_stream_reader.cpp
-  hftengine/core/data/readers/book_stream_reader.cpp
+  hftengine/core/market_data/market_data_feed.cpp
+  hftengine/core/market_data/readers/trade_stream_reader.cpp
+  hftengine/core/market_data/readers/book_stream_reader.cpp
   hftengine/utils/logger/logger.cpp
 )
 target_include_directories(test_grid_trading PRIVATE

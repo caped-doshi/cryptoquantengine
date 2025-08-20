@@ -1,6 +1,6 @@
 /*
  * File: tests/test_book_stream_reader.cpp
- * Description: Unit tests for hftengine/core/data/readers/book_stream_reader.cpp.
+ * Description: Unit tests for hftengine/core/market_data/readers/book_stream_reader.cpp.
  * Author: Arvind Rathnashyam
  * Date: 2025-06-25
  * License: Proprietary
@@ -10,12 +10,13 @@
 # include <filesystem>
 # include <fstream>
 
-# include "core/data/readers/book_stream_reader.h"
+# include "core/market_data/readers/book_stream_reader.h"
 # include "core/types/book_side.h"
 # include "core/types/update_type.h"
 # include "core/market_data/book_update.h"
 
 TEST_CASE("[BookStreamReader] - CSV Parsing", "[book][csv]") {
+    using namespace core::market_data;
     const std::string test_file = "test_book_update_data.csv";
     {
         std::ofstream out(test_file);

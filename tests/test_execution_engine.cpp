@@ -27,6 +27,7 @@ TEST_CASE("[ExecutionEngine] - multi-asset handling",
     using namespace core::execution_engine;
     using namespace core::trading;
     using namespace utils::logger;
+    using namespace core::market_data;
 
     int asset1 = 0;
     double tick_size_1 = 0.01;
@@ -190,6 +191,7 @@ TEST_CASE("[ExecutionEngine] - executes market buy and sell orders",
     using namespace core::trading;
     using namespace utils::logger;
     using namespace core::execution_engine;
+    using namespace core::market_data;
     auto logger = std::make_shared<Logger>("test_execution_engine_market.log",
                                            LogLevel::Debug);
     ExecutionEngine engine(logger);
@@ -282,6 +284,7 @@ TEST_CASE("[ExecutionEngine] - executes limit fill-or-kill buy and sell orders",
     using namespace core::trading;
     using namespace utils::logger;
     using namespace core::execution_engine;
+    using namespace core::market_data;
 
     const int asset_id = 1;
     const double tick_size = 0.01;
@@ -366,6 +369,7 @@ TEST_CASE(
     "[execution-engine][IOC]") {
     using namespace core::trading;
     using namespace core::execution_engine;
+    using namespace core::market_data;
 
     const int asset_id = 1;
     const double tick_size = 0.01;
@@ -452,6 +456,7 @@ TEST_CASE("[ExecutionEngine] - places limit GTC orders ",
     using namespace core::trading;
     using namespace core::execution_engine;
     using namespace utils::logger;
+    using namespace core::market_data;
 
     const int asset_id = 1;
     const double tick_size = 0.01;
@@ -559,6 +564,7 @@ TEST_CASE("[ExecutionEngine] - submit_order routes correctly",
     using namespace core::trading;
     using namespace core::execution_engine;
     using namespace utils::logger;
+    using namespace core::market_data;
 
     const int asset_id = 1;
     const double tick_size = 0.01;
@@ -743,6 +749,7 @@ TEST_CASE("[ExecutionEngine] - submit_order routes correctly",
 TEST_CASE("[ExecutionEngine] - queue estimation", "[execution-engine][queue]") {
     using namespace core::trading;
     using namespace core::execution_engine;
+    using namespace core::market_data;
 
     int asset_id = 0;
     double tick_size = 0.01;
@@ -846,6 +853,7 @@ TEST_CASE("[ExecutionEngine] - queue estimation", "[execution-engine][queue]") {
 TEST_CASE("[ExecutionEngine] - processes trades", "[execution-engine][trade]") {
     using namespace core::trading;
     using namespace core::execution_engine;
+    using namespace core::market_data;
 
     SECTION("Full execution of bid order when sufficient trade size") {
         int asset_id = 0;

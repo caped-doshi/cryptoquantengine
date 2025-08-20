@@ -12,11 +12,13 @@
 # include "../types/usings.h"
 # include "../types/trade_side.h"
 
+namespace core::market_data {
 struct Trade {
-	Timestamp exch_timestamp_;    // arrives at exchange first
-	Timestamp local_timestamp_;   // then sent to local with latency
-	TradeSide side_;
-	Price price_;
-	Quantity quantity_;
-	OrderId orderId_;
+    Timestamp exch_timestamp_;  // arrives at exchange first
+    Timestamp local_timestamp_; // then sent to local with latency
+    TradeSide side_;
+    Price price_;
+    Quantity quantity_;
+    OrderId orderId_;
 };
+} 

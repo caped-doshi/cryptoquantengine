@@ -75,7 +75,7 @@ void OrderBook::clear() {
  * @throws std::invalid_argument if the price is not positive or quantity is
  * negative.
  */
-void OrderBook::apply_book_update(const BookUpdate &update) {
+void OrderBook::apply_book_update(const core::market_data::BookUpdate &update) {
 
     if (update.price_ <= 0.0) {
         throw std::invalid_argument("Price must be positive: " +

@@ -15,7 +15,7 @@
 #include <vector>
 
 #include "../../utils/logger/logger.h"
-#include "../data/market_data_feed.h"
+#include "../market_data/market_data_feed.h"
 #include "../execution_engine/execution_engine.h"
 #include "../orderbook/orderbook.h"
 #include "../trading/depth.h"
@@ -82,11 +82,11 @@ class BacktestEngine {
     void process_order_update_local(OrderEventType event_type, OrderId orderId,
                                     const core::trading::Order order);
     void process_fill_local(int asset_id, const core::trading::Fill &fill);
-    void process_book_update_local(int asset_id, const BookUpdate &book_update);
+    void process_book_update_local(int asset_id, const core::market_data::BookUpdate &book_update);
 
     Timestamp current_time_us_;
     core::execution_engine::ExecutionEngine execution_engine_;
-    MarketDataFeed market_data_feed_;
+    core::market_data::MarketDataFeed market_data_feed_;
     core::trading::OrderIdGenerator orderId_gen_;
 
     // asset configurations
@@ -113,7 +113,7 @@ class BacktestEngine {
         std::optional<OrderId> orderId_;
         std::optional<OrderEventType> order_update_type_;
         std::optional<core::trading::Fill> fill_;
-        std::optional<BookUpdate> book_update_;
+        std::optional<core::market_data::BookUpdate> book_update_;
         Timestamp execute_time_;
     };
 

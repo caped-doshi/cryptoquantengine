@@ -51,8 +51,8 @@ class ExecutionEngine {
     bool execute_order(int asset_id, TradeSide side,
                        const core::trading::Order &order);
 
-    void handle_book_update(int asset_id, const BookUpdate &book_update);
-    void handle_trade(int asset_id, const Trade &trade);
+    void handle_book_update(int asset_id, const core::market_data::BookUpdate &book_update);
+    void handle_trade(int asset_id, const core::market_data::Trade &trade);
 
     const std::vector<core::trading::OrderUpdate> &order_updates() const;
     const std::vector<core::trading::Fill> &fills() const;

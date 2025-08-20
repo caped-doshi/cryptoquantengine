@@ -690,8 +690,9 @@ bool ExecutionEngine::execute_order(int asset_id, TradeSide side,
  * @param book_update The update event (side, price, new quantity).
  */
 void ExecutionEngine::handle_book_update(int asset_id,
-                                         const BookUpdate &book_update) {
+                                         const core::market_data::BookUpdate &book_update) {
     using namespace core::orderbook;
+    using namespace core::market_data;
     Ticks book_update_price_ticks =
         price_to_ticks(book_update.price_, tick_sizes_[asset_id]);
     // update queue position estimationsO
@@ -757,8 +758,9 @@ void ExecutionEngine::handle_book_update(int asset_id,
  * @param trade Incoming trade information (price, quantity, side, timestamp,
  * etc.).
  */
-void ExecutionEngine::handle_trade(int asset_id, const Trade &trade) {
+void ExecutionEngine::handle_trade(int asset_id, const core::market_data::Trade &trade) {
     using namespace core::trading;
+    using namespace core::market_data;
     const auto trade_price_ticks =
         price_to_ticks(trade.price_, tick_sizes_[asset_id]);
     auto it =

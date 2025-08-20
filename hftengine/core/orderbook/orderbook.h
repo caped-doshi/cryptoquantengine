@@ -32,7 +32,7 @@ class OrderBook {
     OrderBook(double tick_size, double lot_size,
               std::shared_ptr<utils::logger::Logger> logger = nullptr);
 
-    void apply_book_update(const BookUpdate &update);
+    void apply_book_update(const core::market_data::BookUpdate &update);
 
     Price best_bid() const;
     Price best_ask() const;
