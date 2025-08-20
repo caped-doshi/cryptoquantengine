@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "../../core/types/usings.h"
+#include "../../core/types/aliases/usings.h"
 #include <cmath>
 
 namespace utils::math {

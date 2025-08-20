@@ -16,8 +16,8 @@
 #include <vector>
 
 #include "../orderbook/orderbook.h"
-#include "../types/event_type.h"
-#include "../types/usings.h"
+#include "../types/enums/event_type.h"
+#include "../types/aliases/usings.h"
 #include "book_update.h"
 #include "readers/book_stream_reader.h"
 #include "readers/trade_stream_reader.h"

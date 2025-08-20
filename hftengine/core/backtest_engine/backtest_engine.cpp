@@ -18,8 +18,8 @@
 #include "../market_data/market_data_feed.h"
 #include "../trading/asset_config.h"
 #include "../trading/depth.h"
-#include "../types/action_type.h"
-#include "../types/order_status.h"
+#include "../types/enums/action_type.h"
+#include "../types/enums/order_status.h"
 #include "backtest_asset.h"
 #include "backtest_engine.h"
 
@@ -208,7 +208,6 @@ bool BacktestEngine::elapse(std::uint64_t microseconds) {
 }
 
 bool BacktestEngine::order_inactive(const core::trading::Order &order) {
-    // using namespace core::trading;
     if (order.orderStatus_ == OrderStatus::FILLED ||
         order.orderStatus_ == OrderStatus::CANCELLED ||
         order.orderStatus_ == OrderStatus::EXPIRED) {

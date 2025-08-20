@@ -10,8 +10,8 @@
 
 #include "core/market_data/book_update.h"
 #include "core/orderbook/orderbook.h"
-#include "core/types/book_side.h"
-#include "core/types/update_type.h"
+#include "core/types/enums/book_side.h"
+#include "core/types/enums/update_type.h"
 #include "utils/math/math_utils.h"
 
 TEST_CASE("[OrderBook] - Initial State", "[orderbook][init]") {

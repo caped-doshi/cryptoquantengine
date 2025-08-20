@@ -14,7 +14,7 @@
 #include <numeric>
 #include <stdexcept>
 
-#include "../../core/types/usings.h"
+#include "../../core/types/aliases/usings.h"
 
 namespace utils::stat {
 /**

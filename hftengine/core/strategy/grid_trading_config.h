@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "../types/usings.h" 
+#include "../types/aliases/usings.h" 
 
 namespace core::strategy {
 struct GridTradingConfig {

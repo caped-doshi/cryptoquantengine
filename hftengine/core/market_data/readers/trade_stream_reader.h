@@ -15,7 +15,7 @@
 
 #include "../../../../external/csv/csv.h"
 #include "../../orderbook/orderbook.h"
-#include "../../types/usings.h"
+#include "../../types/aliases/usings.h"
 #include "../trade.h"
 
 namespace core::market_data {

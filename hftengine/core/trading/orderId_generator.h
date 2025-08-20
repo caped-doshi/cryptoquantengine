@@ -9,7 +9,7 @@
 #include <atomic>
 #include <thread>
 
-#include "../types/usings.h"
+#include "../types/aliases/usings.h"
 
 namespace core::trading {
 class OrderIdGenerator {
