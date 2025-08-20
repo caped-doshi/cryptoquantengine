@@ -19,10 +19,11 @@
 #include "utils/logger/logger.h"
 
 int main() {
-    using namespace utils::config;
-    using namespace core::recorder;
     using namespace core::trading;
     using namespace core::backtest;
+    using namespace core::recorder;
+    using namespace core::strategy;
+    using namespace utils::config;
 
     ConfigReader config_reader;
     const auto asset_config =

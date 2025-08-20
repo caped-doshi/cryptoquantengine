@@ -126,12 +126,12 @@ ConfigReader::get_asset_config(const std::string &filename) {
 /*
  * @brief Reads the grid trading configuration from a file.
  */
-GridTradingConfig
+core::strategy::GridTradingConfig 
 ConfigReader::get_grid_trading_config(const std::string &filename) {
     clear();
     load(filename);
     // read the grid trading config from the file
-    GridTradingConfig config;
+    core::strategy::GridTradingConfig config;
     config.tick_size_ = get_double("tick_size");
     config.lot_size_ = get_double("lot_size");
     config.grid_num_ = get_int("grid_num");

@@ -10,6 +10,7 @@
 
 #include "../types/usings.h" 
 
+namespace core::strategy {
 struct GridTradingConfig {
     double tick_size_;
     double lot_size_;
@@ -19,3 +20,4 @@ struct GridTradingConfig {
     double position_limit_;
     double notional_order_qty_;
 };
+} // namespace core::strategy

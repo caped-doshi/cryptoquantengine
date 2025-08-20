@@ -45,6 +45,7 @@ TEST_CASE("[GridTrading] - does not submit orders when notional too small",
           "[grid-trading][notional]") {
     using namespace core::trading;
     using namespace core::backtest;
+    using namespace core::strategy;
     // Setup as before, but with very small notional
     const double notional_order_qty = 0.00001;
 
@@ -100,6 +101,7 @@ TEST_CASE("[GridTrading] - cancels orders not in new grid",
           "[grid-trading][cancel]") {
     using namespace core::trading;
     using namespace core::backtest;
+    using namespace core::strategy;
 
     const std::string book_file = "test_grid_book.csv";
     const std::string trade_file = "test_grid_trade.csv";
@@ -163,6 +165,7 @@ TEST_CASE("[GridTrading] - on_elapse submits correct grid orders",
           "[grid-trading][elapse]") {
     using namespace core::trading;
     using namespace core::backtest;
+    using namespace core::strategy;
 
     const std::string book_file = "test_grid_book.csv";
     const std::string trade_file = "test_grid_trade.csv";
@@ -237,6 +240,7 @@ TEST_CASE("[GridTrading] - handles position limits correctly",
           "[grid-trading][position-limit]") {
     using namespace core::trading;
     using namespace core::backtest;
+    using namespace core::strategy;
 
     const std::string book_file = "test_grid_book.csv";
     const std::string trade_file = "test_grid_trade.csv";

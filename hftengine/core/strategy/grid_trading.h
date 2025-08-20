@@ -19,14 +19,16 @@
 #include "grid_trading_config.h"
 #include "strategy.h"
 
+namespace core::strategy {
 class GridTrading : public Strategy {
   public:
     explicit GridTrading(int asset_id, int grid_num, Ticks grid_interval,
                          Ticks half_spread, double position_limit,
                          double notional_order_qty,
                          std::shared_ptr<utils::logger::Logger> logger);
-    explicit GridTrading(int asset_id, const GridTradingConfig &config,
-                         std::shared_ptr<utils::logger::Logger> logger = nullptr);
+    explicit GridTrading(
+        int asset_id, const core::strategy::GridTradingConfig &config,
+        std::shared_ptr<utils::logger::Logger> logger = nullptr);
 
     void initialize() override;
     void on_elapse(core::backtest::BacktestEngine &hbt) override;
@@ -41,3 +43,4 @@ class GridTrading : public Strategy {
 
     std::shared_ptr<utils::logger::Logger> logger_;
 };
+} // namespace core::strategy

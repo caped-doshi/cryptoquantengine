@@ -23,7 +23,7 @@ class ConfigReader {
     ConfigReader();
 
     core::trading::AssetConfig get_asset_config(const std::string &filename);
-    GridTradingConfig get_grid_trading_config(const std::string &filename);
+    core::strategy::GridTradingConfig get_grid_trading_config(const std::string &filename);
     core::backtest::BacktestEngineConfig
     get_backtest_engine_config(const std::string &filename);
     RecorderConfig get_recorder_config(const std::string &filename);

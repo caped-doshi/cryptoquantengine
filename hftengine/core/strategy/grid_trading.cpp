@@ -26,6 +26,7 @@
 #include "grid_trading_config.h"
 #include "strategy.h"
 
+namespace core::strategy {
 GridTrading::GridTrading(int asset_id, int grid_num, Ticks grid_interval,
                          Ticks half_spread, double position_limit,
                          double notional_order_qty,
@@ -36,7 +37,7 @@ GridTrading::GridTrading(int asset_id, int grid_num, Ticks grid_interval,
     initialize();
 }
 
-GridTrading::GridTrading(int asset_id, const GridTradingConfig &config,
+GridTrading::GridTrading(int asset_id, const core::strategy::GridTradingConfig &config,
                          std::shared_ptr<utils::logger::Logger> logger)
     : asset_id_(asset_id), grid_num_(config.grid_num_),
       grid_interval_(config.grid_interval_), half_spread_(config.half_spread_),
@@ -225,3 +226,4 @@ void GridTrading::on_elapse(core::backtest::BacktestEngine &hbt) {
         }
     }
 }
+} // namespace core::strategy

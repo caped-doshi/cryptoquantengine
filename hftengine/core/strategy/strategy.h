@@ -15,6 +15,7 @@
 #include "../backtest_engine/backtest_engine.h"
 #include "../types/usings.h"
 
+namespace core::strategy {
 class Strategy {
   public:
     explicit Strategy() {};
@@ -26,3 +27,4 @@ class Strategy {
 
   private:
 };
+} // namespace core::strategy

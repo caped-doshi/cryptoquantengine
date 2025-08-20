@@ -36,7 +36,7 @@ TEST_CASE("[ConfigReader] - get_asset_config returns correct AssetConfig",
     }
 
     ConfigReader reader;
-    AssetConfig config = reader.get_asset_config(config_file);
+    const auto config = reader.get_asset_config(config_file);
 
     REQUIRE(config.book_update_file_ == "test_book.csv");
     REQUIRE(config.trade_file_ == "test_trade.csv");
@@ -67,7 +67,7 @@ TEST_CASE("[ConfigReader] - get_grid_trading_config returns correct "
     }
 
     ConfigReader reader;
-    GridTradingConfig config = reader.get_grid_trading_config(config_file);
+    const auto config = reader.get_grid_trading_config(config_file);
 
     REQUIRE(config.tick_size_ == 0.01);
     REQUIRE(config.lot_size_ == 0.00001);
@@ -144,7 +144,7 @@ TEST_CASE("[ConfigReader] - get_backtest_engine_config returns correct "
     }
 
     ConfigReader reader;
-    BacktestEngineConfig config =
+    const auto config =
         reader.get_backtest_engine_config(config_file);
 
     REQUIRE(config.initial_cash_ == 5000.0);
