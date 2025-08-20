@@ -13,7 +13,7 @@
 #include <vector>
 
 #include "../../utils/logger/logger.h"
-#include "../trading/backtest_engine.h"
+#include "../backtest_engine/backtest_engine.h"
 #include "../trading/depth.h"
 #include "../types/usings.h"
 #include "grid_trading_config.h"

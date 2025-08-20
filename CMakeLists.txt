@@ -11,7 +11,7 @@ add_executable(hftbacktest
   hftengine/core/orderbook/orderbook.cpp
   hftengine/utils/config/config_reader.cpp
   hftengine/core/execution_engine/execution_engine.cpp
-  hftengine/core/trading/backtest_engine.cpp
+  hftengine/core/backtest_engine/backtest_engine.cpp
   hftengine/core/data/market_data_feed.cpp
   hftengine/core/data/readers/book_stream_reader.cpp
   hftengine/core/data/readers/trade_stream_reader.cpp
@@ -118,7 +118,7 @@ target_include_directories(test_execution_engine PRIVATE
 # 7. Backtest Engine Tests
 add_executable(test_backtest_engine
   tests/test_backtest_engine.cpp
-  hftengine/core/trading/backtest_engine.cpp
+  hftengine/core/backtest_engine/backtest_engine.cpp
   hftengine/core/execution_engine/execution_engine.cpp
   hftengine/core/orderbook/orderbook.cpp
   hftengine/core/data/market_data_feed.cpp
@@ -144,7 +144,7 @@ target_include_directories(test_stat_utils PRIVATE
 add_executable(test_recorder
   tests/test_recorder.cpp
   hftengine/core/recorder/recorder.cpp
-  hftengine/core/trading/backtest_engine.cpp
+  hftengine/core/backtest_engine/backtest_engine.cpp
   hftengine/core/orderbook/orderbook.cpp
   hftengine/core/execution_engine/execution_engine.cpp
   hftengine/core/data/market_data_feed.cpp
@@ -162,7 +162,7 @@ add_executable(test_grid_trading
   tests/strategies/test_grid_trading.cpp
   hftengine/core/strategy/grid_trading.cpp
   hftengine/core/execution_engine/execution_engine.cpp
-  hftengine/core/trading/backtest_engine.cpp
+  hftengine/core/backtest_engine/backtest_engine.cpp
   hftengine/core/orderbook/orderbook.cpp
   hftengine/core/data/market_data_feed.cpp
   hftengine/core/data/readers/trade_stream_reader.cpp

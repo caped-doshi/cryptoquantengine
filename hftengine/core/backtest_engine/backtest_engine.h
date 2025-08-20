@@ -18,8 +18,10 @@
 #include "../data/market_data_feed.h"
 #include "../execution_engine/execution_engine.h"
 #include "../orderbook/orderbook.h"
+#include "../trading/depth.h"
 #include "../trading/fill.h"
 #include "../trading/order.h"
+#include "../trading/orderId_generator.h"
 #include "../types/action_type.h"
 #include "../types/order_status.h"
 #include "../types/order_type.h"
@@ -27,8 +29,6 @@
 #include "../types/usings.h"
 #include "backtest_asset.h"
 #include "backtest_engine_config.h"
-#include "depth.h"
-#include "orderId_generator.h"
 
 class BacktestEngine {
   public:
@@ -40,7 +40,7 @@ class BacktestEngine {
     // global methods
     bool elapse(std::uint64_t microseconds);
 
-    bool order_inactive(const Order& order);
+    bool order_inactive(const Order &order);
     void clear_inactive_orders();
 
     // local origin methods
@@ -84,20 +84,20 @@ class BacktestEngine {
     void process_fill_local(int asset_id, const Fill &fill);
     void process_book_update_local(int asset_id, const BookUpdate &book_update);
 
-    Timestamp current_time_us_; 
+    Timestamp current_time_us_;
     ExecutionEngine execution_engine_;
     MarketDataFeed market_data_feed_;
     OrderIdGenerator orderId_gen_;
-    
+
     // asset configurations
     std::unordered_map<int, BacktestAsset> assets_;
     std::unordered_map<int, double> tick_sizes_;
     std::unordered_map<int, double> lot_sizes_;
-    
+
     // local state (updated with latency simulation)
     double local_cash_balance_;
     std::unordered_map<int, double> local_position_;
-    std::unordered_map<int, OrderBook> local_orderbooks_;
+    std::unordered_map<int, core::orderbook::OrderBook> local_orderbooks_;
     std::unordered_map<int, Order> local_active_orders_;
 
     // trading statistics

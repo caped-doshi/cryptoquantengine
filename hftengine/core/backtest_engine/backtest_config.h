@@ -1,5 +1,5 @@
 /*
- * File: hftengine/core/trading/backtest_config.h
+ * File: hftengine/core/backtest_engine/backtest_config.h
  * Description: Configuration for backtest simulation, including elapse time
  * and number of iterations.
  * Author: Arvind Rathnashyam

@@ -12,7 +12,7 @@
 #include <vector>
 
 #include "../../utils/logger/logger.h"
-#include "../trading/backtest_engine.h"
+#include "../backtest_engine/backtest_engine.h"
 #include "../types/usings.h"
 
 class Strategy {

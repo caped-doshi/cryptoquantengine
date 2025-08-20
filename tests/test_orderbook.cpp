@@ -15,6 +15,8 @@
 #include "utils/math/math_utils.h"
 
 TEST_CASE("[OrderBook] - Initial State", "[orderbook][init]") {
+    using namespace core::orderbook;
+
     double tick_size = 0.01;
     double lot_size = 0.01;
 
@@ -27,6 +29,8 @@ TEST_CASE("[OrderBook] - Initial State", "[orderbook][init]") {
 }
 
 TEST_CASE("[OrderBook] - Book Update Processing", "[orderbook][updates]") {
+    using namespace core::orderbook;
+
     double tick_size = 0.01;
     double lot_size = 0.01;
     OrderBook book(tick_size, lot_size);
@@ -71,6 +75,8 @@ TEST_CASE("[OrderBook] - Book Update Processing", "[orderbook][updates]") {
 }
 
 TEST_CASE("[OrderBook] - Price Level Priority", "[orderbook][priority]") {
+    using namespace core::orderbook;
+
     double tick_size = 0.01;
     double lot_size = 0.01;
     OrderBook book(tick_size, lot_size);
@@ -153,6 +159,8 @@ TEST_CASE("[OrderBook] - Price Level Priority", "[orderbook][priority]") {
 }
 
 TEST_CASE("[OrderBook] - Edge Cases", "[orderbook][edge]") {
+    using namespace core::orderbook;
+
     double tick_size = 0.01;
     double lot_size = 0.01;
     OrderBook book(tick_size, lot_size);

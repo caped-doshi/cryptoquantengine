@@ -25,6 +25,8 @@
 #include "../types/update_type.h"
 #include "../types/usings.h"
 
+namespace core {
+namespace orderbook {
 class OrderBook {
   public:
     // Constructor
@@ -65,3 +67,5 @@ class OrderBook {
 
     std::shared_ptr<utils::logger::Logger> logger_;
 };
+} // namespace orderbook
+} // namespace core

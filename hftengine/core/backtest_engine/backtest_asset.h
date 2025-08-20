@@ -1,5 +1,5 @@
 /*
- * File: hftengine/hftengine/core/trading/backtest_asset.h
+ * File: hftengine/hftengine/core/backtest_engine/backtest_asset.h
  * Description: BacktestAsset encapsulates all per-instrument simulation
  * parameters, data sources, and execution models used in the
  * backtest engine. 
@@ -15,7 +15,7 @@
 
 #include "../types/trade_side.h"
 #include "../types/usings.h"
-#include "asset_config.h"
+#include "../trading/asset_config.h"
 
 class BacktestAsset {
   public:

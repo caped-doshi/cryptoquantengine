@@ -69,7 +69,7 @@ class ExecutionEngine {
     std::unordered_map<int, double> tick_sizes_;
     std::unordered_map<int, double> lot_sizes_;
 
-    std::unordered_map<int, OrderBook> orderbooks_;
+    std::unordered_map<int, core::orderbook::OrderBook> orderbooks_;
 
     std::vector<OrderUpdate> order_updates_;
     std::vector<Fill> fills_;

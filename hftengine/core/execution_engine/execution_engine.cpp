@@ -50,6 +50,8 @@ ExecutionEngine::ExecutionEngine(std::shared_ptr<utils::logger::Logger> logger)
  */
 void ExecutionEngine::add_asset(int asset_id, double tick_size,
                                 double lot_size) {
+    using namespace core::orderbook;
+
     tick_sizes_[asset_id] = tick_size;
     lot_sizes_[asset_id] = lot_size;
     orderbooks_.emplace(asset_id, OrderBook(tick_size, lot_size, logger_));
@@ -194,6 +196,8 @@ bool ExecutionEngine::order_exists(const OrderId &orderId) const {
  */
 void ExecutionEngine::execute_market_order(int asset_id, TradeSide side,
                                            std::shared_ptr<Order> order) {
+    using namespace core::orderbook;
+
     if (order->orderStatus_ != OrderStatus::NEW) return;
     int level = 0;
     int levels = (side == TradeSide::Buy)
@@ -295,6 +299,7 @@ void ExecutionEngine::execute_market_order(int asset_id, TradeSide side,
  */
 bool ExecutionEngine::execute_fok_order(int asset_id, TradeSide side,
                                         std::shared_ptr<Order> order) {
+    using namespace core::orderbook;
     if (order->orderStatus_ != OrderStatus::NEW) return false;
     int level = -1;
     int levels = (side == TradeSide::Buy)
@@ -423,6 +428,7 @@ bool ExecutionEngine::execute_fok_order(int asset_id, TradeSide side,
  */
 bool ExecutionEngine::execute_ioc_order(int asset_id, TradeSide side,
                                         std::shared_ptr<Order> order) {
+    using namespace core::orderbook;
     if (order->orderStatus_ != OrderStatus::NEW) {
         if (logger_) {
             logger_->log("[ExecutionEngine] - " +
@@ -555,6 +561,7 @@ bool ExecutionEngine::execute_ioc_order(int asset_id, TradeSide side,
  */
 bool ExecutionEngine::place_maker_order(int asset_id,
                                         std::shared_ptr<Order> order) {
+    using namespace core::orderbook;
     Price best_ask = orderbooks_.at(asset_id).best_ask();
     Price best_bid = orderbooks_.at(asset_id).best_bid();
     if ((order->side_ == BookSide::Bid && best_ask > 0.0 &&
@@ -682,6 +689,7 @@ bool ExecutionEngine::execute_order(int asset_id, TradeSide side,
  */
 void ExecutionEngine::handle_book_update(int asset_id,
                                          const BookUpdate &book_update) {
+    using namespace core::orderbook;
     Ticks book_update_price_ticks =
         price_to_ticks(book_update.price_, tick_sizes_[asset_id]);
     // update queue position estimationsO

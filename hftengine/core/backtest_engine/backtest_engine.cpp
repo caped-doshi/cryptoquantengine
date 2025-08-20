@@ -1,5 +1,5 @@
 /*
- * File: hftengine/core/trading/backtest_engine.h
+ * File: hftengine/core/backtest_engine/backtest_engine.h
  * Description: BacktestEngine to simulate trading with multiple assets.
  * Author: Arvind Rathnashyam
  * Date: 2025-06-26
@@ -16,12 +16,12 @@
 #include "../../utils/logger/logger.h"
 #include "../../utils/math/math_utils.h"
 #include "../data/market_data_feed.h"
+#include "../trading/asset_config.h"
+#include "../trading/depth.h"
 #include "../types/action_type.h"
 #include "../types/order_status.h"
-#include "asset_config.h"
 #include "backtest_asset.h"
 #include "backtest_engine.h"
-#include "depth.h"
 
 /**
  * @brief Constructs a BacktestEngine with per-asset book/trade streams and
@@ -44,7 +44,8 @@
  */
 BacktestEngine::BacktestEngine(
     const std::unordered_map<int, AssetConfig> &asset_configs,
-    const BacktestEngineConfig &engine_config, std::shared_ptr<utils::logger::Logger> logger)
+    const BacktestEngineConfig &engine_config,
+    std::shared_ptr<utils::logger::Logger> logger)
     : current_time_us_(0), local_cash_balance_(engine_config.initial_cash_),
       logger_(logger) {
 
@@ -57,6 +58,8 @@ BacktestEngine::BacktestEngine(
     execution_engine_.set_order_response_latency_us(order_response_latency_us);
 
     for (const auto &[asset_id, config] : asset_configs) {
+        using namespace core::orderbook; 
+
         assets_.emplace(asset_id, BacktestAsset(config));
         execution_engine_.add_asset(asset_id, config.tick_size_,
                                     config.lot_size_);
@@ -496,6 +499,7 @@ void BacktestEngine::process_fill_local(int asset_id, const Fill &fill) {
 
 void BacktestEngine::process_book_update_local(int asset_id,
                                                const BookUpdate &book_update) {
+    using namespace core::orderbook;
     local_orderbooks_.at(asset_id).apply_book_update(book_update);
 }
 
@@ -551,6 +555,7 @@ const double BacktestEngine::equity() const {
     }
     double value = local_cash_balance_;
     for (auto &[asset_id, pos] : local_position_) {
+        using namespace core::orderbook;
         value += pos * local_orderbooks_.at(asset_id).mid_price();
         if (logger_) {
             logger_->log(
@@ -580,6 +585,7 @@ const Quantity BacktestEngine::position(int asset_id) const {
 }
 
 const Depth BacktestEngine::depth(int asset_id) const {
+    using namespace core::orderbook;
     Ticks best_ask =
         local_orderbooks_.at(asset_id).price_at_level(BookSide::Ask, 0);
     Ticks best_bid =

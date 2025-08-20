@@ -18,6 +18,9 @@
 #include "../types/book_side.h"
 #include "orderbook.h"
 
+namespace core {
+namespace orderbook {
+
 OrderBook::OrderBook(double tick_size, double lot_size,
                      std::shared_ptr<utils::logger::Logger> logger)
     : tick_size_(tick_size), lot_size_(lot_size), logger_(logger),
@@ -50,9 +53,7 @@ std::map<Ticks, Quantity, std::greater<>> OrderBook::bid_book() const {
  *
  * @return A map of price levels (Ticks) to quantities (Quantity) for asks.
  */
-std::map<Ticks, Quantity> OrderBook::ask_book() const {
-    return ask_book_; 
-}
+std::map<Ticks, Quantity> OrderBook::ask_book() const { return ask_book_; }
 
 /**
  * @brief Clears the order book by removing all bids and asks.
@@ -271,8 +272,11 @@ void OrderBook::print_top_levels(int depth) const {
             << ticks_to_price(price, tick_size_) << " : " << qty << "\n";
     }
     if (logger_) {
-        logger_->log(oss.str(),utils::logger::LogLevel::Info);
+        logger_->log(oss.str(), utils::logger::LogLevel::Info);
     } else {
         std::cout << oss.str();
     }
 }
+
+} // namespace orderbook
+} // namespace core

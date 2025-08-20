@@ -15,7 +15,7 @@
 #include "core/execution_engine/execution_engine.h"
 #include "core/market_data/book_update.h"
 #include "core/orderbook/orderbook.h"
-#include "core/trading/backtest_engine.h"
+#include "core/backtest_engine/backtest_engine.h"
 #include "core/types/book_side.h"
 #include "core/types/order_type.h"
 #include "core/types/time_in_force.h"
