@@ -19,8 +19,9 @@
 #include "../hftengine/utils/stat/stat_utils.h"
 
 TEST_CASE("[Recorder] - recorder interval returns", "[recorder][initial]") {
-    auto logger =
-        std::make_shared<Logger>("test_recorder_initial.log", LogLevel::Debug);
+    using namespace core::recorder;
+    auto logger = std::make_shared<utils::logger::Logger>(
+        "test_recorder_initial.log", utils::logger::LogLevel::Debug);
     Recorder recorder(1'000'000, logger);
     SECTION("Empty recorder returns empty vectors") {
         REQUIRE(recorder.interval_returns().empty());
@@ -34,6 +35,8 @@ TEST_CASE("[Recorder] - recorder interval returns", "[recorder][initial]") {
 }
 
 TEST_CASE("[Recorder] - interval returns calculation", "[recorder][returns]") {
+    using namespace core::recorder;
+    using namespace utils::logger;
     auto logger =
         std::make_shared<Logger>("test_recorder_returns.log", LogLevel::Debug);
     Recorder recorder(1'000'000, logger);
@@ -53,8 +56,9 @@ TEST_CASE("[Recorder] - interval returns calculation", "[recorder][returns]") {
 }
 
 TEST_CASE("[Recorder] - Risk-adjusted metrics edge cases", "[recorder][edge]") {
-    auto logger =
-        std::make_shared<Logger>("test_recorder_edge.log", LogLevel::Debug);
+    using namespace core::recorder;
+    auto logger = std::make_shared<utils::logger::Logger>(
+        "test_recorder_edge.log", utils::logger::LogLevel::Debug);
     Recorder recorder(1'000'000, logger); // 1 second interval
 
     SECTION("Sharpe ratio calculation") {
@@ -92,6 +96,8 @@ TEST_CASE("[Recorder] - Risk-adjusted metrics edge cases", "[recorder][edge]") {
 
 TEST_CASE("[Recorder] - Risk adjusted metrics correctness",
           "[recorder][correctness]") {
+    using namespace core::recorder;
+    using namespace utils::logger;
     auto logger = std::make_shared<Logger>("test_recorder_correctness.log",
                                            LogLevel::Debug);
     Recorder recorder(60'000'000, logger);
@@ -120,8 +126,8 @@ TEST_CASE("[Recorder] - Risk adjusted metrics correctness",
     std::vector<double> downside_returns = {-0.1, -0.2};
 
     SECTION("Sharpe ratio calculation") {
-        double mean_return = mean(expected_returns);
-        double stddev_return = stddev(expected_returns);
+        double mean_return = utils::stat::mean(expected_returns);
+        double stddev_return = utils::stat::stddev(expected_returns);
         double expected_sharpe =
             annualization_factor * mean_return / stddev_return;
 
@@ -130,8 +136,8 @@ TEST_CASE("[Recorder] - Risk adjusted metrics correctness",
     }
 
     SECTION("Sortino ratio calculation") {
-        double mean_return = mean(expected_returns);
-        double downside_stddev = stddev(downside_returns);
+        double mean_return = utils::stat::mean(expected_returns);
+        double downside_stddev = utils::stat::stddev(downside_returns);
         double expected_sortino =
             annualization_factor * mean_return / downside_stddev;
 
@@ -148,6 +154,9 @@ TEST_CASE("[Recorder] - Risk adjusted metrics correctness",
 }
 
 TEST_CASE("[Recorder] - Max drawdown edge cases", "[recorder][drawdown]") {
+    using namespace core::recorder;
+    using namespace utils::logger;
+
     SECTION("Empty recorder throws") {
         auto logger = std::make_shared<Logger>(
             "test_recorder_drawdown_throws.log", LogLevel::Debug);
@@ -187,6 +196,10 @@ TEST_CASE("[Recorder] - Max drawdown edge cases", "[recorder][drawdown]") {
 
 TEST_CASE("[Recorder] - record(BacktestEngine, int) with limit orders",
           "[recorder][backtest][limit_order]") {
+    using namespace core::recorder;
+    using namespace core::trading;
+    using namespace utils::logger;
+    using namespace core::backtest;
     // Create a minimal trade file
     const std::string trade_file = "test_recorder_trade.csv";
     std::ofstream tf(trade_file);

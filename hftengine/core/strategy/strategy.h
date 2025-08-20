@@ -12,9 +12,10 @@
 #include <vector>
 
 #include "../../utils/logger/logger.h"
-#include "../trading/backtest_engine.h"
+#include "../backtest_engine/backtest_engine.h"
 #include "../types/usings.h"
 
+namespace core::strategy {
 class Strategy {
   public:
     explicit Strategy() {};
@@ -22,7 +23,8 @@ class Strategy {
     virtual ~Strategy() = default;
 
     virtual void initialize() = 0;
-    virtual void on_elapse(BacktestEngine &hbt) = 0;
+    virtual void on_elapse(core::backtest::BacktestEngine &hbt) = 0;
 
   private:
 };
+} // namespace core::strategy

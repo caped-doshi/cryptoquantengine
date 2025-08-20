@@ -1,5 +1,5 @@
 /*
- * File: hftengine/core/trading/backtest_engine_config.h
+ * File: hftengine/core/backtest_engine/backtest_engine_config.h
  * Description: Configuration for the backtest engine, including initial cash,
  * order entry latency, order response latency, and market feed latency.
  * Author: Arvind Rathnashyam
@@ -8,14 +8,14 @@
  */
 
 #pragma once
-#include "../../utils/logger/log_level.h"
-#include "asset_config.h"
-#include <string>
-#include <unordered_map>
 
+#include <cstdint>
+
+namespace core::backtest {
 struct BacktestEngineConfig {
     double initial_cash_ = 1000.0;
     std::uint64_t order_entry_latency_us_ = 25000;
     std::uint64_t order_response_latency_us_ = 25000;
     std::uint64_t market_feed_latency_us_ = 50000;
 };
+} 

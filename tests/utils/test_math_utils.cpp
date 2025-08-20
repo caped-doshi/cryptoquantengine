@@ -13,6 +13,7 @@
 
 TEST_CASE("[MathUtils] - price_to_ticks converts price to ticks correctly",
           "[math_utils][price_to_ticks]") {
+    using namespace utils::math;
     double tick_size = 0.01;
     REQUIRE(price_to_ticks(100.00, tick_size) == 10000);
     REQUIRE(price_to_ticks(100.005, tick_size) ==
@@ -23,6 +24,7 @@ TEST_CASE("[MathUtils] - price_to_ticks converts price to ticks correctly",
 
 TEST_CASE("[MathUtils] - ticks_to_price converts ticks to price correctly",
           "[math_utils][ticks_to_price]") {
+    using namespace utils::math;
     double tick_size = 0.01;
     REQUIRE(ticks_to_price(10000, tick_size) ==
             Catch::Approx(100.00).margin(1e-8));
@@ -33,6 +35,7 @@ TEST_CASE("[MathUtils] - ticks_to_price converts ticks to price correctly",
 
 TEST_CASE("[MathUtils] - quantity_to_lot rounds quantity to nearest lot size",
           "[math_utils][quantity_to_lots]") {
+    using namespace utils::math;
     double lot_size = 0.01;
     REQUIRE(quantity_to_lot(1.005, lot_size) ==
             Catch::Approx(1.01).margin(1e-8));

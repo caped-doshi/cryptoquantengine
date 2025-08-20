@@ -13,23 +13,25 @@
 #include <vector>
 
 #include "../../utils/logger/logger.h"
-#include "../trading/backtest_engine.h"
+#include "../backtest_engine/backtest_engine.h"
 #include "../trading/depth.h"
 #include "../types/usings.h"
 #include "grid_trading_config.h"
 #include "strategy.h"
 
+namespace core::strategy {
 class GridTrading : public Strategy {
   public:
     explicit GridTrading(int asset_id, int grid_num, Ticks grid_interval,
                          Ticks half_spread, double position_limit,
                          double notional_order_qty,
-                         std::shared_ptr<Logger> logger);
-    explicit GridTrading(int asset_id, const GridTradingConfig &config,
-                         std::shared_ptr<Logger> logger = nullptr);
+                         std::shared_ptr<utils::logger::Logger> logger);
+    explicit GridTrading(
+        int asset_id, const core::strategy::GridTradingConfig &config,
+        std::shared_ptr<utils::logger::Logger> logger = nullptr);
 
     void initialize() override;
-    void on_elapse(BacktestEngine &hbt) override;
+    void on_elapse(core::backtest::BacktestEngine &hbt) override;
 
   private:
     int asset_id_;
@@ -39,5 +41,6 @@ class GridTrading : public Strategy {
     double position_limit_;
     double notional_order_qty_;
 
-    std::shared_ptr<Logger> logger_;
+    std::shared_ptr<utils::logger::Logger> logger_;
 };
+} // namespace core::strategy

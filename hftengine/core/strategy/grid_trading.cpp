@@ -16,7 +16,7 @@
 #include "../../utils/logger/log_level.h"
 #include "../../utils/logger/logger.h"
 #include "../../utils/math/math_utils.h"
-#include "../trading/backtest_engine.h"
+#include "../backtest_engine/backtest_engine.h"
 #include "../trading/depth.h"
 #include "../trading/order.h"
 #include "../types/book_side.h"
@@ -26,18 +26,19 @@
 #include "grid_trading_config.h"
 #include "strategy.h"
 
+namespace core::strategy {
 GridTrading::GridTrading(int asset_id, int grid_num, Ticks grid_interval,
                          Ticks half_spread, double position_limit,
                          double notional_order_qty,
-                         std::shared_ptr<Logger> logger)
+                         std::shared_ptr<utils::logger::Logger> logger)
     : asset_id_(asset_id), grid_num_(grid_num), grid_interval_(grid_interval),
       half_spread_(half_spread), position_limit_(position_limit),
       notional_order_qty_(notional_order_qty), logger_(logger) {
     initialize();
 }
 
-GridTrading::GridTrading(int asset_id, const GridTradingConfig &config,
-                         std::shared_ptr<Logger> logger)
+GridTrading::GridTrading(int asset_id, const core::strategy::GridTradingConfig &config,
+                         std::shared_ptr<utils::logger::Logger> logger)
     : asset_id_(asset_id), grid_num_(config.grid_num_),
       grid_interval_(config.grid_interval_), half_spread_(config.half_spread_),
       position_limit_(config.position_limit_),
@@ -49,19 +50,20 @@ void GridTrading::initialize() {
     if (logger_) {
         logger_->log("[GridTrading] - Strategy initialized for asset ID: " +
                          std::to_string(asset_id_),
-                     LogLevel::Debug);
+                     utils::logger::LogLevel::Debug);
     }
 }
 
-void GridTrading::on_elapse(BacktestEngine &hbt) {
+void GridTrading::on_elapse(core::backtest::BacktestEngine &hbt) {
+    using namespace core::trading;
     Depth depth = hbt.depth(asset_id_);
     Quantity position = hbt.position(asset_id_);
-    std::vector<Order> orders = hbt.orders(asset_id_);
+    const std::vector<Order> orders = hbt.orders(asset_id_);
 
     double tick_size = depth.tick_size_;
     double lot_size = depth.lot_size_;
-    Price best_bid = ticks_to_price(depth.best_bid_, tick_size);
-    Price best_ask = ticks_to_price(depth.best_ask_, tick_size);
+    Price best_bid = utils::math::ticks_to_price(depth.best_bid_, tick_size);
+    Price best_ask = utils::math::ticks_to_price(depth.best_ask_, tick_size);
 
     if (best_bid <= 0.0 || best_ask <= 0.0 || !std::isfinite(best_bid) ||
         !std::isfinite(best_ask)) {
@@ -71,7 +73,7 @@ void GridTrading::on_elapse(BacktestEngine &hbt) {
                              std::to_string(asset_id_) +
                              " (bid=" + std::to_string(best_bid) +
                              ", ask=" + std::to_string(best_ask) + ")",
-                         LogLevel::Debug);
+                         utils::logger::LogLevel::Debug);
         }
         return;
     }
@@ -134,13 +136,13 @@ void GridTrading::on_elapse(BacktestEngine &hbt) {
                             "[GridTrading] - Cancelled bid order at price: " +
                                 std::to_string(order.price_) +
                                 " for asset ID: " + std::to_string(asset_id_),
-                            LogLevel::Debug);
+                            utils::logger::LogLevel::Debug);
                     } else {
                         logger_->log(
                             "[GridTrading] - Cancelled ask order at price: " +
                                 std::to_string(order.price_) +
                                 " for asset ID: " + std::to_string(asset_id_),
-                            LogLevel::Debug);
+                            utils::logger::LogLevel::Debug);
                     }
                 }
             }
@@ -160,7 +162,7 @@ void GridTrading::on_elapse(BacktestEngine &hbt) {
                             std::to_string(bid_price) +
                             " for asset ID: " + std::to_string(asset_id_) +
                             ". Skipping order submission.",
-                        LogLevel::Info);
+                        utils::logger::LogLevel::Info);
                 }
                 continue;
             }
@@ -171,7 +173,7 @@ void GridTrading::on_elapse(BacktestEngine &hbt) {
                             std::to_string(order_qty) +
                             " for asset ID: " + std::to_string(asset_id_) +
                             ". Skipping order submission.",
-                        LogLevel::Info);
+                        utils::logger::LogLevel::Info);
                 }
                 continue;
             }
@@ -180,7 +182,7 @@ void GridTrading::on_elapse(BacktestEngine &hbt) {
                                  std::to_string(asset_id_) +
                                  ", price=" + std::to_string(bid_price) +
                                  ", qty=" + std::to_string(order_qty),
-                             LogLevel::Info);
+                             utils::logger::LogLevel::Info);
             }
             hbt.submit_buy_order(asset_id_, bid_price, order_qty,
                                  TimeInForce::GTC, OrderType::LIMIT);
@@ -197,7 +199,7 @@ void GridTrading::on_elapse(BacktestEngine &hbt) {
                             std::to_string(bid_price) +
                             " for asset ID: " + std::to_string(asset_id_) +
                             ". Skipping order submission.",
-                        LogLevel::Info);
+                        utils::logger::LogLevel::Info);
                 }
                 continue;
             }
@@ -208,7 +210,7 @@ void GridTrading::on_elapse(BacktestEngine &hbt) {
                             std::to_string(order_qty) +
                             " for asset ID: " + std::to_string(asset_id_) +
                             ". Skipping order submission.",
-                        LogLevel::Info);
+                        utils::logger::LogLevel::Info);
                 }
                 continue;
             }
@@ -219,8 +221,9 @@ void GridTrading::on_elapse(BacktestEngine &hbt) {
                                  std::to_string(asset_id_) +
                                  ", price=" + std::to_string(bid_price) +
                                  ", qty=" + std::to_string(order_qty),
-                             LogLevel::Info);
+                             utils::logger::LogLevel::Info);
             }
         }
     }
 }
+} // namespace core::strategy

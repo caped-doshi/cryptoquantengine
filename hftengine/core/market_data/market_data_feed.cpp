@@ -1,5 +1,5 @@
 /*
- * File: hftengine/core/data/market_data_feed.cpp
+ * File: hftengine/core/market_data/market_data_feed.cpp
  * Description: Class to stream trade and book_update data chronologically.
  * Author: Arvind Rathnashyam
  * Date: 2025-06-26
@@ -20,16 +20,7 @@
 #include "readers/book_stream_reader.h"
 #include "readers/trade_stream_reader.h"
 
-/**
- * @brief Default constructor for MarketDataFeed.
- *
- * Initializes an empty market data feed with no registered asset streams.
- * This constructor can be used when streams are intended to be added manually
- * later via `add_stream`.
- *
- * @note This constructor does not load any data sources. Call `add_stream` to
- *       register asset-specific book and trade readers.
- */
+namespace core::market_data {
 MarketDataFeed::MarketDataFeed() {}
 
 /**
@@ -53,6 +44,7 @@ MarketDataFeed::MarketDataFeed() {}
 MarketDataFeed::MarketDataFeed(
     const std::unordered_map<int, std::string> &book_files,
     const std::unordered_map<int, std::string> &trade_files) {
+    using namespace core::market_data;
     for (const auto &[asset_id, book_file] : book_files) {
         StreamState state;
         state.book_reader = std::make_unique<BookStreamReader>();
@@ -86,6 +78,7 @@ MarketDataFeed::MarketDataFeed(
  */
 void MarketDataFeed::add_stream(int asset_id, const std::string &book_file,
                                 const std::string &trade_file) {
+    using namespace core::market_data;
     StreamState stream;
     stream.book_reader = std::make_unique<BookStreamReader>();
     stream.book_reader->open(book_file);
@@ -116,7 +109,9 @@ void MarketDataFeed::add_stream(int asset_id, const std::string &book_file,
  * exhausted.
  */
 bool MarketDataFeed::next_event(int &asset_id, EventType &event_type,
-                                BookUpdate &book_update, Trade &trade) {
+                                core::market_data::BookUpdate &book_update,
+                                core::market_data::Trade &trade) {
+    using namespace core::market_data;
     bool found = false;
     Timestamp min_time = std::numeric_limits<Timestamp>::max();
 
@@ -169,6 +164,7 @@ bool MarketDataFeed::next_event(int &asset_id, EventType &event_type,
  * `std::numeric_limits<Timestamp>::max()` if no events remain.
  */
 std::optional<Timestamp> MarketDataFeed::peek_timestamp() {
+    using namespace core::market_data;
     std::optional<Timestamp> earliest;
 
     for (auto &[asset_id, stream] : asset_streams_) {
@@ -205,6 +201,7 @@ std::optional<Timestamp> MarketDataFeed::peek_timestamp() {
  * otherwise.
  */
 bool MarketDataFeed::StreamState::advance_book() {
+    using namespace core::market_data;
     BookUpdate update;
     if (book_reader->parse_next(update)) {
         next_book_update = update;
@@ -226,11 +223,13 @@ bool MarketDataFeed::StreamState::advance_book() {
  * otherwise.
  */
 bool MarketDataFeed::StreamState::advance_trade() {
-    Trade t;
-    if (trade_reader->parse_next(t)) {
-        next_trade = t;
+    using namespace core::market_data;
+    Trade trade;
+    if (trade_reader->parse_next(trade)) {
+        next_trade = trade;
         return true;
     }
     next_trade.reset();
     return false;
+}
 }

@@ -15,13 +15,15 @@
 #include "../types/time_in_force.h"
 #include "../types/usings.h"
 
+namespace core::trading {
 struct Fill {
     int asset_id_;
-    Timestamp exch_timestamp_;  // processed on exchange first, 
-    Timestamp local_timestamp_; // received by local via wss
+    Timestamp exch_timestamp_;  
+    Timestamp local_timestamp_; 
     OrderId orderId_;
     TradeSide side_;
     Price price_;
     Quantity quantity_;
     bool is_maker;
 };
+}

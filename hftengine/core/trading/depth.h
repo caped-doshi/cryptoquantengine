@@ -12,9 +12,8 @@
 
 #include "../types/usings.h"
 
-/**
- * @brief Represents the best bid and ask prices and their quantities.
- */
+namespace core {
+namespace trading {
 struct Depth {
     Ticks best_bid_ = 0;
     Quantity bid_qty_ = 0.0;
@@ -25,3 +24,5 @@ struct Depth {
     double tick_size_;
     double lot_size_;
 };
+}
+}

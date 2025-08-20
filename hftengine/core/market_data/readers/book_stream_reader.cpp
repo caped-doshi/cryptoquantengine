@@ -1,5 +1,5 @@
 /*
- * File: hft_bt_engine/core/data/readers/book_stream_reader.cpp
+ * File: hft_bt_engine/core/market_data/readers/book_stream_reader.cpp
  * Description: Class for parsing and reading csv files with tardis incremental
  * book data.
  * Author: Arvind Rathnashyam
@@ -20,6 +20,7 @@
 #include "../../types/usings.h"
 #include "book_stream_reader.h"
 
+namespace core::market_data {
 BookStreamReader::BookStreamReader() = default;
 /*
  * @brief Constructs a BookStreamReader and opens the specified CSV file.
@@ -50,7 +51,7 @@ void BookStreamReader::open(const std::string &filename) {
  * @brief Parses the next row from the CSV file and populates the BookUpdate
  * object.
  */
-bool BookStreamReader::parse_next(BookUpdate &update) {
+bool BookStreamReader::parse_next(core::market_data::BookUpdate &update) {
     if (!csv_reader_) {
         return false;
     }
@@ -90,3 +91,4 @@ bool BookStreamReader::parse_next(BookUpdate &update) {
     }
     return false;
 }
+} 

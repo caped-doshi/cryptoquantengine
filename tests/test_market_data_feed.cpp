@@ -1,6 +1,6 @@
 /*
  * File: tests/test_market_data_feed.cpp
- * Description: Unit tests for hftengine/core/data/market_data_feed.cpp.
+ * Description: Unit tests for hftengine/core/market_data/market_data_feed.cpp.
  * Author: Arvind Rathnashyam
  * Date: 2025-06-25
  * License: Proprietary
@@ -15,10 +15,10 @@
 #include <unordered_map>
 #include <vector>
 
-#include "core/data/readers/book_stream_reader.h"
-#include "core/data/market_data_feed.h"
-#include "core/data/readers/trade_stream_reader.h"
 #include "core/market_data/book_update.h"
+#include "core/market_data/market_data_feed.h"
+#include "core/market_data/readers/book_stream_reader.h"
+#include "core/market_data/readers/trade_stream_reader.h"
 #include "core/market_data/trade.h"
 
 // Helper: Create temporary CSV files for testing
@@ -55,6 +55,8 @@ void create_book_update_csv_2(const std::string &filename) {
 
 TEST_CASE("[MarketDataFeed] - initializes with empty input",
           "[multi-asset][empty]") {
+    using namespace core::market_data;
+
     MarketDataFeed feed({}, {});
     EventType type;
     BookUpdate book_update;
@@ -66,6 +68,8 @@ TEST_CASE("[MarketDataFeed] - initializes with empty input",
 
 TEST_CASE("[MarketDataFeed] - add_stream single asset",
           "[MarketDataFeed][add_stream]") {
+    using namespace core::market_data;
+
     const std::string book_file = "test_book.csv";
     const std::string trade_file = "test_trade.csv";
     TestHelpers::create_book_update_csv(book_file);
@@ -90,6 +94,8 @@ TEST_CASE("[MarketDataFeed] - add_stream single asset",
 
 TEST_CASE("[MarketDataFeed] - processes multi-asset events in timestamp order",
           "[multi-asset][order]") {
+    using namespace core::market_data;
+
     const std::string book_file = "book_asset0.csv";
     const std::string trade_file = "trade_asset0.csv";
     TestHelpers::create_book_update_csv(book_file);
@@ -140,6 +146,8 @@ TEST_CASE("[MarketDataFeed] - processes multi-asset events in timestamp order",
 
 TEST_CASE("[MarketDataFeed] - handles header-only files",
           "[multi-asset][header-only]") {
+    using namespace core::market_data;
+
     const std::string book_file = "book_empty.csv";
     const std::string trade_file = "trade_empty.csv";
 
@@ -167,6 +175,7 @@ TEST_CASE("[MarketDataFeed] - handles header-only files",
 
 TEST_CASE("[MarketDataFeed] - multi-asset event sequencing",
           "[feed][multi_asset]") {
+    using namespace core::market_data;
     // Create test files for 2 assets
     const std::string btc_trade_file = "btc_trades.csv";
     const std::string btc_book_file = "btc_book.csv";
@@ -228,6 +237,7 @@ TEST_CASE("[MarketDataFeed] - multi-asset event sequencing",
 }
 
 TEST_CASE("[MarketDataFeed] - peek timestamp", "[feed][peek]") {
+    using namespace core::market_data;
     // Create test files for 2 assets
     const std::string trade_file_1 = "btc_trades.csv";
     const std::string book_file_1 = "btc_book.csv";

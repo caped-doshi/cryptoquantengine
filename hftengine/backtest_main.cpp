@@ -13,12 +13,17 @@
 
 #include "core/recorder/recorder.h"
 #include "core/strategy/grid_trading.h"
-#include "core/trading/backtest_engine.h"
+#include "core/backtest_engine/backtest_engine.h"
 #include "utils/config/config_reader.h"
 #include "utils/logger/log_level.h"
 #include "utils/logger/logger.h"
 
 int main() {
+    using namespace core::trading;
+    using namespace core::backtest;
+    using namespace core::recorder;
+    using namespace core::strategy;
+    using namespace utils::config;
 
     ConfigReader config_reader;
     const auto asset_config =
@@ -31,9 +36,9 @@ int main() {
         config_reader.get_recorder_config("../config/recorder_config.txt");
     const auto backtest_config =
         config_reader.get_backtest_config("../config/backtest_config.txt");
-    std::unordered_map<int, AssetConfig> asset_configs;
     const int asset_id = 1;
-    asset_configs.insert({asset_id, asset_config});
+    const std::unordered_map<int, AssetConfig> asset_configs = {
+        {asset_id, asset_config}};
     auto logger = nullptr;
 
     BacktestEngine hbt(asset_configs, backtest_engine_config, logger);

@@ -1,32 +1,28 @@
 cmake_minimum_required(VERSION 3.20)
 project(hftengine LANGUAGES CXX)
 
-# Set C++ standard before defining targets
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Define executable
 add_executable(hftbacktest
   hftengine/backtest_main.cpp
   hftengine/core/orderbook/orderbook.cpp
   hftengine/utils/config/config_reader.cpp
   hftengine/core/execution_engine/execution_engine.cpp
-  hftengine/core/trading/backtest_engine.cpp
-  hftengine/core/data/market_data_feed.cpp
-  hftengine/core/data/readers/book_stream_reader.cpp
-  hftengine/core/data/readers/trade_stream_reader.cpp
+  hftengine/core/backtest_engine/backtest_engine.cpp
+  hftengine/core/market_data/market_data_feed.cpp
+  hftengine/core/market_data/readers/book_stream_reader.cpp
+  hftengine/core/market_data/readers/trade_stream_reader.cpp
   hftengine/core/recorder/recorder.cpp
   hftengine/core/strategy/grid_trading.cpp
   hftengine/utils/logger/logger.cpp
 )
 
-# THEN set properties
 target_include_directories(hftbacktest PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/hftengine
   ${CMAKE_CURRENT_SOURCE_DIR}/external 
 )
 
-# Compiler flags
 target_compile_options(hftbacktest PRIVATE
   $<$<CONFIG:Release>:-O3>
   $<$<CONFIG:Debug>:-O3 -Wall -Wextra -Wpedantic>
@@ -45,8 +41,6 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(Catch2)
 enable_testing()
 
-# Test Executables - Separate for each component
-# 1. OrderBook Tests
 add_executable(test_orderbook
   tests/test_orderbook.cpp
   hftengine/core/orderbook/orderbook.cpp
@@ -57,7 +51,6 @@ target_include_directories(test_orderbook PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/hftengine
 )
 
-# 2. ConfigReader Tests
 add_executable(test_config_reader
   tests/utils/test_config_reader.cpp
   hftengine/utils/config/config_reader.cpp
@@ -67,10 +60,9 @@ target_include_directories(test_config_reader PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/hftengine
 )
 
-# 3. BookStreamReader Tests
 add_executable(test_book_stream_reader
   tests/test_book_stream_reader.cpp
-  hftengine/core/data/readers/book_stream_reader.cpp
+  hftengine/core/market_data/readers/book_stream_reader.cpp
   hftengine/core/orderbook/orderbook.cpp
   hftengine/utils/logger/logger.cpp
 )
@@ -79,10 +71,9 @@ target_include_directories(test_book_stream_reader PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/hftengine
 )
 
-# 4. TradeStreamReader Tests
 add_executable(test_trade_stream_reader
   tests/test_trade_stream_reader.cpp
-  hftengine/core/data/readers/trade_stream_reader.cpp
+  hftengine/core/market_data/readers/trade_stream_reader.cpp
   hftengine/core/orderbook/orderbook.cpp
   hftengine/utils/logger/logger.cpp
 )
@@ -91,19 +82,17 @@ target_include_directories(test_trade_stream_reader PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/hftengine
 )
 
-# 5. MarketDataFeed Tests
 add_executable(test_market_data_feed
   tests/test_market_data_feed.cpp
-  hftengine/core/data/market_data_feed.cpp
-  hftengine/core/data/readers/trade_stream_reader.cpp
-  hftengine/core/data/readers/book_stream_reader.cpp
+  hftengine/core/market_data/market_data_feed.cpp
+  hftengine/core/market_data/readers/trade_stream_reader.cpp
+  hftengine/core/market_data/readers/book_stream_reader.cpp
 )
 
 target_include_directories(test_market_data_feed PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/hftengine
 )
 
-# 6. Execution Engine Tests
 add_executable(test_execution_engine
   tests/test_execution_engine.cpp
   hftengine/core/execution_engine/execution_engine.cpp
@@ -115,15 +104,14 @@ target_include_directories(test_execution_engine PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/hftengine
 )
 
-# 7. Backtest Engine Tests
 add_executable(test_backtest_engine
   tests/test_backtest_engine.cpp
-  hftengine/core/trading/backtest_engine.cpp
+  hftengine/core/backtest_engine/backtest_engine.cpp
   hftengine/core/execution_engine/execution_engine.cpp
   hftengine/core/orderbook/orderbook.cpp
-  hftengine/core/data/market_data_feed.cpp
-  hftengine/core/data/readers/trade_stream_reader.cpp
-  hftengine/core/data/readers/book_stream_reader.cpp
+  hftengine/core/market_data/market_data_feed.cpp
+  hftengine/core/market_data/readers/trade_stream_reader.cpp
+  hftengine/core/market_data/readers/book_stream_reader.cpp
   hftengine/utils/logger/logger.cpp
 )
 
@@ -131,7 +119,6 @@ target_include_directories(test_backtest_engine PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/hftengine
 )
 
-# 8. Stat util tests
 add_executable(test_stat_utils
   tests/utils/test_stat_utils.cpp
 )
@@ -140,16 +127,15 @@ target_include_directories(test_stat_utils PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/hftengine
 )
 
-# 9. Recorder Tests
 add_executable(test_recorder
   tests/test_recorder.cpp
   hftengine/core/recorder/recorder.cpp
-  hftengine/core/trading/backtest_engine.cpp
+  hftengine/core/backtest_engine/backtest_engine.cpp
   hftengine/core/orderbook/orderbook.cpp
   hftengine/core/execution_engine/execution_engine.cpp
-  hftengine/core/data/market_data_feed.cpp
-  hftengine/core/data/readers/trade_stream_reader.cpp
-  hftengine/core/data/readers/book_stream_reader.cpp
+  hftengine/core/market_data/market_data_feed.cpp
+  hftengine/core/market_data/readers/trade_stream_reader.cpp
+  hftengine/core/market_data/readers/book_stream_reader.cpp
   hftengine/utils/logger/logger.cpp
 )
 
@@ -157,22 +143,20 @@ target_include_directories(test_recorder PRIVATE
   ${CMAKE_CURRENT_SOURDE_DIR}/hftengine
 )
 
-# 10. Grid Trading Strategy Tests
 add_executable(test_grid_trading
   tests/strategies/test_grid_trading.cpp
   hftengine/core/strategy/grid_trading.cpp
   hftengine/core/execution_engine/execution_engine.cpp
-  hftengine/core/trading/backtest_engine.cpp
+  hftengine/core/backtest_engine/backtest_engine.cpp
   hftengine/core/orderbook/orderbook.cpp
-  hftengine/core/data/market_data_feed.cpp
-  hftengine/core/data/readers/trade_stream_reader.cpp
-  hftengine/core/data/readers/book_stream_reader.cpp
+  hftengine/core/market_data/market_data_feed.cpp
+  hftengine/core/market_data/readers/trade_stream_reader.cpp
+  hftengine/core/market_data/readers/book_stream_reader.cpp
   hftengine/utils/logger/logger.cpp
 )
 target_include_directories(test_grid_trading PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/hftengine)
 
-# 11. Math Utils Tests
 add_executable(test_math_utils
   tests/utils/test_math_utils.cpp
 )
@@ -180,7 +164,6 @@ target_include_directories(test_math_utils PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/hftengine
 )
 
-# 12. Logger Tests
 add_executable(test_logger
   tests/utils/test_logger.cpp
   hftengine/utils/logger/logger.cpp
@@ -223,7 +206,6 @@ catch_discover_tests(test_grid_trading)
 catch_discover_tests(test_math_utils)
 catch_discover_tests(test_logger)
 
-# Optional: Add a global test target
 add_custom_target(run_all_tests DEPENDS
   test_orderbook
   test_config_reader

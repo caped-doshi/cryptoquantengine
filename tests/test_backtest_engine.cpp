@@ -15,7 +15,7 @@
 #include "core/execution_engine/execution_engine.h"
 #include "core/market_data/book_update.h"
 #include "core/orderbook/orderbook.h"
-#include "core/trading/backtest_engine.h"
+#include "core/backtest_engine/backtest_engine.h"
 #include "core/types/book_side.h"
 #include "core/types/order_type.h"
 #include "core/types/time_in_force.h"
@@ -48,6 +48,9 @@ void create_book_update_csv(const std::string &filename) {
 
 TEST_CASE("[BacktestEngine] - initializes correctly with valid input",
           "[backtest][init]") {
+    using namespace core::trading;
+    using namespace core::backtest;
+
     const std::string book_file = "test_book.csv";
     const std::string trade_file = "test_trade.csv";
     TestHelpers::create_book_update_csv(book_file);
@@ -70,8 +73,8 @@ TEST_CASE("[BacktestEngine] - initializes correctly with valid input",
                              .order_response_latency_us_ = 1000,
                              .market_feed_latency_us_ = 1000};
     // Logger
-    auto logger = std::make_shared<Logger>("test_backtest_engine_init.log",
-                                           LogLevel::Debug);
+    auto logger = std::make_shared<utils::logger::Logger>("test_backtest_engine_init.log",
+                                           utils::logger::LogLevel::Debug);
 
     SECTION("Construct BacktestEngine with valid file inputs") {
         bool threw = false;
@@ -92,14 +95,16 @@ TEST_CASE("[BacktestEngine] - initializes correctly with valid input",
 
 TEST_CASE("[BacktestEngine] - rejects invalid orders",
           "[backtest-engine][invalid]") {
+    using namespace core::trading;
+    using namespace core::backtest;
+
     const std::string book_file = "test_book.csv";
     const std::string trade_file = "test_trade.csv";
     TestHelpers::create_book_update_csv(book_file);
     TestHelpers::create_trade_csv(trade_file);
 
     int asset_id = 1;
-    Depth depth;
-
+    
     std::unordered_map<int, AssetConfig> asset_configs = {
         {asset_id, AssetConfig{.book_update_file_ = book_file,
                                .trade_file_ = trade_file,
@@ -114,8 +119,8 @@ TEST_CASE("[BacktestEngine] - rejects invalid orders",
                              .order_entry_latency_us_ = 1000,
                              .order_response_latency_us_ = 1000,
                              .market_feed_latency_us_ = 1000};
-    auto logger = std::make_shared<Logger>("test_backtest_engine_invalid.log",
-                                           LogLevel::Debug);
+    auto logger = std::make_shared<utils::logger::Logger>("test_backtest_engine_invalid.log",
+                                           utils::logger::LogLevel::Debug);
     BacktestEngine hbt(asset_configs, backtest_engine_config, logger);
 
     // Invalid price (0 or negative)
@@ -136,6 +141,9 @@ TEST_CASE("[BacktestEngine] - rejects invalid orders",
 }
 
 TEST_CASE("[BacktestEngine] - elapse", "[backtest-engine][elapse]") {
+    using namespace core::trading;
+    using namespace core::backtest;
+
     const std::string book_file = "test_book.csv";
     const std::string trade_file = "test_trade.csv";
     TestHelpers::create_book_update_csv(book_file);
@@ -162,8 +170,8 @@ TEST_CASE("[BacktestEngine] - elapse", "[backtest-engine][elapse]") {
                              .market_feed_latency_us_ = 1000};
 
     SECTION("Current timestamp elapses correctly") {
-        auto logger = std::make_shared<Logger>(
-            "test_backtest_engine_elapse_correct.log", LogLevel::Debug);
+        auto logger = std::make_shared<utils::logger::Logger>(
+            "test_backtest_engine_elapse_correct.log", utils::logger::LogLevel::Debug);
         BacktestEngine hbt(asset_configs, backtest_engine_config, logger);
 
         REQUIRE(hbt.elapse(100) == true);
@@ -174,20 +182,20 @@ TEST_CASE("[BacktestEngine] - elapse", "[backtest-engine][elapse]") {
         logger->flush();
     }
     SECTION("local orderbook updated with latency") {
-        auto logger = std::make_shared<Logger>(
-            "test_backtest_engine_elapse_latency.log", LogLevel::Debug);
+        auto logger = std::make_shared<utils::logger::Logger>(
+            "test_backtest_engine_elapse_latency.log", utils::logger::LogLevel::Debug);
         BacktestEngine hbt(asset_configs, backtest_engine_config, logger);
 
         REQUIRE(hbt.elapse(50000) == true);
         REQUIRE(hbt.current_time() == 50000);
 
         depth = hbt.depth(asset_id);
-        REQUIRE(depth.best_ask_ == price_to_ticks(50001.0, tick_size));
-        REQUIRE(depth.best_bid_ == price_to_ticks(50000.5, tick_size));
+        REQUIRE(depth.best_ask_ == utils::math::price_to_ticks(50001.0, tick_size));
+        REQUIRE(depth.best_bid_ == utils::math::price_to_ticks(50000.5, tick_size));
         REQUIRE(depth.ask_qty_ == 1.5);
         REQUIRE(depth.bid_qty_ == 2.0);
-        REQUIRE(depth.bid_depth_[price_to_ticks(50000.5, tick_size)] == 2.0);
-        REQUIRE(depth.ask_depth_[price_to_ticks(50001.0, tick_size)] == 1.5);
+        REQUIRE(depth.bid_depth_[utils::math::price_to_ticks(50000.5, tick_size)] == 2.0);
+        REQUIRE(depth.ask_depth_[utils::math::price_to_ticks(50001.0, tick_size)] == 1.5);
 
         REQUIRE(hbt.elapse(2000) == true);
         REQUIRE(hbt.current_time() == 52000);
@@ -198,15 +206,15 @@ TEST_CASE("[BacktestEngine] - elapse", "[backtest-engine][elapse]") {
         logger->flush();
     }
     SECTION("Market order executed in correct schedule") {
-        auto logger = std::make_shared<Logger>(
-            "test_backtest_engine_elapse_market_schedule.log", LogLevel::Debug);
+        auto logger = std::make_shared<utils::logger::Logger>(
+            "test_backtest_engine_elapse_market_schedule.log", utils::logger::LogLevel::Debug);
         BacktestEngine hbt(asset_configs, backtest_engine_config, logger);
 
         REQUIRE(hbt.elapse(29500));
         REQUIRE(hbt.current_time() == 29500);
 
         depth = hbt.depth(asset_id);
-        REQUIRE(depth.best_bid_ == price_to_ticks(50000.0, tick_size));
+        REQUIRE(depth.best_bid_ == utils::math::price_to_ticks(50000.0, tick_size));
         REQUIRE(depth.bid_qty_ == 2.0);
         // Submit a buy order that will be delayed and scheduled
         OrderId order_id = hbt.submit_sell_order(
@@ -227,15 +235,15 @@ TEST_CASE("[BacktestEngine] - elapse", "[backtest-engine][elapse]") {
         logger->flush();
     }
     SECTION("Limit order executed in correct schedule") {
-        auto logger = std::make_shared<Logger>(
-            "test_backtest_engine_elapse_limit_schedule.log", LogLevel::Debug);
+        auto logger = std::make_shared<utils::logger::Logger>(
+            "test_backtest_engine_elapse_limit_schedule.log", utils::logger::LogLevel::Debug);
         BacktestEngine hbt(asset_configs, backtest_engine_config, logger);
 
         REQUIRE(hbt.elapse(5000));
         REQUIRE(hbt.current_time() == 5000);
 
         depth = hbt.depth(asset_id);
-        REQUIRE(depth.best_ask_ == price_to_ticks(50001.0, tick_size));
+        REQUIRE(depth.best_ask_ == utils::math::price_to_ticks(50001.0, tick_size));
 
         OrderId order_id = hbt.submit_sell_order(
             asset_id, 50000.5, 1.0, TimeInForce::GTC, OrderType::LIMIT);
@@ -253,8 +261,8 @@ TEST_CASE("[BacktestEngine] - elapse", "[backtest-engine][elapse]") {
 
     SECTION("Complex multi-limit order execution with partial fills and "
             "cancellations") {
-        auto logger = std::make_shared<Logger>(
-            "test_backtest_engine_elapse_complex.log", LogLevel::Debug);
+        auto logger = std::make_shared<utils::logger::Logger>(
+            "test_backtest_engine_elapse_complex.log", utils::logger::LogLevel::Debug);
         BacktestEngine hbt(asset_configs, backtest_engine_config, logger);
 
         REQUIRE(hbt.elapse(5000));
@@ -292,8 +300,8 @@ TEST_CASE("[BacktestEngine] - elapse", "[backtest-engine][elapse]") {
         logger->flush();
     }
     SECTION("Handles partial fills correctly") {
-        auto logger = std::make_shared<Logger>(
-            "test_backtest_engine_elapse_partial_fills.log", LogLevel::Debug);
+        auto logger = std::make_shared<utils::logger::Logger>(
+            "test_backtest_engine_elapse_partial_fills.log", utils::logger::LogLevel::Debug);
         BacktestEngine hbt(asset_configs, backtest_engine_config, logger);
 
         hbt.elapse(5000);

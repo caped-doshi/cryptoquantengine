@@ -16,13 +16,14 @@
 
 #include "../../core/types/usings.h"
 
+namespace utils::stat {
 /**
  * @brief Computes the mean of a vector of doubles.
  *
  * @param data A vector of doubles.
  * @return mean of data.
  */
-inline double mean(const std::vector<double>& data) {
+inline double mean(const std::vector<double> &data) {
     if (data.empty())
         throw std::invalid_argument("Cannot compute mean of empty vector");
     if (data.size() > std::numeric_limits<double>::max())
@@ -47,3 +48,4 @@ inline double stddev(const std::vector<double> &data) {
     }
     return std::sqrt(sq_sum / (data.size()));
 }
+} // namespace utils::stat

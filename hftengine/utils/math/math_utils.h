@@ -12,6 +12,7 @@
 #include "../../core/types/usings.h"
 #include <cmath>
 
+namespace utils::math {
 /**
  * @brief Converts a price to integer ticks given a tick size.
  *
@@ -48,3 +49,4 @@ inline Quantity quantity_to_lot(Quantity quantity, double lot_size) {
     constexpr double EPSILON = 1e-9;
     return std::round((quantity + EPSILON) / lot_size) * lot_size;
 }
+} // namespace utils::math

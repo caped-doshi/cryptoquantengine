@@ -16,6 +16,7 @@
 #include "../types/time_in_force.h"
 #include "../types/usings.h"
 
+namespace core::trading {
 struct Order {
     Timestamp local_timestamp_;
     Timestamp exch_timestamp_;
@@ -29,3 +30,4 @@ struct Order {
     Quantity queueEst_;
     OrderStatus orderStatus_;
 };
+} 

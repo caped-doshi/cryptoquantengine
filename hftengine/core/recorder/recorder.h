@@ -13,19 +13,21 @@
 #include <vector>
 
 #include "../../utils/logger/logger.h"
-#include "../trading/backtest_engine.h"
+#include "../backtest_engine/backtest_engine.h"
 #include "../types/usings.h"
 #include "equity_snapshot.h"
 #include "state_snapshot.h"
 
+namespace core {
+namespace recorder {
 class Recorder {
   public:
     Recorder(Microseconds interval_us,
-             std::shared_ptr<Logger> logger = nullptr);
+             std::shared_ptr<utils::logger::Logger> logger = nullptr);
 
     void record(const EquitySnapshot &snapshot);
     void record(Timestamp timestamp, double equity);
-    void record(const BacktestEngine &hbt, int asset_id);
+    void record(const core::backtest::BacktestEngine &hbt, int asset_id);
 
     double sharpe() const;
     double sortino() const;
@@ -41,5 +43,7 @@ class Recorder {
     std::vector<EquitySnapshot> records_;
     std::vector<StateSnapshot> state_records_;
 
-    std::shared_ptr<Logger> logger_;
+    std::shared_ptr<utils::logger::Logger> logger_;
 };
+} // namespace recorder
+} // namespace core

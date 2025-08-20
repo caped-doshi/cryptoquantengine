@@ -15,6 +15,8 @@
 #include "utils/math/math_utils.h"
 
 TEST_CASE("[OrderBook] - Initial State", "[orderbook][init]") {
+    using namespace core::orderbook;
+
     double tick_size = 0.01;
     double lot_size = 0.01;
 
@@ -27,6 +29,9 @@ TEST_CASE("[OrderBook] - Initial State", "[orderbook][init]") {
 }
 
 TEST_CASE("[OrderBook] - Book Update Processing", "[orderbook][updates]") {
+    using namespace core::orderbook;
+    using namespace core::market_data;
+
     double tick_size = 0.01;
     double lot_size = 0.01;
     OrderBook book(tick_size, lot_size);
@@ -40,7 +45,7 @@ TEST_CASE("[OrderBook] - Book Update Processing", "[orderbook][updates]") {
         REQUIRE(book.best_bid() == 100.0);
         REQUIRE(book.best_ask() == 0.0);
         REQUIRE(book.depth_at(BookSide::Bid,
-                              price_to_ticks(100.0, tick_size)) == 500.0);
+                              utils::math::price_to_ticks(100.0, tick_size)) == 500.0);
         REQUIRE(book.depth_at_level(BookSide::Bid, 0) == 500.0);
     }
 
@@ -54,7 +59,7 @@ TEST_CASE("[OrderBook] - Book Update Processing", "[orderbook][updates]") {
             {20, 110, UpdateType::Incremental, BookSide::Ask, 101.0, 150.0});
 
         REQUIRE(book.depth_at(BookSide::Ask,
-                              price_to_ticks(101.0, tick_size)) == 150.0);
+                              utils::math::price_to_ticks(101.0, tick_size)) == 150.0);
         REQUIRE(book.depth_at_level(BookSide::Ask, 0) == 150.0);
     }
 
@@ -71,6 +76,9 @@ TEST_CASE("[OrderBook] - Book Update Processing", "[orderbook][updates]") {
 }
 
 TEST_CASE("[OrderBook] - Price Level Priority", "[orderbook][priority]") {
+    using namespace core::orderbook;
+    using namespace core::market_data;
+
     double tick_size = 0.01;
     double lot_size = 0.01;
     OrderBook book(tick_size, lot_size);
@@ -153,6 +161,9 @@ TEST_CASE("[OrderBook] - Price Level Priority", "[orderbook][priority]") {
 }
 
 TEST_CASE("[OrderBook] - Edge Cases", "[orderbook][edge]") {
+    using namespace core::orderbook;
+    using namespace core::market_data;
+
     double tick_size = 0.01;
     double lot_size = 0.01;
     OrderBook book(tick_size, lot_size);

@@ -1,8 +1,9 @@
 /*
- * File: hftengine/core/data/readers/trade_stream_reader.h
- * Description: Class to stream trade data from tardis.
+ * File: hftengine/core/market_data/readers/book_stream_reader.h
+ * Description: Class to read L2 data from tardis incremental_book_update csv
+ * files.
  * Author: Arvind Rathnashyam
- * Date: 2025-06-25
+ * Date: 2025-06-24
  * License: Proprietary
  */
 
@@ -14,17 +15,18 @@
 #include <vector>
 
 #include "../../../../external/csv/csv.h"
-#include "../../market_data/trade.h"
-#include "../../orderbook/orderbook.h"
+#include "../../market_data/book_update.h"
+#include "../../types/book_side.h"
 #include "../../types/usings.h"
 
-class TradeStreamReader {
+namespace core::market_data {
+class BookStreamReader {
   public:
-    TradeStreamReader();
-    explicit TradeStreamReader(const std::string &filename);
+    BookStreamReader();
+    explicit BookStreamReader(const std::string &filename);
 
     void open(const std::string &filename);
-    bool parse_next(Trade &trade);
+    bool parse_next(core::market_data::BookUpdate &update);
 
   private:
     struct CSVReaderImpl {
@@ -35,4 +37,6 @@ class TradeStreamReader {
             : reader(filename) {}
     };
     std::unique_ptr<CSVReaderImpl> csv_reader_;
+    bool has_local_timestamp_ = false;
 };
+}

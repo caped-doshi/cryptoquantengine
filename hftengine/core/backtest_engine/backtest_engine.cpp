@@ -1,5 +1,5 @@
 /*
- * File: hftengine/core/trading/backtest_engine.h
+ * File: hftengine/core/backtest_engine/backtest_engine.h
  * Description: BacktestEngine to simulate trading with multiple assets.
  * Author: Arvind Rathnashyam
  * Date: 2025-06-26
@@ -15,14 +15,15 @@
 #include "../../utils/logger/log_level.h"
 #include "../../utils/logger/logger.h"
 #include "../../utils/math/math_utils.h"
-#include "../data/market_data_feed.h"
+#include "../market_data/market_data_feed.h"
+#include "../trading/asset_config.h"
+#include "../trading/depth.h"
 #include "../types/action_type.h"
 #include "../types/order_status.h"
-#include "asset_config.h"
 #include "backtest_asset.h"
 #include "backtest_engine.h"
-#include "depth.h"
 
+namespace core::backtest {
 /**
  * @brief Constructs a BacktestEngine with per-asset book/trade streams and
  * configurations.
@@ -43,20 +44,24 @@
  * entries in @p book_files. Trade file entries are optional but recommended.
  */
 BacktestEngine::BacktestEngine(
-    const std::unordered_map<int, AssetConfig> &asset_configs,
-    const BacktestEngineConfig &engine_config, std::shared_ptr<Logger> logger)
+    const std::unordered_map<int, core::trading::AssetConfig> &asset_configs,
+    const core::backtest::BacktestEngineConfig &engine_config,
+    std::shared_ptr<utils::logger::Logger> logger)
     : current_time_us_(0), local_cash_balance_(engine_config.initial_cash_),
       logger_(logger) {
-
+    using namespace core::market_data;
+    using namespace core::backtest;
     order_entry_latency_us = engine_config.order_entry_latency_us_;
     order_response_latency_us = engine_config.order_response_latency_us_;
     market_feed_latency_us = engine_config.market_feed_latency_us_;
 
-    execution_engine_ = ExecutionEngine(logger_);
+    execution_engine_ = core::execution_engine::ExecutionEngine(logger_);
     execution_engine_.set_order_entry_latency_us(order_entry_latency_us);
     execution_engine_.set_order_response_latency_us(order_response_latency_us);
 
     for (const auto &[asset_id, config] : asset_configs) {
+        using namespace core::orderbook;
+
         assets_.emplace(asset_id, BacktestAsset(config));
         execution_engine_.add_asset(asset_id, config.tick_size_,
                                     config.lot_size_);
@@ -91,7 +96,7 @@ BacktestEngine::BacktestEngine(
                          std::to_string(order_response_latency_us) +
                          ", market_feed_latency_us=" +
                          std::to_string(market_feed_latency_us),
-                     LogLevel::Info);
+                     utils::logger::LogLevel::Info);
     }
 }
 
@@ -115,6 +120,7 @@ BacktestEngine::BacktestEngine(
  * @throws std::invalid_argument If an unknown action type is encountered.
  */
 bool BacktestEngine::elapse(std::uint64_t microseconds) {
+    using namespace core::market_data;
     EventType event_type;
     BookUpdate book_update;
     Trade trade;
@@ -196,13 +202,13 @@ bool BacktestEngine::elapse(std::uint64_t microseconds) {
     if (logger_) {
         logger_->log("[BacktestEngine] - " + std::to_string(current_time_us_) +
                          "us - elapse complete",
-                     LogLevel::Debug);
+                     utils::logger::LogLevel::Debug);
     }
     return std::isfinite(current_time_us_);
 }
 
-bool BacktestEngine::order_inactive(const Order &order) {
-    // Check if order is filled, cancelled, or expired
+bool BacktestEngine::order_inactive(const core::trading::Order &order) {
+    // using namespace core::trading;
     if (order.orderStatus_ == OrderStatus::FILLED ||
         order.orderStatus_ == OrderStatus::CANCELLED ||
         order.orderStatus_ == OrderStatus::EXPIRED) {
@@ -215,6 +221,8 @@ bool BacktestEngine::order_inactive(const Order &order) {
  * @param asset_id
  */
 void BacktestEngine::clear_inactive_orders() {
+    using namespace core::trading;
+    using namespace utils::logger;
     if (logger_) {
         logger_->log("[BacktestEngine] - " + std::to_string(current_time_us_) +
                          "us - clearing inactive orders",
@@ -258,6 +266,7 @@ void BacktestEngine::clear_inactive_orders() {
 OrderId BacktestEngine::submit_buy_order(int asset_id, Price price,
                                          Quantity quantity, TimeInForce tif,
                                          OrderType orderType) {
+    using namespace core::trading;
     if (quantity <= 0.0) throw std::invalid_argument("Insufficient quantity");
     if (orderType == OrderType::LIMIT && price <= 0.0)
         throw std::invalid_argument("Invalid price for limit order");
@@ -278,7 +287,7 @@ OrderId BacktestEngine::submit_buy_order(int asset_id, Price price,
                          "us - buy order (" +
                          std::to_string(buy_order.orderId_) +
                          ") submitted to exchange",
-                     LogLevel::Debug);
+                     utils::logger::LogLevel::Debug);
     }
     delayed_actions_.insert(
         {buy_order.exch_timestamp_,
@@ -306,6 +315,7 @@ OrderId BacktestEngine::submit_buy_order(int asset_id, Price price,
 OrderId BacktestEngine::submit_sell_order(int asset_id, Price price,
                                           Quantity quantity, TimeInForce tif,
                                           OrderType orderType) {
+    using namespace core::trading;
     if (quantity <= 0.0) throw std::invalid_argument("Insufficient quantity");
     if (orderType == OrderType::LIMIT && price <= 0.0)
         throw std::invalid_argument("Invalid price for limit order");
@@ -326,7 +336,7 @@ OrderId BacktestEngine::submit_sell_order(int asset_id, Price price,
                          "us - sell order (" +
                          std::to_string(sell_order.orderId_) +
                          ") submitted to exchange",
-                     LogLevel::Debug);
+                     utils::logger::LogLevel::Debug);
     }
     delayed_actions_.insert(
         {sell_order.exch_timestamp_,
@@ -361,6 +371,8 @@ void BacktestEngine::cancel_order(int asset_id, OrderId orderId) {
  * after order response latency.
  */
 void BacktestEngine::process_exchange_order_updates() {
+    using namespace core::trading;
+    using namespace core::execution_engine;
     std::vector<OrderUpdate> order_updates = execution_engine_.order_updates();
     for (const auto &order_update : order_updates) {
         delayed_actions_.insert(
@@ -381,8 +393,9 @@ void BacktestEngine::process_exchange_order_updates() {
  * Order updates that were processed in the exchange have not reached the
  * local system and are updated in this method after order response latency.
  */
-void BacktestEngine::process_order_update_local(OrderEventType event_type,
-                                                OrderId orderId, Order order) {
+void BacktestEngine::process_order_update_local(
+    OrderEventType event_type, OrderId orderId,
+    const core::trading::Order order) {
     if (event_type == OrderEventType::ACKNOWLEDGED) {
         local_active_orders_[orderId] = order;
         if (logger_) {
@@ -390,7 +403,7 @@ void BacktestEngine::process_order_update_local(OrderEventType event_type,
                              std::to_string(current_time_us_) +
                              "us - ACKNOWLEDGE recieved locally (" +
                              std::to_string(orderId) + ") update",
-                         LogLevel::Debug);
+                         utils::logger::LogLevel::Debug);
         }
     } else if (event_type == OrderEventType::CANCELLED) {
         auto it = local_active_orders_.find(orderId);
@@ -400,7 +413,7 @@ void BacktestEngine::process_order_update_local(OrderEventType event_type,
                              std::to_string(current_time_us_) +
                              "us - CANCELLED recieved locally (" +
                              std::to_string(orderId) + ") update",
-                         LogLevel::Debug);
+                         utils::logger::LogLevel::Debug);
         }
     } else if (event_type == OrderEventType::FILL) {
         local_active_orders_[orderId] = order;
@@ -409,7 +422,7 @@ void BacktestEngine::process_order_update_local(OrderEventType event_type,
                              std::to_string(current_time_us_) +
                              "us - FILL recieved locally (" +
                              std::to_string(orderId) + ") update",
-                         LogLevel::Debug);
+                         utils::logger::LogLevel::Debug);
         }
     } else if (event_type == OrderEventType::REJECTED) {
         if (logger_) {
@@ -417,7 +430,7 @@ void BacktestEngine::process_order_update_local(OrderEventType event_type,
                              std::to_string(current_time_us_) +
                              "us - REJECTED recieved locally (" +
                              std::to_string(orderId) + ") update",
-                         LogLevel::Debug);
+                         utils::logger::LogLevel::Debug);
         }
     } else {
         throw std::invalid_argument(
@@ -442,7 +455,9 @@ void BacktestEngine::process_order_update_local(OrderEventType event_type,
  * step, to ensure fills are processed and reflected in portfolio state or PnL.
  */
 void BacktestEngine::process_exchange_fills() {
-    std::vector<Fill> fills = execution_engine_.fills();
+    using namespace core::trading;
+    using namespace core::execution_engine;
+    std::vector<core::trading::Fill> fills = execution_engine_.fills();
     for (const auto &fill : fills) {
         delayed_actions_.insert(
             {fill.local_timestamp_,
@@ -473,14 +488,16 @@ void BacktestEngine::process_exchange_fills() {
  * @note Assumes `fill.price_` is in quote currency. For inverse contracts,
  *       additional logic may be needed.
  */
-void BacktestEngine::process_fill_local(int asset_id, const Fill &fill) {
+void BacktestEngine::process_fill_local(int asset_id,
+                                        const core::trading::Fill &fill) {
+    using namespace core::trading;
     if (logger_) {
         logger_->log("[BacktestEngine] - " +
                          std::to_string(fill.local_timestamp_) +
                          "us - fill processed locally, price=" +
                          std::to_string(fill.price_) +
                          ", qty=" + std::to_string(fill.quantity_),
-                     LogLevel::Debug);
+                     utils::logger::LogLevel::Debug);
     }
     Quantity signed_qty =
         (fill.side_ == TradeSide::Buy) ? fill.quantity_ : -fill.quantity_;
@@ -494,8 +511,9 @@ void BacktestEngine::process_fill_local(int asset_id, const Fill &fill) {
     local_cash_balance_ += -signed_qty * fill.price_ - fee;
 }
 
-void BacktestEngine::process_book_update_local(int asset_id,
-                                               const BookUpdate &book_update) {
+void BacktestEngine::process_book_update_local(
+    int asset_id, const core::market_data::BookUpdate &book_update) {
+    using namespace core::orderbook;
     local_orderbooks_.at(asset_id).apply_book_update(book_update);
 }
 
@@ -509,15 +527,16 @@ void BacktestEngine::process_book_update_local(int asset_id,
  * @param asset_id The identifier of the asset for which to retrieve orders.
  * @return A vector containing all active orders for the specified asset.
  */
-const std::vector<Order> BacktestEngine::orders(int asset_id) const {
+const std::vector<core::trading::Order>
+BacktestEngine::orders(int asset_id) const {
     if (logger_) {
         logger_->log("[BacktestEngine] - " + std::to_string(current_time_us_) +
                          "us - retrieving " +
                          std::to_string(local_active_orders_.size()) +
                          " local active orders",
-                     LogLevel::Debug);
+                     utils::logger::LogLevel::Debug);
     }
-    std::vector<Order> active_orders;
+    std::vector<core::trading::Order> active_orders;
     active_orders.reserve(local_active_orders_.size());
     for (const auto &[id, order] : local_active_orders_) {
         active_orders.emplace_back(order);
@@ -547,10 +566,11 @@ const double BacktestEngine::equity() const {
     if (logger_) {
         logger_->log("[BacktestEngine] - " + std::to_string(current_time_us_) +
                          "us - calculating equity",
-                     LogLevel::Debug);
+                     utils::logger::LogLevel::Debug);
     }
     double value = local_cash_balance_;
     for (auto &[asset_id, pos] : local_position_) {
+        using namespace core::orderbook;
         value += pos * local_orderbooks_.at(asset_id).mid_price();
         if (logger_) {
             logger_->log(
@@ -558,7 +578,7 @@ const double BacktestEngine::equity() const {
                     "us - asset " + std::to_string(asset_id) +
                     " position: " + std::to_string(pos) + ", mid price: " +
                     std::to_string(local_orderbooks_.at(asset_id).mid_price()),
-                LogLevel::Debug);
+                utils::logger::LogLevel::Debug);
         }
     }
     return value;
@@ -579,7 +599,9 @@ const Quantity BacktestEngine::position(int asset_id) const {
     return (it != local_position_.end()) ? it->second : 0.0;
 }
 
-const Depth BacktestEngine::depth(int asset_id) const {
+const core::trading::Depth BacktestEngine::depth(int asset_id) const {
+    using namespace core::orderbook;
+    using namespace core::trading;
     Ticks best_ask =
         local_orderbooks_.at(asset_id).price_at_level(BookSide::Ask, 0);
     Ticks best_bid =
@@ -592,7 +614,7 @@ const Depth BacktestEngine::depth(int asset_id) const {
         logger_->log("[BacktestEngine] - " + std::to_string(current_time_us_) +
                          "us - retrieving depth for asset " +
                          std::to_string(asset_id),
-                     LogLevel::Debug);
+                     utils::logger::LogLevel::Debug);
     }
     return Depth{.best_bid_ = best_bid,
                  .bid_qty_ = bid_0_size,
@@ -661,7 +683,7 @@ void BacktestEngine::set_cash(double cash) {
         logger_->log("[BacktestEngine] - " + std::to_string(current_time_us_) +
                          "us - Cash balance set to " +
                          std::to_string(local_cash_balance_),
-                     LogLevel::Info);
+                     utils::logger::LogLevel::Info);
     }
 }
 
@@ -670,6 +692,7 @@ void BacktestEngine::set_cash(double cash) {
  * @param Latency in microseconds
  */
 void BacktestEngine::set_order_entry_latency(Microseconds latency) {
+    using namespace core::execution_engine;
     order_entry_latency_us = latency;
     execution_engine_.set_order_entry_latency_us(latency);
 }
@@ -679,6 +702,7 @@ void BacktestEngine::set_order_entry_latency(Microseconds latency) {
  * @param Latency in microseconds
  */
 void BacktestEngine::set_order_response_latency(Microseconds latency) {
+    using namespace core::execution_engine;
     order_response_latency_us = latency;
     execution_engine_.set_order_response_latency_us(latency);
 }
@@ -728,3 +752,4 @@ const Microseconds BacktestEngine::order_response_latency() const {
 const Microseconds BacktestEngine::market_feed_latency() const {
     return market_feed_latency_us;
 }
+} // namespace core::backtest

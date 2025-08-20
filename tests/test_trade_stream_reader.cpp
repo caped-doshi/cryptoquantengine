@@ -1,6 +1,6 @@
 /*
  * File: tests/test_trade_stream_reader.cpp
- * Description: Unit tests for hftengine/core/data/readers/trade_stream_reader.cpp.
+ * Description: Unit tests for hftengine/core/market_data/readers/trade_stream_reader.cpp.
  * Author: Arvind Rathnashyam
  * Date: 2025-06-25
  * License: Proprietary
@@ -10,12 +10,13 @@
 # include <filesystem>
 # include <fstream>
 
-# include "core/data/readers/trade_stream_reader.h"
+# include "core/market_data/readers/trade_stream_reader.h"
 # include "core/types/trade_side.h"
 # include "core/market_data/trade.h"
 
 
 TEST_CASE("[TradeStreamReader] - CSV Parsing", "[trade][csv]") {
+    using namespace core::market_data;
     const std::string test_file = "test_trade_data.csv";
     {
         std::ofstream out(test_file);

@@ -13,12 +13,15 @@
 #include "core/recorder/recorder_config.h"
 #include "core/strategy/grid_trading_config.h"
 #include "core/trading/asset_config.h"
-#include "core/trading/backtest_config.h"
-#include "core/trading/backtest_engine_config.h"
+#include "core/backtest_engine/backtest_config.h"
+#include "core/backtest_engine/backtest_engine_config.h"
 #include "utils/config/config_reader.h"
 
 TEST_CASE("[ConfigReader] - get_asset_config returns correct AssetConfig",
           "[config][asset_config]") {
+    using namespace utils::config;
+    using namespace core::trading;
+
     const std::string config_file = "test_asset_config.tmp";
     {
         std::ofstream out(config_file);
@@ -33,7 +36,7 @@ TEST_CASE("[ConfigReader] - get_asset_config returns correct AssetConfig",
     }
 
     ConfigReader reader;
-    AssetConfig config = reader.get_asset_config(config_file);
+    const auto config = reader.get_asset_config(config_file);
 
     REQUIRE(config.book_update_file_ == "test_book.csv");
     REQUIRE(config.trade_file_ == "test_trade.csv");
@@ -50,6 +53,7 @@ TEST_CASE("[ConfigReader] - get_asset_config returns correct AssetConfig",
 TEST_CASE("[ConfigReader] - get_grid_trading_config returns correct "
           "GridTradingConfig",
           "[config][grid_trading_config]") {
+    using namespace utils::config;
     const std::string config_file = "test_grid_trading_config.tmp";
     {
         std::ofstream out(config_file);
@@ -63,7 +67,7 @@ TEST_CASE("[ConfigReader] - get_grid_trading_config returns correct "
     }
 
     ConfigReader reader;
-    GridTradingConfig config = reader.get_grid_trading_config(config_file);
+    const auto config = reader.get_grid_trading_config(config_file);
 
     REQUIRE(config.tick_size_ == 0.01);
     REQUIRE(config.lot_size_ == 0.00001);
@@ -78,6 +82,8 @@ TEST_CASE("[ConfigReader] - get_grid_trading_config returns correct "
 
 TEST_CASE("[ConfigReader] - get_asset_config throws on missing keys",
           "[config][asset_config][missing]") {
+    using namespace utils::config;
+
     const std::string config_file = "test_asset_config_missing.tmp";
     // Omit some required keys
     {
@@ -100,6 +106,8 @@ TEST_CASE("[ConfigReader] - get_asset_config throws on missing keys",
 
 TEST_CASE("[ConfigReader] - get_grid_trading_config throws on missing keys",
           "[config][grid_trading_config][missing]") {
+    using namespace utils::config;
+
     const std::string config_file = "test_grid_trading_config_missing.tmp";
     // Omit some required keys
     {
@@ -123,6 +131,9 @@ TEST_CASE("[ConfigReader] - get_grid_trading_config throws on missing keys",
 TEST_CASE("[ConfigReader] - get_backtest_engine_config returns correct "
           "BacktestEngineConfig",
           "[config][backtest_engine_config]") {
+    using namespace utils::config;
+    using namespace core::backtest;
+
     const std::string config_file = "test_backtest_engine_config.tmp";
     {
         std::ofstream out(config_file);
@@ -133,7 +144,7 @@ TEST_CASE("[ConfigReader] - get_backtest_engine_config returns correct "
     }
 
     ConfigReader reader;
-    BacktestEngineConfig config =
+    const auto config =
         reader.get_backtest_engine_config(config_file);
 
     REQUIRE(config.initial_cash_ == 5000.0);
@@ -146,6 +157,9 @@ TEST_CASE("[ConfigReader] - get_backtest_engine_config returns correct "
 
 TEST_CASE("[ConfigReader] - get_backtest_engine_config throws on missing keys",
           "[config][backtest_engine_config][missing]") {
+    using namespace utils::config;
+    using namespace core::backtest;
+
     const std::string config_file = "test_backtest_engine_config_missing.tmp";
     // Omit some required keys
     {
@@ -165,6 +179,8 @@ TEST_CASE("[ConfigReader] - get_backtest_engine_config throws on missing keys",
 
 TEST_CASE("[ConfigReader] - get_recorder_config returns correct RecorderConfig",
           "[config][recorder_config]") {
+    using namespace utils::config;
+
     const std::string config_file = "test_recorder_config.tmp";
     {
         std::ofstream out(config_file);
@@ -183,6 +199,8 @@ TEST_CASE("[ConfigReader] - get_recorder_config returns correct RecorderConfig",
 
 TEST_CASE("[ConfigReader] - get_recorder_config uses defaults if missing",
           "[config][recorder_config][defaults]") {
+    using namespace utils::config;
+
     const std::string config_file = "test_recorder_config_defaults.tmp";
     {
         std::ofstream out(config_file);
@@ -201,6 +219,8 @@ TEST_CASE("[ConfigReader] - get_recorder_config uses defaults if missing",
 
 TEST_CASE("[ConfigReader] - get_backtest_config returns correct BacktestConfig",
           "[config][backtest_config]") {
+    using namespace utils::config;
+
     const std::string config_file = "test_backtest_config.tmp";
     {
         std::ofstream out(config_file);
@@ -209,7 +229,8 @@ TEST_CASE("[ConfigReader] - get_backtest_config returns correct BacktestConfig",
     }
 
     ConfigReader reader;
-    BacktestConfig config = reader.get_backtest_config(config_file);
+    core::backtest::BacktestConfig config =
+        reader.get_backtest_config(config_file);
 
     REQUIRE(config.elapse_us == 2000000);
     REQUIRE(config.iterations == 12345);
@@ -219,6 +240,8 @@ TEST_CASE("[ConfigReader] - get_backtest_config returns correct BacktestConfig",
 
 TEST_CASE("[ConfigReader] - get_backtest_config uses defaults if missing",
           "[config][backtest_config][defaults]") {
+    using namespace utils::config;
+
     const std::string config_file = "test_backtest_config_defaults.tmp";
     {
         std::ofstream out(config_file);
@@ -227,7 +250,8 @@ TEST_CASE("[ConfigReader] - get_backtest_config uses defaults if missing",
     }
 
     ConfigReader reader;
-    BacktestConfig config = reader.get_backtest_config(config_file);
+    core::backtest::BacktestConfig config =
+        reader.get_backtest_config(config_file);
 
     REQUIRE(config.elapse_us == 500000);
     REQUIRE(config.iterations == 86400); // default value
