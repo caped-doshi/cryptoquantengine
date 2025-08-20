@@ -31,7 +31,7 @@ class ExecutionEngine {
 
     void add_asset(int asset_id, double tick_size, double lot_size);
 
-    bool order_inactive(const std::shared_ptr<Order> &order);
+    bool order_inactive(const std::shared_ptr<core::trading::Order> &order);
     bool clear_inactive_orders(int asset_id);
     bool cancel_order(int asset_id, const OrderId &orderId,
                       const Timestamp &current_timestamp);
@@ -39,20 +39,22 @@ class ExecutionEngine {
     bool order_exists(const OrderId &orderId) const;
 
     void execute_market_order(int asset_id, TradeSide side,
-                              std::shared_ptr<Order> order);
+                              std::shared_ptr<core::trading::Order> order);
     bool execute_fok_order(int asset_id, TradeSide side,
-                           std::shared_ptr<Order> order);
+                           std::shared_ptr<core::trading::Order> order);
     bool execute_ioc_order(int asset_id, TradeSide side,
-                           std::shared_ptr<Order> order);
-    bool place_maker_order(int asset_id, std::shared_ptr<Order> order);
+                           std::shared_ptr<core::trading::Order> order);
+    bool place_maker_order(int asset_id,
+                           std::shared_ptr<core::trading::Order> order);
 
-    bool execute_order(int asset_id, TradeSide side, const Order &order);
+    bool execute_order(int asset_id, TradeSide side,
+                       const core::trading::Order &order);
 
     void handle_book_update(int asset_id, const BookUpdate &book_update);
     void handle_trade(int asset_id, const Trade &trade);
 
-    const std::vector<OrderUpdate> &order_updates() const;
-    const std::vector<Fill> &fills() const;
+    const std::vector<core::trading::OrderUpdate> &order_updates() const;
+    const std::vector<core::trading::Fill> &fills() const;
 
     void clear_fills();
     void clear_order_updates();
@@ -71,17 +73,20 @@ class ExecutionEngine {
 
     std::unordered_map<int, core::orderbook::OrderBook> orderbooks_;
 
-    std::vector<OrderUpdate> order_updates_;
-    std::vector<Fill> fills_;
+    std::vector<core::trading::OrderUpdate> order_updates_;
+    std::vector<core::trading::Fill> fills_;
 
     struct MakerBook {
-        std::unordered_map<Ticks, std::shared_ptr<Order>> bid_orders_;
-        std::unordered_map<Ticks, std::shared_ptr<Order>> ask_orders_;
+        std::unordered_map<Ticks, std::shared_ptr<core::trading::Order>>
+            bid_orders_;
+        std::unordered_map<Ticks, std::shared_ptr<core::trading::Order>>
+            ask_orders_;
     };
     std::unordered_map<int, MakerBook> maker_books_;
 
-    std::unordered_map<int, std::vector<std::shared_ptr<Order>>> active_orders_;
-    std::unordered_map<OrderId, std::shared_ptr<Order>> orders_;
+    std::unordered_map<int, std::vector<std::shared_ptr<core::trading::Order>>>
+        active_orders_;
+    std::unordered_map<OrderId, std::shared_ptr<core::trading::Order>> orders_;
 
     std::shared_ptr<utils::logger::Logger> logger_;
 };

@@ -48,6 +48,8 @@ void create_book_update_csv(const std::string &filename) {
 
 TEST_CASE("[BacktestEngine] - initializes correctly with valid input",
           "[backtest][init]") {
+    using namespace core::trading;
+
     const std::string book_file = "test_book.csv";
     const std::string trade_file = "test_trade.csv";
     TestHelpers::create_book_update_csv(book_file);
@@ -92,14 +94,15 @@ TEST_CASE("[BacktestEngine] - initializes correctly with valid input",
 
 TEST_CASE("[BacktestEngine] - rejects invalid orders",
           "[backtest-engine][invalid]") {
+    using namespace core::trading;
+
     const std::string book_file = "test_book.csv";
     const std::string trade_file = "test_trade.csv";
     TestHelpers::create_book_update_csv(book_file);
     TestHelpers::create_trade_csv(trade_file);
 
     int asset_id = 1;
-    Depth depth;
-
+    
     std::unordered_map<int, AssetConfig> asset_configs = {
         {asset_id, AssetConfig{.book_update_file_ = book_file,
                                .trade_file_ = trade_file,
@@ -136,6 +139,8 @@ TEST_CASE("[BacktestEngine] - rejects invalid orders",
 }
 
 TEST_CASE("[BacktestEngine] - elapse", "[backtest-engine][elapse]") {
+    using namespace core::trading;
+
     const std::string book_file = "test_book.csv";
     const std::string trade_file = "test_trade.csv";
     TestHelpers::create_book_update_csv(book_file);

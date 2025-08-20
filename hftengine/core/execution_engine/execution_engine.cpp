@@ -55,13 +55,13 @@ void ExecutionEngine::add_asset(int asset_id, double tick_size,
     tick_sizes_[asset_id] = tick_size;
     lot_sizes_[asset_id] = lot_size;
     orderbooks_.emplace(asset_id, OrderBook(tick_size, lot_size, logger_));
-    active_orders_.emplace(asset_id, std::vector<std::shared_ptr<Order>>());
+    active_orders_.emplace(asset_id, std::vector<std::shared_ptr<core::trading::Order>>());
     maker_books_.emplace(
         asset_id,
         MakerBook{.bid_orders_ =
-                      std::unordered_map<Ticks, std::shared_ptr<Order>>(),
+                      std::unordered_map<Ticks, std::shared_ptr<core::trading::Order>>(),
                   .ask_orders_ =
-                      std::unordered_map<Ticks, std::shared_ptr<Order>>()});
+                      std::unordered_map<Ticks, std::shared_ptr<core::trading::Order>>()});
     if (logger_) {
         logger_->log("[ExecutionEngine] - Added asset with ID: " +
                          std::to_string(asset_id) +
@@ -78,7 +78,7 @@ void ExecutionEngine::add_asset(int asset_id, double tick_size,
  *
  * @return true if order is inactive, false otherwise.
  */
-bool ExecutionEngine::order_inactive(const std::shared_ptr<Order> &order) {
+bool ExecutionEngine::order_inactive(const std::shared_ptr<core::trading::Order> &order) {
     return order->orderStatus_ == OrderStatus::FILLED ||
            order->orderStatus_ == OrderStatus::CANCELLED ||
            order->orderStatus_ == OrderStatus::EXPIRED ||
@@ -102,7 +102,7 @@ bool ExecutionEngine::clear_inactive_orders(int asset_id) {
         using ContainerType = std::decay_t<decltype(container)>;
 
         if constexpr (std::is_same_v<ContainerType,
-                                     std::vector<std::shared_ptr<Order>>>) {
+                                     std::vector<std::shared_ptr<core::trading::Order>>>) {
             // Vector version
             container.erase(std::remove_if(container.begin(), container.end(),
                                            [&](const auto &order) {
@@ -142,6 +142,7 @@ bool ExecutionEngine::clear_inactive_orders(int asset_id) {
  */
 bool ExecutionEngine::cancel_order(int asset_id, const OrderId &orderId,
                                    const Timestamp &current_timestamp) {
+    using namespace core::trading;
     auto it = orders_.find(orderId);
     if (it == orders_.end()) return false;
     auto order = it->second;
@@ -195,9 +196,9 @@ bool ExecutionEngine::order_exists(const OrderId &orderId) const {
  *              The order's fill state will be updated in-place.
  */
 void ExecutionEngine::execute_market_order(int asset_id, TradeSide side,
-                                           std::shared_ptr<Order> order) {
+                                           std::shared_ptr<core::trading::Order> order) {
     using namespace core::orderbook;
-
+    using namespace core::trading;
     if (order->orderStatus_ != OrderStatus::NEW) return;
     int level = 0;
     int levels = (side == TradeSide::Buy)
@@ -298,8 +299,9 @@ void ExecutionEngine::execute_market_order(int asset_id, TradeSide side,
  * @return true if the order was fully filled; false if rejected with no fills.
  */
 bool ExecutionEngine::execute_fok_order(int asset_id, TradeSide side,
-                                        std::shared_ptr<Order> order) {
+                                        std::shared_ptr<core::trading::Order> order) {
     using namespace core::orderbook;
+    using namespace core::trading;
     if (order->orderStatus_ != OrderStatus::NEW) return false;
     int level = -1;
     int levels = (side == TradeSide::Buy)
@@ -427,8 +429,9 @@ bool ExecutionEngine::execute_fok_order(int asset_id, TradeSide side,
  * occurred.
  */
 bool ExecutionEngine::execute_ioc_order(int asset_id, TradeSide side,
-                                        std::shared_ptr<Order> order) {
+                                        std::shared_ptr<core::trading::Order> order) {
     using namespace core::orderbook;
+    using namespace core::trading;
     if (order->orderStatus_ != OrderStatus::NEW) {
         if (logger_) {
             logger_->log("[ExecutionEngine] - " +
@@ -560,8 +563,9 @@ bool ExecutionEngine::execute_ioc_order(int asset_id, TradeSide side,
  *       It only handles enforcement and insertion of passive orders.
  */
 bool ExecutionEngine::place_maker_order(int asset_id,
-                                        std::shared_ptr<Order> order) {
+                                        std::shared_ptr<core::trading::Order> order) {
     using namespace core::orderbook;
+    using namespace core::trading;
     Price best_ask = orderbooks_.at(asset_id).best_ask();
     Price best_bid = orderbooks_.at(asset_id).best_bid();
     if ((order->side_ == BookSide::Bid && best_ask > 0.0 &&
@@ -625,7 +629,8 @@ bool ExecutionEngine::place_maker_order(int asset_id,
  * @throws std::invalid_argument if the TimeInForce value is unsupported.
  */
 bool ExecutionEngine::execute_order(int asset_id, TradeSide side,
-                                    const Order &order) {
+                                    const core::trading::Order &order) {
+    using namespace core::trading;
     if (logger_) {
         logger_->log(
             "[ExecutionEngine] - " + std::to_string(order.exch_timestamp_) +
@@ -641,7 +646,7 @@ bool ExecutionEngine::execute_order(int asset_id, TradeSide side,
                          "us - total orders=" + std::to_string(orders_.size()),
                      utils::logger::LogLevel::Debug);
     }
-    auto order_ptr = std::make_shared<Order>(order);
+    auto order_ptr = std::make_shared<core::trading::Order>(order);
     if (order.orderType_ == OrderType::MARKET) {
         execute_market_order(asset_id, side, order_ptr);
     } else if (order.orderType_ == OrderType::LIMIT) {
@@ -756,7 +761,8 @@ void ExecutionEngine::handle_book_update(int asset_id,
  * etc.).
  */
 void ExecutionEngine::handle_trade(int asset_id, const Trade &trade) {
-    Ticks trade_price_ticks =
+    using namespace core::trading;
+    const auto trade_price_ticks =
         price_to_ticks(trade.price_, tick_sizes_[asset_id]);
     auto it =
         (trade.side_ == TradeSide::Sell)
@@ -874,7 +880,7 @@ void ExecutionEngine::handle_trade(int asset_id, const Trade &trade) {
  *
  * @return A const reference to the vector of OrderUpdate objects.
  */
-const std::vector<OrderUpdate> &ExecutionEngine::order_updates() const {
+const std::vector<core::trading::OrderUpdate> &ExecutionEngine::order_updates() const {
     return order_updates_;
 }
 
@@ -893,7 +899,7 @@ void ExecutionEngine::clear_order_updates() { order_updates_.clear(); }
  *
  * @return A const reference to the vector of Fill objects.
  */
-const std::vector<Fill> &ExecutionEngine::fills() const { return fills_; }
+const std::vector<core::trading::Fill> &ExecutionEngine::fills() const { return fills_; }
 
 /**
  * @brief Clears all recorded fills from the execution engine.

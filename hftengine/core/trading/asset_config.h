@@ -11,6 +11,8 @@
 
 # include <string>
 
+namespace core {
+namespace trading {
 struct AssetConfig {
     std::string book_update_file_;
     std::string trade_file_;
@@ -23,3 +25,5 @@ struct AssetConfig {
     double maker_fee_;
     double taker_fee_;
 };
+}
+}

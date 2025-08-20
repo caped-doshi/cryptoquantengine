@@ -33,14 +33,14 @@
 class BacktestEngine {
   public:
     explicit BacktestEngine(
-        const std::unordered_map<int, AssetConfig> &asset_configs,
+        const std::unordered_map<int, core::trading::AssetConfig> &asset_configs,
         const BacktestEngineConfig &engine_config,
         std::shared_ptr<utils::logger::Logger> logger = nullptr);
 
     // global methods
     bool elapse(std::uint64_t microseconds);
 
-    bool order_inactive(const Order &order);
+    bool order_inactive(const core::trading::Order &order);
     void clear_inactive_orders();
 
     // local origin methods
@@ -51,11 +51,11 @@ class BacktestEngine {
     void cancel_order(int asset_id, OrderId orderId);
 
     // local state access methods
-    const std::vector<Order> orders(int asset_id) const;
+    const std::vector<core::trading::Order> orders(int asset_id) const;
     const double cash() const;
     const double equity() const;
     const Quantity position(int asset_id) const;
-    const Depth depth(int asset_id) const;
+    const core::trading::Depth depth(int asset_id) const;
     const Timestamp current_time() const;
 
     void print_trading_stats(int asset_id) const;
@@ -80,14 +80,14 @@ class BacktestEngine {
     void process_exchange_fills();
 
     void process_order_update_local(OrderEventType event_type, OrderId orderId,
-                                    Order order);
-    void process_fill_local(int asset_id, const Fill &fill);
+                                    const core::trading::Order order);
+    void process_fill_local(int asset_id, const core::trading::Fill &fill);
     void process_book_update_local(int asset_id, const BookUpdate &book_update);
 
     Timestamp current_time_us_;
     ExecutionEngine execution_engine_;
     MarketDataFeed market_data_feed_;
-    OrderIdGenerator orderId_gen_;
+    core::trading::OrderIdGenerator orderId_gen_;
 
     // asset configurations
     std::unordered_map<int, BacktestAsset> assets_;
@@ -98,7 +98,7 @@ class BacktestEngine {
     double local_cash_balance_;
     std::unordered_map<int, double> local_position_;
     std::unordered_map<int, core::orderbook::OrderBook> local_orderbooks_;
-    std::unordered_map<int, Order> local_active_orders_;
+    std::unordered_map<int, core::trading::Order> local_active_orders_;
 
     // trading statistics
     std::unordered_map<int, int> num_trades_;
@@ -109,10 +109,10 @@ class BacktestEngine {
     struct DelayedAction {
         ActionType type_;
         int asset_id_;
-        std::optional<Order> order_;
+        std::optional<core::trading::Order> order_;
         std::optional<OrderId> orderId_;
         std::optional<OrderEventType> order_update_type_;
-        std::optional<Fill> fill_;
+        std::optional<core::trading::Fill> fill_;
         std::optional<BookUpdate> book_update_;
         Timestamp execute_time_;
     };

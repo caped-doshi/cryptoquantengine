@@ -29,14 +29,11 @@ namespace core {
 namespace orderbook {
 class OrderBook {
   public:
-    // Constructor
     OrderBook(double tick_size, double lot_size,
               std::shared_ptr<utils::logger::Logger> logger = nullptr);
 
-    // Apply incoming L2 book update (price-level based)
     void apply_book_update(const BookUpdate &update);
 
-    // Book queries
     Price best_bid() const;
     Price best_ask() const;
     Price mid_price() const;
@@ -51,10 +48,8 @@ class OrderBook {
     std::map<Ticks, Quantity, std::greater<>> bid_book() const;
     std::map<Ticks, Quantity> ask_book() const;
 
-    // Clear book (e.g., on snapshot)
     void clear();
 
-    // debugging and testing
     void print_top_levels(int depth = 5) const;
     bool is_empty() const;
 
@@ -67,5 +62,5 @@ class OrderBook {
 
     std::shared_ptr<utils::logger::Logger> logger_;
 };
-} // namespace orderbook
-} // namespace core
+} 
+} 

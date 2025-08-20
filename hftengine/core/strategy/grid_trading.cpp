@@ -54,9 +54,10 @@ void GridTrading::initialize() {
 }
 
 void GridTrading::on_elapse(BacktestEngine &hbt) {
+    using namespace core::trading;
     Depth depth = hbt.depth(asset_id_);
     Quantity position = hbt.position(asset_id_);
-    std::vector<Order> orders = hbt.orders(asset_id_);
+    const std::vector<Order> orders = hbt.orders(asset_id_);
 
     double tick_size = depth.tick_size_;
     double lot_size = depth.lot_size_;

@@ -21,8 +21,9 @@
 int main() {
     using namespace utils::config;
     using namespace core::recorder;
-    ConfigReader config_reader;
+    using namespace core::trading;
 
+    ConfigReader config_reader;
     const auto asset_config =
         config_reader.get_asset_config("../config/asset_config.txt");
     const auto grid_trading_config = config_reader.get_grid_trading_config(
@@ -33,9 +34,9 @@ int main() {
         config_reader.get_recorder_config("../config/recorder_config.txt");
     const auto backtest_config =
         config_reader.get_backtest_config("../config/backtest_config.txt");
-    std::unordered_map<int, AssetConfig> asset_configs;
     const int asset_id = 1;
-    asset_configs.insert({asset_id, asset_config});
+    const std::unordered_map<int, AssetConfig> asset_configs = {
+        {asset_id, asset_config}};
     auto logger = nullptr;
 
     BacktestEngine hbt(asset_configs, backtest_engine_config, logger);

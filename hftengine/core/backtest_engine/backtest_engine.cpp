@@ -43,7 +43,7 @@
  * entries in @p book_files. Trade file entries are optional but recommended.
  */
 BacktestEngine::BacktestEngine(
-    const std::unordered_map<int, AssetConfig> &asset_configs,
+    const std::unordered_map<int, core::trading::AssetConfig> &asset_configs,
     const BacktestEngineConfig &engine_config,
     std::shared_ptr<utils::logger::Logger> logger)
     : current_time_us_(0), local_cash_balance_(engine_config.initial_cash_),
@@ -204,8 +204,8 @@ bool BacktestEngine::elapse(std::uint64_t microseconds) {
     return std::isfinite(current_time_us_);
 }
 
-bool BacktestEngine::order_inactive(const Order &order) {
-    // Check if order is filled, cancelled, or expired
+bool BacktestEngine::order_inactive(const core::trading::Order &order) {
+    using namespace core::trading;
     if (order.orderStatus_ == OrderStatus::FILLED ||
         order.orderStatus_ == OrderStatus::CANCELLED ||
         order.orderStatus_ == OrderStatus::EXPIRED) {
@@ -218,10 +218,12 @@ bool BacktestEngine::order_inactive(const Order &order) {
  * @param asset_id
  */
 void BacktestEngine::clear_inactive_orders() {
+    using namespace core::trading;
+    using namespace utils::logger;
     if (logger_) {
         logger_->log("[BacktestEngine] - " + std::to_string(current_time_us_) +
                          "us - clearing inactive orders",
-                     utils::logger::LogLevel::Debug);
+                     LogLevel::Debug);
     }
     for (auto &asset_pair : assets_) {
         int asset_id = asset_pair.first;
@@ -235,7 +237,7 @@ void BacktestEngine::clear_inactive_orders() {
                                  std::to_string(current_time_us_) +
                                  "us - clearing inactive order (" +
                                  std::to_string(it->second.orderId_) + ")",
-                             utils::logger::LogLevel::Debug);
+                             LogLevel::Debug);
             }
             it = local_active_orders_.erase(it);
         } else {
@@ -261,6 +263,7 @@ void BacktestEngine::clear_inactive_orders() {
 OrderId BacktestEngine::submit_buy_order(int asset_id, Price price,
                                          Quantity quantity, TimeInForce tif,
                                          OrderType orderType) {
+    using namespace core::trading;
     if (quantity <= 0.0) throw std::invalid_argument("Insufficient quantity");
     if (orderType == OrderType::LIMIT && price <= 0.0)
         throw std::invalid_argument("Invalid price for limit order");
@@ -309,6 +312,7 @@ OrderId BacktestEngine::submit_buy_order(int asset_id, Price price,
 OrderId BacktestEngine::submit_sell_order(int asset_id, Price price,
                                           Quantity quantity, TimeInForce tif,
                                           OrderType orderType) {
+    using namespace core::trading;
     if (quantity <= 0.0) throw std::invalid_argument("Insufficient quantity");
     if (orderType == OrderType::LIMIT && price <= 0.0)
         throw std::invalid_argument("Invalid price for limit order");
@@ -364,6 +368,7 @@ void BacktestEngine::cancel_order(int asset_id, OrderId orderId) {
  * after order response latency.
  */
 void BacktestEngine::process_exchange_order_updates() {
+    using namespace core::trading;
     std::vector<OrderUpdate> order_updates = execution_engine_.order_updates();
     for (const auto &order_update : order_updates) {
         delayed_actions_.insert(
@@ -385,7 +390,7 @@ void BacktestEngine::process_exchange_order_updates() {
  * local system and are updated in this method after order response latency.
  */
 void BacktestEngine::process_order_update_local(OrderEventType event_type,
-                                                OrderId orderId, Order order) {
+                                                OrderId orderId, const core::trading::Order order) {
     if (event_type == OrderEventType::ACKNOWLEDGED) {
         local_active_orders_[orderId] = order;
         if (logger_) {
@@ -445,7 +450,8 @@ void BacktestEngine::process_order_update_local(OrderEventType event_type,
  * step, to ensure fills are processed and reflected in portfolio state or PnL.
  */
 void BacktestEngine::process_exchange_fills() {
-    std::vector<Fill> fills = execution_engine_.fills();
+    using namespace core::trading;
+    std::vector<core::trading::Fill> fills = execution_engine_.fills();
     for (const auto &fill : fills) {
         delayed_actions_.insert(
             {fill.local_timestamp_,
@@ -476,7 +482,8 @@ void BacktestEngine::process_exchange_fills() {
  * @note Assumes `fill.price_` is in quote currency. For inverse contracts,
  *       additional logic may be needed.
  */
-void BacktestEngine::process_fill_local(int asset_id, const Fill &fill) {
+void BacktestEngine::process_fill_local(int asset_id, const core::trading::Fill &fill) {
+    using namespace core::trading;
     if (logger_) {
         logger_->log("[BacktestEngine] - " +
                          std::to_string(fill.local_timestamp_) +
@@ -513,7 +520,7 @@ void BacktestEngine::process_book_update_local(int asset_id,
  * @param asset_id The identifier of the asset for which to retrieve orders.
  * @return A vector containing all active orders for the specified asset.
  */
-const std::vector<Order> BacktestEngine::orders(int asset_id) const {
+const std::vector<core::trading::Order> BacktestEngine::orders(int asset_id) const {
     if (logger_) {
         logger_->log("[BacktestEngine] - " + std::to_string(current_time_us_) +
                          "us - retrieving " +
@@ -521,7 +528,7 @@ const std::vector<Order> BacktestEngine::orders(int asset_id) const {
                          " local active orders",
                      utils::logger::LogLevel::Debug);
     }
-    std::vector<Order> active_orders;
+    std::vector<core::trading::Order> active_orders;
     active_orders.reserve(local_active_orders_.size());
     for (const auto &[id, order] : local_active_orders_) {
         active_orders.emplace_back(order);
@@ -584,8 +591,9 @@ const Quantity BacktestEngine::position(int asset_id) const {
     return (it != local_position_.end()) ? it->second : 0.0;
 }
 
-const Depth BacktestEngine::depth(int asset_id) const {
+const core::trading::Depth BacktestEngine::depth(int asset_id) const {
     using namespace core::orderbook;
+    using namespace core::trading;
     Ticks best_ask =
         local_orderbooks_.at(asset_id).price_at_level(BookSide::Ask, 0);
     Ticks best_bid =

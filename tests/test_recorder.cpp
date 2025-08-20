@@ -197,6 +197,7 @@ TEST_CASE("[Recorder] - Max drawdown edge cases", "[recorder][drawdown]") {
 TEST_CASE("[Recorder] - record(BacktestEngine, int) with limit orders",
           "[recorder][backtest][limit_order]") {
     using namespace core::recorder;
+    using namespace core::trading;
     using namespace utils::logger;
     // Create a minimal trade file
     const std::string trade_file = "test_recorder_trade.csv";

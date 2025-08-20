@@ -108,7 +108,8 @@ bool ConfigReader::has(const std::string &key) const {
  * @param filename The name of the configuration file.
  * @return An AssetConfig object containing the asset configuration.*
  */
-AssetConfig ConfigReader::get_asset_config(const std::string &filename) {
+core::trading::AssetConfig ConfigReader::get_asset_config(const std::string &filename) {
+    using namespace core::trading;
     clear();
     load(filename);
     AssetConfig config;

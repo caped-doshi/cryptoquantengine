@@ -2,8 +2,8 @@
  * File: hftengine/hftengine/core/backtest_engine/backtest_asset.h
  * Description: BacktestAsset encapsulates all per-instrument simulation
  * parameters, data sources, and execution models used in the
- * backtest engine. 
- * Author: Arvind Rathnashyam 
+ * backtest engine.
+ * Author: Arvind Rathnashyam
  * Date: 2025-06-26
  * License: Proprietary
  */
@@ -13,17 +13,18 @@
 #include <cstdint>
 #include <vector>
 
+#include "../trading/asset_config.h"
 #include "../types/trade_side.h"
 #include "../types/usings.h"
-#include "../trading/asset_config.h"
 
 class BacktestAsset {
   public:
     BacktestAsset() = default;
-    explicit BacktestAsset(const AssetConfig &config) : config_(config) {}
+    explicit BacktestAsset(const core::trading::AssetConfig &config)
+        : config_(config) {}
 
-    const AssetConfig &config() const { return config_; }
+    const core::trading::AssetConfig &config() const { return config_; }
 
   private:
-    AssetConfig config_;
+    core::trading::AssetConfig config_;
 };

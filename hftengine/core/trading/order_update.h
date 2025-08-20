@@ -17,11 +17,13 @@
 #include "../types/time_in_force.h"
 #include "../types/usings.h"
 
+namespace core::trading {
 struct OrderUpdate {
     Timestamp exch_timestamp_;
     Timestamp local_timestamp_;
     int asset_id_;
     OrderId orderId_;
     OrderEventType event_type_;
-    std::optional<Order> order_;
+    std::optional<core::trading::Order> order_;
 };
+}

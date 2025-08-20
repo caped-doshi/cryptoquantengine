@@ -23,7 +23,7 @@ class ConfigReader {
   public:
     ConfigReader();
 
-    AssetConfig get_asset_config(const std::string &filename);
+    core::trading::AssetConfig get_asset_config(const std::string &filename);
     GridTradingConfig get_grid_trading_config(const std::string &filename);
     BacktestEngineConfig
     get_backtest_engine_config(const std::string &filename);

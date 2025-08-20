@@ -20,6 +20,7 @@
 TEST_CASE("[ConfigReader] - get_asset_config returns correct AssetConfig",
           "[config][asset_config]") {
     using namespace utils::config;
+    using namespace core::trading;
 
     const std::string config_file = "test_asset_config.tmp";
     {

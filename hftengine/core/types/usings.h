@@ -15,7 +15,6 @@
  // Forward declarations
 struct BookUpdate;
 struct Trade;
-struct Order;
 
 using QuantityLot = std::uint32_t;
 using Timestamp = std::uint64_t;

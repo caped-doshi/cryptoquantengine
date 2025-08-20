@@ -11,6 +11,7 @@
 
 #include "../types/usings.h"
 
+namespace core::trading {
 class OrderIdGenerator {
   public:
     OrderIdGenerator() : current_id_(0) {}
@@ -20,3 +21,4 @@ class OrderIdGenerator {
   private:
     std::atomic<OrderId> current_id_;
 };
+}
