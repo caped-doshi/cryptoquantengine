@@ -53,7 +53,7 @@ BacktestEngine::BacktestEngine(
     order_response_latency_us = engine_config.order_response_latency_us_;
     market_feed_latency_us = engine_config.market_feed_latency_us_;
 
-    execution_engine_ = ExecutionEngine(logger_);
+    execution_engine_ = core::execution_engine::ExecutionEngine(logger_);
     execution_engine_.set_order_entry_latency_us(order_entry_latency_us);
     execution_engine_.set_order_response_latency_us(order_response_latency_us);
 
@@ -369,6 +369,7 @@ void BacktestEngine::cancel_order(int asset_id, OrderId orderId) {
  */
 void BacktestEngine::process_exchange_order_updates() {
     using namespace core::trading;
+    using namespace core::execution_engine;
     std::vector<OrderUpdate> order_updates = execution_engine_.order_updates();
     for (const auto &order_update : order_updates) {
         delayed_actions_.insert(
@@ -451,6 +452,7 @@ void BacktestEngine::process_order_update_local(OrderEventType event_type,
  */
 void BacktestEngine::process_exchange_fills() {
     using namespace core::trading;
+    using namespace core::execution_engine;
     std::vector<core::trading::Fill> fills = execution_engine_.fills();
     for (const auto &fill : fills) {
         delayed_actions_.insert(
@@ -684,6 +686,7 @@ void BacktestEngine::set_cash(double cash) {
  * @param Latency in microseconds
  */
 void BacktestEngine::set_order_entry_latency(Microseconds latency) {
+    using namespace core::execution_engine;
     order_entry_latency_us = latency;
     execution_engine_.set_order_entry_latency_us(latency);
 }
@@ -693,6 +696,7 @@ void BacktestEngine::set_order_entry_latency(Microseconds latency) {
  * @param Latency in microseconds
  */
 void BacktestEngine::set_order_response_latency(Microseconds latency) {
+    using namespace core::execution_engine;
     order_response_latency_us = latency;
     execution_engine_.set_order_response_latency_us(latency);
 }

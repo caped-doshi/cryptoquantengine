@@ -28,13 +28,7 @@
 #include "../types/usings.h"
 #include "execution_engine.h"
 
-/**
- * @brief Default constructor for the ExecutionEngine.
- *
- * Initializes a new instance of the ExecutionEngine with default-initialized
- * internal data structures. The order books, order tracking, and asset-related
- * state will need to be set up through subsequent calls.
- */
+namespace core::execution_engine {
 ExecutionEngine::ExecutionEngine(std::shared_ptr<utils::logger::Logger> logger)
     : logger_(logger) {}
 
@@ -55,13 +49,14 @@ void ExecutionEngine::add_asset(int asset_id, double tick_size,
     tick_sizes_[asset_id] = tick_size;
     lot_sizes_[asset_id] = lot_size;
     orderbooks_.emplace(asset_id, OrderBook(tick_size, lot_size, logger_));
-    active_orders_.emplace(asset_id, std::vector<std::shared_ptr<core::trading::Order>>());
+    active_orders_.emplace(
+        asset_id, std::vector<std::shared_ptr<core::trading::Order>>());
     maker_books_.emplace(
         asset_id,
-        MakerBook{.bid_orders_ =
-                      std::unordered_map<Ticks, std::shared_ptr<core::trading::Order>>(),
-                  .ask_orders_ =
-                      std::unordered_map<Ticks, std::shared_ptr<core::trading::Order>>()});
+        MakerBook{.bid_orders_ = std::unordered_map<
+                      Ticks, std::shared_ptr<core::trading::Order>>(),
+                  .ask_orders_ = std::unordered_map<
+                      Ticks, std::shared_ptr<core::trading::Order>>()});
     if (logger_) {
         logger_->log("[ExecutionEngine] - Added asset with ID: " +
                          std::to_string(asset_id) +
@@ -78,7 +73,8 @@ void ExecutionEngine::add_asset(int asset_id, double tick_size,
  *
  * @return true if order is inactive, false otherwise.
  */
-bool ExecutionEngine::order_inactive(const std::shared_ptr<core::trading::Order> &order) {
+bool ExecutionEngine::order_inactive(
+    const std::shared_ptr<core::trading::Order> &order) {
     return order->orderStatus_ == OrderStatus::FILLED ||
            order->orderStatus_ == OrderStatus::CANCELLED ||
            order->orderStatus_ == OrderStatus::EXPIRED ||
@@ -101,8 +97,9 @@ bool ExecutionEngine::clear_inactive_orders(int asset_id) {
     auto clear_from_container = [&](auto &container) {
         using ContainerType = std::decay_t<decltype(container)>;
 
-        if constexpr (std::is_same_v<ContainerType,
-                                     std::vector<std::shared_ptr<core::trading::Order>>>) {
+        if constexpr (std::is_same_v<
+                          ContainerType,
+                          std::vector<std::shared_ptr<core::trading::Order>>>) {
             // Vector version
             container.erase(std::remove_if(container.begin(), container.end(),
                                            [&](const auto &order) {
@@ -195,8 +192,8 @@ bool ExecutionEngine::order_exists(const OrderId &orderId) const {
  * @param order Shared pointer to the market order to be executed.
  *              The order's fill state will be updated in-place.
  */
-void ExecutionEngine::execute_market_order(int asset_id, TradeSide side,
-                                           std::shared_ptr<core::trading::Order> order) {
+void ExecutionEngine::execute_market_order(
+    int asset_id, TradeSide side, std::shared_ptr<core::trading::Order> order) {
     using namespace core::orderbook;
     using namespace core::trading;
     if (order->orderStatus_ != OrderStatus::NEW) return;
@@ -298,8 +295,8 @@ void ExecutionEngine::execute_market_order(int asset_id, TradeSide side,
  *              The order's `filled_quantity_` will be updated if filled.
  * @return true if the order was fully filled; false if rejected with no fills.
  */
-bool ExecutionEngine::execute_fok_order(int asset_id, TradeSide side,
-                                        std::shared_ptr<core::trading::Order> order) {
+bool ExecutionEngine::execute_fok_order(
+    int asset_id, TradeSide side, std::shared_ptr<core::trading::Order> order) {
     using namespace core::orderbook;
     using namespace core::trading;
     if (order->orderStatus_ != OrderStatus::NEW) return false;
@@ -428,8 +425,8 @@ bool ExecutionEngine::execute_fok_order(int asset_id, TradeSide side,
  * @return true if the order was partially or fully filled; false if no fills
  * occurred.
  */
-bool ExecutionEngine::execute_ioc_order(int asset_id, TradeSide side,
-                                        std::shared_ptr<core::trading::Order> order) {
+bool ExecutionEngine::execute_ioc_order(
+    int asset_id, TradeSide side, std::shared_ptr<core::trading::Order> order) {
     using namespace core::orderbook;
     using namespace core::trading;
     if (order->orderStatus_ != OrderStatus::NEW) {
@@ -562,8 +559,8 @@ bool ExecutionEngine::execute_ioc_order(int asset_id, TradeSide side,
  * @note This function does not attempt to match or execute the order.
  *       It only handles enforcement and insertion of passive orders.
  */
-bool ExecutionEngine::place_maker_order(int asset_id,
-                                        std::shared_ptr<core::trading::Order> order) {
+bool ExecutionEngine::place_maker_order(
+    int asset_id, std::shared_ptr<core::trading::Order> order) {
     using namespace core::orderbook;
     using namespace core::trading;
     Price best_ask = orderbooks_.at(asset_id).best_ask();
@@ -880,7 +877,8 @@ void ExecutionEngine::handle_trade(int asset_id, const Trade &trade) {
  *
  * @return A const reference to the vector of OrderUpdate objects.
  */
-const std::vector<core::trading::OrderUpdate> &ExecutionEngine::order_updates() const {
+const std::vector<core::trading::OrderUpdate> &
+ExecutionEngine::order_updates() const {
     return order_updates_;
 }
 
@@ -899,7 +897,9 @@ void ExecutionEngine::clear_order_updates() { order_updates_.clear(); }
  *
  * @return A const reference to the vector of Fill objects.
  */
-const std::vector<core::trading::Fill> &ExecutionEngine::fills() const { return fills_; }
+const std::vector<core::trading::Fill> &ExecutionEngine::fills() const {
+    return fills_;
+}
 
 /**
  * @brief Clears all recorded fills from the execution engine.
@@ -937,4 +937,5 @@ void ExecutionEngine::set_order_entry_latency_us(
 void ExecutionEngine::set_order_response_latency_us(
     const Microseconds latency_us) {
     order_response_latency_us_ = latency_us;
+}
 }

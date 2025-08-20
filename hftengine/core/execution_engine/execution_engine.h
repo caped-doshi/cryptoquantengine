@@ -25,6 +25,7 @@
 #include "../types/time_in_force.h"
 #include "../types/usings.h"
 
+namespace core::execution_engine {
 class ExecutionEngine {
   public:
     ExecutionEngine(std::shared_ptr<utils::logger::Logger> logger = nullptr);
@@ -90,3 +91,4 @@ class ExecutionEngine {
 
     std::shared_ptr<utils::logger::Logger> logger_;
 };
+}

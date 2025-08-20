@@ -85,7 +85,7 @@ class BacktestEngine {
     void process_book_update_local(int asset_id, const BookUpdate &book_update);
 
     Timestamp current_time_us_;
-    ExecutionEngine execution_engine_;
+    core::execution_engine::ExecutionEngine execution_engine_;
     MarketDataFeed market_data_feed_;
     core::trading::OrderIdGenerator orderId_gen_;
 
