@@ -18,6 +18,7 @@
 #include <thread>
 
 #include "log_level.h"
+
 namespace utils {
 namespace logger {
 class Logger {

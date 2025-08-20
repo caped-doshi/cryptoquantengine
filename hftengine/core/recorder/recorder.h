@@ -18,6 +18,8 @@
 #include "equity_snapshot.h"
 #include "state_snapshot.h"
 
+namespace core {
+namespace recorder {
 class Recorder {
   public:
     Recorder(Microseconds interval_us,
@@ -43,3 +45,5 @@ class Recorder {
 
     std::shared_ptr<utils::logger::Logger> logger_;
 };
+} // namespace recorder
+} // namespace core

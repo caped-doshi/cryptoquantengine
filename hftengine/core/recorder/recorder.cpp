@@ -24,6 +24,9 @@
 #include "../types/usings.h"
 #include "recorder.h"
 
+namespace core {
+namespace recorder {
+
 /**
  * @brief Constructs a Recorder with a specified interval.
  *
@@ -289,3 +292,6 @@ void Recorder::plot(int asset_id) const {
         " " + std::to_string(asset_id);
     std::system(command.c_str());
 }
+
+} // namespace recorder
+} // namespace core
