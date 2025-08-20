@@ -16,8 +16,8 @@
 
 #include "../../../../external/csv/csv.h"
 #include "../../market_data/book_update.h"
-#include "../../types/book_side.h"
-#include "../../types/usings.h"
+#include "../../types/enums/book_side.h"
+#include "../../types/aliases/usings.h"
 
 namespace core::market_data {
 class BookStreamReader {

@@ -15,7 +15,7 @@
 #include "../../utils/math/math_utils.h"
 #include "../market_data/book_update.h"
 #include "../market_data/trade.h"
-#include "../types/book_side.h"
+#include "../types/enums/book_side.h"
 #include "orderbook.h"
 
 namespace core {

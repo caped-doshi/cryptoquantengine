@@ -11,8 +11,8 @@
 # include <fstream>
 
 # include "core/market_data/readers/book_stream_reader.h"
-# include "core/types/book_side.h"
-# include "core/types/update_type.h"
+# include "core/types/enums/book_side.h"
+# include "core/types/enums/update_type.h"
 # include "core/market_data/book_update.h"
 
 TEST_CASE("[BookStreamReader] - CSV Parsing", "[book][csv]") {

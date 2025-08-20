@@ -10,9 +10,9 @@
 
 #include <string>
 
-#include "../types/usings.h" 
-#include "../types/update_type.h"
-#include "../types/book_side.h"
+#include "../types/aliases/usings.h" 
+#include "../types/enums/update_type.h"
+#include "../types/enums/book_side.h"
 
 namespace core::market_data {
 struct BookUpdate {

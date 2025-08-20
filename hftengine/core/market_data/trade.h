@@ -9,8 +9,8 @@
 
 #pragma once
 
-# include "../types/usings.h"
-# include "../types/trade_side.h"
+# include "../types/aliases/usings.h"
+# include "../types/enums/trade_side.h"
 
 namespace core::market_data {
 struct Trade {

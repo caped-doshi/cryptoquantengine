@@ -21,7 +21,7 @@
 #include "../../utils/logger/logger.h"
 #include "../../utils/math/math_utils.h"
 #include "../../utils/stat/stat_utils.h"
-#include "../types/usings.h"
+#include "../types/aliases/usings.h"
 #include "recorder.h"
 
 namespace core {

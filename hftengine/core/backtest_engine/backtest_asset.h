@@ -14,8 +14,6 @@
 #include <vector>
 
 #include "../trading/asset_config.h"
-#include "../types/trade_side.h"
-#include "../types/usings.h"
 
 namespace core::backtest {
 class BacktestAsset {

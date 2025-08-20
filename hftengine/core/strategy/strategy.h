@@ -13,7 +13,7 @@
 
 #include "../../utils/logger/logger.h"
 #include "../backtest_engine/backtest_engine.h"
-#include "../types/usings.h"
+#include "../types/aliases/usings.h"
 
 namespace core::strategy {
 class Strategy {

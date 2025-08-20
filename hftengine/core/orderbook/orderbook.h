@@ -20,13 +20,12 @@
 #include "../../utils/logger/logger.h"
 #include "../market_data/book_update.h"
 #include "../market_data/trade.h"
-#include "../types/book_side.h"
-#include "../types/trade_side.h"
-#include "../types/update_type.h"
-#include "../types/usings.h"
+#include "../types/enums/book_side.h"
+#include "../types/enums/trade_side.h"
+#include "../types/enums/update_type.h"
+#include "../types/aliases/usings.h"
 
-namespace core {
-namespace orderbook {
+namespace core::orderbook {
 class OrderBook {
   public:
     OrderBook(double tick_size, double lot_size,
@@ -62,5 +61,4 @@ class OrderBook {
 
     std::shared_ptr<utils::logger::Logger> logger_;
 };
-} 
 } 

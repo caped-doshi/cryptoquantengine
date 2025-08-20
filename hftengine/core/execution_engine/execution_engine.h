@@ -20,10 +20,10 @@
 #include "../trading/fill.h"
 #include "../trading/order.h"
 #include "../trading/order_update.h"
-#include "../types/order_event_type.h"
-#include "../types/order_type.h"
-#include "../types/time_in_force.h"
-#include "../types/usings.h"
+#include "../types/enums/order_event_type.h"
+#include "../types/enums/order_type.h"
+#include "../types/enums/time_in_force.h"
+#include "../types/aliases/usings.h"
 
 namespace core::execution_engine {
 class ExecutionEngine {

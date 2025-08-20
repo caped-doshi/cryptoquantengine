@@ -9,11 +9,11 @@
 
 #pragma once
 
-#include "../types/book_side.h"
-#include "../types/trade_side.h"
-#include "../types/order_type.h"
-#include "../types/time_in_force.h"
-#include "../types/usings.h"
+#include "../types/enums/book_side.h"
+#include "../types/enums/trade_side.h"
+#include "../types/enums/order_type.h"
+#include "../types/enums/time_in_force.h"
+#include "../types/aliases/usings.h"
 
 namespace core::trading {
 struct Fill {

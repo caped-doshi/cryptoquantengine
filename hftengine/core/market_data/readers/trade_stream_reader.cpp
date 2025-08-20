@@ -15,8 +15,8 @@
 
 #include "../../../../external/csv/csv.h"
 #include "../../market_data/trade.h"
-#include "../../types/trade_side.h"
-#include "../../types/usings.h"
+#include "../../types/enums/trade_side.h"
+#include "../../types/aliases/usings.h"
 #include "trade_stream_reader.h"
 
 namespace core::market_data {

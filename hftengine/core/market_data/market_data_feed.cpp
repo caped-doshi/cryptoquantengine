@@ -6,6 +6,7 @@
  * License: Proprietary
  */
 
+#include <future>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -14,8 +15,8 @@
 #include "../market_data/book_update.h"
 #include "../market_data/trade.h"
 #include "../orderbook/orderbook.h"
-#include "../types/event_type.h"
-#include "../types/usings.h"
+#include "../types/aliases/usings.h"
+#include "../types/enums/event_type.h"
 #include "market_data_feed.h"
 #include "readers/book_stream_reader.h"
 #include "readers/trade_stream_reader.h"
@@ -45,17 +46,29 @@ MarketDataFeed::MarketDataFeed(
     const std::unordered_map<int, std::string> &book_files,
     const std::unordered_map<int, std::string> &trade_files) {
     using namespace core::market_data;
+
     for (const auto &[asset_id, book_file] : book_files) {
         StreamState state;
-        state.book_reader = std::make_unique<BookStreamReader>();
-        state.book_reader->open(book_file);
+        std::future<std::unique_ptr<BookStreamReader>> book_future;
+        book_future = std::async(std::launch::async, [book_file]() {
+            auto reader = std::make_unique<BookStreamReader>();
+            reader->open(book_file);
+            return reader;
+        });
 
         auto trade_it = trade_files.find(asset_id);
-        if (trade_it != trade_files.end()) {
-            state.trade_reader = std::make_unique<TradeStreamReader>();
-            state.trade_reader->open(trade_it->second);
-        }
+        if (trade_it == trade_files.end()) continue;
 
+        std::future<std::unique_ptr<TradeStreamReader>> trade_future;
+        std::string trade_file = trade_it->second;
+        trade_future = std::async(std::launch::async, [trade_file]() {
+            auto reader = std::make_unique<TradeStreamReader>();
+            reader->open(trade_file);
+            return reader;
+        });
+
+        state.book_reader = book_future.get();
+        state.trade_reader = trade_future.get();
         asset_streams_[asset_id] = std::move(state);
     }
 }
@@ -80,12 +93,19 @@ void MarketDataFeed::add_stream(int asset_id, const std::string &book_file,
                                 const std::string &trade_file) {
     using namespace core::market_data;
     StreamState stream;
-    stream.book_reader = std::make_unique<BookStreamReader>();
-    stream.book_reader->open(book_file);
 
-    stream.trade_reader = std::make_unique<TradeStreamReader>();
-    stream.trade_reader->open(trade_file);
-
+    auto book_future = std::async(std::launch::async, [book_file]() {
+        auto reader = std::make_unique<BookStreamReader>();
+        reader->open(book_file);
+        return reader;
+    });
+    auto trade_future = std::async(std::launch::async, [trade_file]() {
+        auto reader = std::make_unique<TradeStreamReader>();
+        reader->open(trade_file);
+        return reader;
+    });
+    stream.book_reader = book_future.get();
+    stream.trade_reader = trade_future.get();
     asset_streams_[asset_id] = std::move(stream);
 }
 
@@ -232,4 +252,4 @@ bool MarketDataFeed::StreamState::advance_trade() {
     next_trade.reset();
     return false;
 }
-}
+} // namespace core::market_data

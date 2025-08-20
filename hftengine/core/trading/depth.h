@@ -10,7 +10,7 @@
 
 #include <unordered_map>
 
-#include "../types/usings.h"
+#include "../types/aliases/usings.h"
 
 namespace core {
 namespace trading {

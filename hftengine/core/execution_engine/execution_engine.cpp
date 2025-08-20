@@ -21,11 +21,11 @@
 #include "../../utils/math/math_utils.h"
 #include "../trading/fill.h"
 #include "../trading/order_update.h"
-#include "../types/book_side.h"
-#include "../types/order_status.h"
-#include "../types/order_type.h"
-#include "../types/time_in_force.h"
-#include "../types/usings.h"
+#include "../types/enums/book_side.h"
+#include "../types/enums/order_status.h"
+#include "../types/enums/order_type.h"
+#include "../types/enums/time_in_force.h"
+#include "../types/aliases/usings.h"
 #include "execution_engine.h"
 
 namespace core::execution_engine {

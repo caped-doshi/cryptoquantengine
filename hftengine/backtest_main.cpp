@@ -43,7 +43,7 @@ int main() {
 
     BacktestEngine hbt(asset_configs, backtest_engine_config, logger);
     Recorder recorder(recorder_config.interval_us, logger);
-    GridTrading grid_trading(1, grid_trading_config, logger);
+    GridTrading grid_trading(asset_id, grid_trading_config, logger);
 
     const auto start = std::chrono::high_resolution_clock::now();
 

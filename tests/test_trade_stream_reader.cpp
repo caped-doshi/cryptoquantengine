@@ -11,7 +11,7 @@
 # include <fstream>
 
 # include "core/market_data/readers/trade_stream_reader.h"
-# include "core/types/trade_side.h"
+# include "core/types/enums/trade_side.h"
 # include "core/market_data/trade.h"
 
 
