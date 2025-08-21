@@ -1,4 +1,4 @@
-name: Windows C++ CI
+name: Linux G++ CI
 
 on:
   push:
@@ -8,42 +8,28 @@ on:
 
 jobs:
   build-and-test:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      with:
-        submodules: recursive
 
-    - name: Install CMake
-      run: choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System' -y
+    - name: Install G++ and CMake
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y g++ cmake make
 
-    - name: Build and test
+    - name: Verify G++ version
+      run: g++ --version
+
+    - name: Build with G++
       run: |
         mkdir build
         cd build
-        cmake ..
-        cmake --build . --config Debug --target ALL_BUILD
+        cmake .. -DCMAKE_CXX_COMPILER=g++ -DCMAKE_BUILD_TYPE=Debug
+        cmake --build . -- -j 2
 
-    - name: Run tests with verbose output
+    - name: Run tests
       run: |
         cd build
-        ctest --output-on-failure --verbose
-
-    - name: Verify main executable
-      run: |
-        if (Test-Path "build/Debug/hftbacktest.exe") {
-          echo "✓ Success: hftbacktest.exe created"
-          echo "File size: $((Get-Item 'build/Debug/hftbacktest.exe').Length) bytes"
-        } else {
-          echo "✗ Error: hftbacktest.exe not found in build/Debug/"
-          echo "Available files in build/Debug/:"
-          Get-ChildItem "build/Debug/" -Name
-          exit 1
-        }
-
-    - name: List test executables
-      run: |
-        echo "Test executables found:"
-        Get-ChildItem "build/Debug/" -Filter "test_*.exe" -Name
+        ctest --output-on-failure
