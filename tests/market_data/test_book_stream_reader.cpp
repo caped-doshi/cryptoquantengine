@@ -63,3 +63,32 @@ TEST_CASE("[BookStreamReader] - CSV Parsing", "[book][csv]") {
     // Clean up
     std::remove(test_file.c_str());
 }
+
+TEST_CASE("[BookStreamReader] - market feed latency applied when "
+          "local_timestamp missing",
+          "[book][latency]") {
+    using namespace core::market_data;
+
+    const std::string test_file = "test_book_latency.csv";
+    {
+        // Write CSV without local_timestamp column
+        std::ofstream out(test_file);
+        out << "timestamp,is_snapshot,side,price,amount\n";
+        out << "200,true,bid,100.50,2.0\n";
+    }
+
+    BookStreamReader reader;
+    reader.set_market_feed_latency_us(10000);
+    reader.open(test_file);
+
+    BookUpdate update;
+    REQUIRE(reader.parse_next(update));
+    REQUIRE(update.exch_timestamp_ == 200);
+    REQUIRE(update.local_timestamp_ == 10200);
+    REQUIRE(update.update_type_ == UpdateType::Snapshot);
+    REQUIRE(update.side_ == BookSide::Bid);
+    REQUIRE(update.price_ == 100.50);
+    REQUIRE(update.quantity_ == 2.0);
+
+    std::remove(test_file.c_str());
+}

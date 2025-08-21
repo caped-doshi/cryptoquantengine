@@ -49,6 +49,9 @@ bool TradeStreamReader::parse_next(core::market_data::Trade &trade) {
             std::cerr << "Warning: Skipped row with missing required fields\n";
             return parse_next(trade);
         }
+        if (!has_local_timestamp_) {
+            local_timestamp = exch_timestamp + market_feed_latency_us_;
+        }
         trade.exch_timestamp_ = exch_timestamp;
         trade.local_timestamp_ = local_timestamp;
         trade.orderId_ = orderId;

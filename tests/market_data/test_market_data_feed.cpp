@@ -291,3 +291,44 @@ TEST_CASE("[MarketDataFeed] - peek timestamp", "[feed][peek]") {
     std::filesystem::remove(trade_file_2);
     std::filesystem::remove(book_file_2);
 }
+
+TEST_CASE("[MarketDataFeed] - set_market_feed_latency applies to all streams",
+          "[MarketDataFeed][latency]") {
+    using namespace core::market_data;
+
+    // Create test files without local_timestamp columns
+    const std::string book_file = "test_book_latency.csv";
+    const std::string trade_file = "test_trade_latency.csv";
+    {
+        std::ofstream out(book_file);
+        out << "timestamp,is_snapshot,side,price,amount\n";
+        out << "200,true,bid,100.50,2.0\n";
+    }
+    {
+        std::ofstream out(trade_file);
+        out << "timestamp,id,side,price,amount\n";
+        out << "100,1,buy,50000.0,1.0\n";
+    }
+
+    MarketDataFeed feed;
+    feed.set_market_feed_latency(20000);
+    feed.add_stream(1, book_file, trade_file);
+
+    EventType event_type;
+    BookUpdate book_update;
+    Trade trade;
+    int asset_id;
+
+    REQUIRE(feed.next_event(asset_id, event_type, book_update, trade));
+    REQUIRE(event_type == EventType::Trade);
+    REQUIRE(trade.exch_timestamp_ == 100);
+    REQUIRE(trade.local_timestamp_ == 20100);
+
+    REQUIRE(feed.next_event(asset_id, event_type, book_update, trade));
+    REQUIRE(event_type == EventType::BookUpdate);
+    REQUIRE(book_update.exch_timestamp_ == 200);
+    REQUIRE(book_update.local_timestamp_ == 20200);
+
+    std::remove(book_file.c_str());
+    std::remove(trade_file.c_str());
+}

@@ -27,4 +27,8 @@ void BaseStreamReader::init_csv_reader(const std::string &filename,
     }
     has_local_timestamp_ = csv_reader_->reader.has_column("local_timestamp");
 }
+
+void BaseStreamReader::set_market_feed_latency_us(Microseconds latency) {
+    market_feed_latency_us_ = latency;
+}
 } // namespace core::market_data

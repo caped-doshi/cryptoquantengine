@@ -63,3 +63,28 @@ TEST_CASE("[TradeStreamReader] - CSV Parsing", "[trade][csv]") {
     // Clean up
     std::remove(test_file.c_str());
 }
+
+TEST_CASE("[TradeStreamReader] - market feed latency applied when "
+          "local_timestamp missing",
+          "[trade][latency]") {
+    using namespace core::market_data;
+
+    const std::string test_file = "test_trade_latency.csv";
+    {
+        // Write CSV without local_timestamp column
+        std::ofstream out(test_file);
+        out << "timestamp,id,side,price,amount\n";
+        out << "100,1,buy,50000.0,1.0\n";
+    }
+
+    TradeStreamReader reader;
+    reader.set_market_feed_latency_us(10000);
+    reader.open(test_file);
+
+    Trade trade;
+    REQUIRE(reader.parse_next(trade));
+    REQUIRE(trade.exch_timestamp_ == 100);
+    REQUIRE(trade.local_timestamp_ == 10100); 
+
+    std::remove(test_file.c_str());
+}

@@ -42,25 +42,25 @@ void BookStreamReader::open(const std::string &filename) {
 bool BookStreamReader::parse_next(core::market_data::BookUpdate &update) {
     if (!csv_reader_) return false;
     try {
-        Timestamp timestamp = 0;
+        Timestamp exch_timestamp = 0;
         Timestamp local_timestamp = 0;
         std::string update_type_str;
         std::string side_str;
         double price = 0;
         double quantity = 0;
-        if (!csv_reader_->reader.read_row(timestamp, local_timestamp,
+        if (!csv_reader_->reader.read_row(exch_timestamp, local_timestamp,
                                           update_type_str, side_str, price,
                                           quantity)) {
             return false; 
         }
         if (!has_local_timestamp_) {
-            local_timestamp = timestamp + 10000;
+            local_timestamp = exch_timestamp + market_feed_latency_us_;
         }
         if (update_type_str.empty() || side_str.empty()) {
             std::cerr << "Warning: Skipped row with missing required fields\n";
             return parse_next(update); // Try next row
         }
-        update.exch_timestamp_ = timestamp;
+        update.exch_timestamp_ = exch_timestamp;
         update.local_timestamp_ = local_timestamp;
         update.update_type_ = (update_type_str == "true")
                                   ? UpdateType::Snapshot

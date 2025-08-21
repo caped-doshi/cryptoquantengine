@@ -48,28 +48,10 @@ MarketDataFeed::MarketDataFeed(
     using namespace core::market_data;
 
     for (const auto &[asset_id, book_file] : book_files) {
-        StreamState state;
-        std::future<std::unique_ptr<BookStreamReader>> book_future;
-        book_future = std::async(std::launch::async, [book_file]() {
-            auto reader = std::make_unique<BookStreamReader>();
-            reader->open(book_file);
-            return reader;
-        });
-
         auto trade_it = trade_files.find(asset_id);
-        if (trade_it == trade_files.end()) continue;
-
-        std::future<std::unique_ptr<TradeStreamReader>> trade_future;
-        std::string trade_file = trade_it->second;
-        trade_future = std::async(std::launch::async, [trade_file]() {
-            auto reader = std::make_unique<TradeStreamReader>();
-            reader->open(trade_file);
-            return reader;
-        });
-
-        state.book_reader = book_future.get();
-        state.trade_reader = trade_future.get();
-        asset_streams_[asset_id] = std::move(state);
+        std::string trade_file =
+            (trade_it != trade_files.end()) ? trade_it->second : "";
+        add_stream(asset_id, book_file, trade_file);
     }
 }
 
@@ -106,6 +88,8 @@ void MarketDataFeed::add_stream(int asset_id, const std::string &book_file,
     });
     stream.book_reader = book_future.get();
     stream.trade_reader = trade_future.get();
+    stream.book_reader->set_market_feed_latency_us(market_feed_latency_us_);
+    stream.trade_reader->set_market_feed_latency_us(market_feed_latency_us_);
     asset_streams_[asset_id] = std::move(stream);
 }
 
@@ -251,5 +235,13 @@ bool MarketDataFeed::StreamState::advance_trade() {
     }
     next_trade.reset();
     return false;
+}
+
+void MarketDataFeed::set_market_feed_latency(Microseconds latency_us) {
+    market_feed_latency_us_ = latency_us;
+    for (auto &[_, stream] : asset_streams_) {
+        stream.book_reader->set_market_feed_latency_us(latency_us);
+        stream.trade_reader->set_market_feed_latency_us(latency_us);
+    }
 }
 } // namespace core::market_data

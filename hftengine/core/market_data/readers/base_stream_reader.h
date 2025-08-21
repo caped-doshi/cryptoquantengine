@@ -13,6 +13,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "../../types/aliases/usings.h"
 #include "../../../../external/csv/csv.h"
 
 namespace core::market_data {
@@ -27,9 +28,11 @@ class BaseStreamReader {
                          const std::vector<std::string> &cols);
     std::unique_ptr<CSVReaderImpl> csv_reader_;
     bool has_local_timestamp_ = false;
+    Microseconds market_feed_latency_us_ = 0;
 
   public:
     virtual ~BaseStreamReader() = default;
     virtual void open(const std::string &filename) = 0;
+    void set_market_feed_latency_us(Microseconds latency);
 };
 } // namespace core::market_data
