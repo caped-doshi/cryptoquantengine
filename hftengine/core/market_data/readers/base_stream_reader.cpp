@@ -17,8 +17,9 @@ void BaseStreamReader::init_csv_reader(const std::string &filename,
                                        const std::vector<std::string> &cols) {
     csv_reader_ = std::make_unique<CSVReaderImpl>(filename);
     csv_reader_->reader.read_header(
-        io::ignore_extra_column, cols[0].c_str(), cols[1].c_str(),
-        cols[2].c_str(), cols[3].c_str(), cols[4].c_str(), cols[5].c_str());
+        io::ignore_extra_column | io::ignore_missing_column, cols[0].c_str(),
+        cols[1].c_str(), cols[2].c_str(), cols[3].c_str(), cols[4].c_str(),
+        cols[5].c_str());
     for (size_t i = 0; i < cols.size(); ++i) {
         if (csv_reader_->reader.has_column(cols[i])) {
             csv_reader_->column_map[cols[i]] = i;

@@ -28,57 +28,40 @@ BookStreamReader::BookStreamReader() = default;
 BookStreamReader::BookStreamReader(const std::string &filename) {
     open(filename);
 }
-/*
- * @brief Opens the CSV file and initializes the reader.
- */
+
 void BookStreamReader::open(const std::string &filename) {
-    csv_reader_ = std::make_unique<CSVReaderImpl>(filename);
-    // Column header processing
-    csv_reader_->reader.read_header(
-        io::ignore_extra_column | io::ignore_missing_column, "timestamp",
-        "local_timestamp", "is_snapshot", "side", "price", "amount");
-    has_local_timestamp_ = csv_reader_->reader.has_column("local_timestamp");
-    // Build column index map
-    const char *cols[] = {"timestamp", "local_timestamp", "is_snapshot",
-                          "side",      "price",           "amount"};
-    for (size_t i = 0; i < 6; ++i) {
-        if (csv_reader_->reader.has_column(cols[i])) {
-            csv_reader_->column_map[cols[i]] = i;
-        }
-    }
+    std::vector<std::string> cols = {"timestamp",   "local_timestamp",
+                                     "is_snapshot", "side",
+                                     "price",       "amount"};
+    init_csv_reader(filename, cols);
 }
 /*
  * @brief Parses the next row from the CSV file and populates the BookUpdate
  * object.
  */
 bool BookStreamReader::parse_next(core::market_data::BookUpdate &update) {
-    if (!csv_reader_) {
-        return false;
-    }
+    if (!csv_reader_) return false;
     try {
-        double timestamp = 0;
-        double local_timestamp = 0;
+        Timestamp timestamp = 0;
+        Timestamp local_timestamp = 0;
         std::string update_type_str;
         std::string side_str;
         double price = 0;
         double quantity = 0;
-        // Read the next row
         if (!csv_reader_->reader.read_row(timestamp, local_timestamp,
                                           update_type_str, side_str, price,
                                           quantity)) {
-            return false; // EOF or read error
+            return false; 
         }
         if (!has_local_timestamp_) {
             local_timestamp = timestamp + 10000;
         }
-        // Validate required fields
         if (update_type_str.empty() || side_str.empty()) {
             std::cerr << "Warning: Skipped row with missing required fields\n";
             return parse_next(update); // Try next row
         }
-        // Convert and populate the update
-        update.exch_timestamp_ = static_cast<Timestamp>(timestamp);
-        update.local_timestamp_ = static_cast<Timestamp>(local_timestamp);
+        update.exch_timestamp_ = timestamp;
+        update.local_timestamp_ = local_timestamp;
         update.update_type_ = (update_type_str == "true")
                                   ? UpdateType::Snapshot
                                   : UpdateType::Incremental;
