@@ -33,3 +33,8 @@ jobs:
       run: |
         cd build
         ctest --output-on-failure
+        
+    - name: Run backtest executable
+      run: |
+        cd build
+        ./hftbacktest
