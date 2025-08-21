@@ -13,10 +13,10 @@
 #include <iostream>
 #include <memory>
 
-#include "../hftengine/core/recorder/recorder.h"
-#include "../hftengine/utils/logger/log_level.h"
-#include "../hftengine/utils/logger/logger.h"
-#include "../hftengine/utils/stat/stat_utils.h"
+#include "core/recorder/recorder.h"
+#include "utils/logger/log_level.h"
+#include "utils/logger/logger.h"
+#include "utils/stat/stat_utils.h"
 
 TEST_CASE("[Recorder] - recorder interval returns", "[recorder][initial]") {
     using namespace core::recorder;

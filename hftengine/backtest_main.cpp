@@ -12,7 +12,7 @@
 #include <unordered_map>
 
 #include "core/recorder/recorder.h"
-#include "core/strategy/grid_trading.h"
+#include "core/strategy/grid_trading/grid_trading.h"
 #include "core/backtest_engine/backtest_engine.h"
 #include "utils/config/config_reader.h"
 #include "utils/logger/log_level.h"
@@ -21,11 +21,8 @@
 int main() {
     using namespace core::trading;
     using namespace core::backtest;
-    using namespace core::recorder;
-    using namespace core::strategy;
-    using namespace utils::config;
 
-    ConfigReader config_reader;
+    utils::config::ConfigReader config_reader;
     const auto asset_config =
         config_reader.get_asset_config("../config/asset_config.txt");
     const auto grid_trading_config = config_reader.get_grid_trading_config(
@@ -42,8 +39,8 @@ int main() {
     auto logger = nullptr;
 
     BacktestEngine hbt(asset_configs, backtest_engine_config, logger);
-    Recorder recorder(recorder_config.interval_us, logger);
-    GridTrading grid_trading(asset_id, grid_trading_config, logger);
+    core::recorder::Recorder recorder(recorder_config.interval_us, logger);
+    core::strategy::GridTrading grid_trading(asset_id, grid_trading_config, logger);
 
     const auto start = std::chrono::high_resolution_clock::now();
 

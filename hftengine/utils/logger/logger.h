@@ -19,8 +19,7 @@
 
 #include "log_level.h"
 
-namespace utils {
-namespace logger {
+namespace utils::logger {
 class Logger {
   public:
     explicit Logger(const std::string &filename, utils::logger::LogLevel level);
@@ -30,7 +29,7 @@ class Logger {
     void set_level(utils::logger::LogLevel level);
 
   private:
-    void process(); // Logging thread function
+    void process(); 
 
     std::queue<std::string> messages_;
     std::mutex mutex_;
@@ -40,5 +39,4 @@ class Logger {
     std::atomic<bool> exit_flag_;
     std::atomic<LogLevel> log_level_;
 };
-} // namespace logger
-} // namespace utils
+} // namespace utils::logger

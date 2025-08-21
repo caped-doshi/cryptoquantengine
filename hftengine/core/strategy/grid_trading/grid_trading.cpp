@@ -1,5 +1,5 @@
 /*
- * File: hftengine/core/strategy/grid_trading.cpp
+ * File: hftengine/core/strategy/grid_trading/grid_trading.cpp
  * Description: Basic grid market making strategy with no alpha.
  * Author: Arvind Rathnashyam
  * Date: 2025-08-10
@@ -13,18 +13,18 @@
 #include <unordered_set>
 #include <vector>
 
-#include "../../utils/logger/log_level.h"
-#include "../../utils/logger/logger.h"
-#include "../../utils/math/math_utils.h"
-#include "../backtest_engine/backtest_engine.h"
-#include "../trading/depth.h"
-#include "../trading/order.h"
-#include "../types/enums/book_side.h"
-#include "../types/enums/order_status.h"
-#include "../types/aliases/usings.h"
+#include "../../../utils/logger/log_level.h"
+#include "../../../utils/logger/logger.h"
+#include "../../../utils/math/math_utils.h"
+#include "../../backtest_engine/backtest_engine.h"
+#include "../../trading/depth.h"
+#include "../../trading/order.h"
+#include "../../types/aliases/usings.h"
+#include "../../types/enums/book_side.h"
+#include "../../types/enums/order_status.h"
+#include "../strategy.h"
 #include "grid_trading.h"
 #include "grid_trading_config.h"
-#include "strategy.h"
 
 namespace core::strategy {
 GridTrading::GridTrading(int asset_id, int grid_num, Ticks grid_interval,
@@ -37,7 +37,8 @@ GridTrading::GridTrading(int asset_id, int grid_num, Ticks grid_interval,
     initialize();
 }
 
-GridTrading::GridTrading(int asset_id, const core::strategy::GridTradingConfig &config,
+GridTrading::GridTrading(int asset_id,
+                         const core::strategy::GridTradingConfig &config,
                          std::shared_ptr<utils::logger::Logger> logger)
     : asset_id_(asset_id), grid_num_(config.grid_num_),
       grid_interval_(config.grid_interval_), half_spread_(config.half_spread_),
