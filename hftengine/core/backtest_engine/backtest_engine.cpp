@@ -551,7 +551,8 @@ BacktestEngine::orders(int asset_id) const {
  *
  * @return The current cash balance as a double.
  */
-const double BacktestEngine::cash() const { return local_cash_balance_; }
+
+double BacktestEngine::cash() const { return local_cash_balance_; }
 
 /**
  * @brief Returns the current equity value of the backtest portfolio.
@@ -561,7 +562,7 @@ const double BacktestEngine::cash() const { return local_cash_balance_; }
  *
  * @return The total equity as a double.
  */
-const double BacktestEngine::equity() const {
+double BacktestEngine::equity() const {
     if (logger_) {
         logger_->log("[BacktestEngine] - " + std::to_string(current_time_us_) +
                          "us - calculating equity",
@@ -593,7 +594,7 @@ const double BacktestEngine::equity() const {
  * @param asset_id The identifier of the asset.
  * @return The current position as a double.
  */
-const Quantity BacktestEngine::position(int asset_id) const {
+Quantity BacktestEngine::position(int asset_id) const {
     auto it = local_position_.find(asset_id);
     return (it != local_position_.end()) ? it->second : 0.0;
 }
@@ -669,7 +670,7 @@ void BacktestEngine::print_trading_stats(int asset_id) const {
  *
  * @return Current timestamp in microseconds.
  */
-const Timestamp BacktestEngine::current_time() const {
+Timestamp BacktestEngine::current_time() const {
     return current_time_us_;
 }
 
@@ -722,7 +723,7 @@ void BacktestEngine::set_market_feed_latency(Microseconds latency) {
  *
  * @return The order entry latency in microseconds.
  */
-const Microseconds BacktestEngine::order_entry_latency() const {
+Microseconds BacktestEngine::order_entry_latency() const {
     return order_entry_latency_us;
 }
 
@@ -735,7 +736,7 @@ const Microseconds BacktestEngine::order_entry_latency() const {
  *
  * @return The order response latency in microseconds.
  */
-const Microseconds BacktestEngine::order_response_latency() const {
+Microseconds BacktestEngine::order_response_latency() const {
     return order_response_latency_us;
 }
 
@@ -748,7 +749,7 @@ const Microseconds BacktestEngine::order_response_latency() const {
  *
  * @return The market feed latency in microseconds.
  */
-const Microseconds BacktestEngine::market_feed_latency() const {
+Microseconds BacktestEngine::market_feed_latency() const {
     return market_feed_latency_us;
 }
 } // namespace core::backtest

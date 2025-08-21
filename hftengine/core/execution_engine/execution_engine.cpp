@@ -669,12 +669,6 @@ bool ExecutionEngine::execute_order(int asset_id, TradeSide side,
                 ", qty=" + std::to_string(order.quantity_),
             utils::logger::LogLevel::Debug);
     }
-    if (logger_) {
-        logger_->log("[ExecutionEngine] - " +
-                         std::to_string(order.exch_timestamp_) +
-                         "us - total orders=" + std::to_string(orders_.size()),
-                     utils::logger::LogLevel::Debug);
-    }
     auto order_ptr = std::make_shared<core::trading::Order>(order);
     if (order.orderType_ == OrderType::MARKET) {
         execute_market_order(asset_id, side, order_ptr);
@@ -953,7 +947,7 @@ void ExecutionEngine::clear_fills() { fills_.clear(); }
  * @param qty The quantity (x) for which to compute log(1 + x).
  * @return The natural logarithm of (1 + qty).
  */
-constexpr double ExecutionEngine::f(const double x) { return std::log1p(x); }
+constexpr double ExecutionEngine::f(double x) { return std::log1p(x); }
 
 /**
  * @brief Sets the order entry latency in microseconds

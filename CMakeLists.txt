@@ -11,6 +11,7 @@ add_executable(hftbacktest
   hftengine/core/execution_engine/execution_engine.cpp
   hftengine/core/backtest_engine/backtest_engine.cpp
   hftengine/core/market_data/market_data_feed.cpp
+  hftengine/core/market_data/readers/base_stream_reader.cpp
   hftengine/core/market_data/readers/book_stream_reader.cpp
   hftengine/core/market_data/readers/trade_stream_reader.cpp
   hftengine/core/recorder/recorder.cpp
@@ -60,27 +61,27 @@ add_hft_test_executable(test_config_reader
   "tests/utils/test_config_reader.cpp;hftengine/utils/config/config_reader.cpp"
 )
 add_hft_test_executable(test_bookstream_reader
-  "tests/market_data/test_book_stream_reader.cpp;hftengine/core/market_data/readers/book_stream_reader.cpp;hftengine/core/orderbook/orderbook.cpp;hftengine/utils/logger/logger.cpp"
+  "tests/market_data/test_book_stream_reader.cpp;hftengine/core/market_data/readers/book_stream_reader.cpp;hftengine/core/market_data/readers/base_stream_reader.cpp;hftengine/core/orderbook/orderbook.cpp;hftengine/utils/logger/logger.cpp"
 )
 add_hft_test_executable(test_trade_stream_reader
-  "tests/market_data/test_trade_stream_reader.cpp;hftengine/core/market_data/readers/trade_stream_reader.cpp;hftengine/core/orderbook/orderbook.cpp;hftengine/utils/logger/logger.cpp"
+  "tests/market_data/test_trade_stream_reader.cpp;hftengine/core/market_data/readers/trade_stream_reader.cpp;hftengine/core/market_data/readers/base_stream_reader.cpp;hftengine/core/orderbook/orderbook.cpp;hftengine/utils/logger/logger.cpp"
 )
 add_hft_test_executable(test_market_data_feed
-  "tests/market_data/test_market_data_feed.cpp;hftengine/core/market_data/market_data_feed.cpp;hftengine/core/market_data/readers/trade_stream_reader.cpp;hftengine/core/market_data/readers/book_stream_reader.cpp"	
+  "tests/market_data/test_market_data_feed.cpp;hftengine/core/market_data/market_data_feed.cpp;hftengine/core/market_data/readers/base_stream_reader.cpp;hftengine/core/market_data/readers/trade_stream_reader.cpp;hftengine/core/market_data/readers/book_stream_reader.cpp"	
 )
 add_hft_test_executable(test_execution_engine "tests/core/test_execution_engine.cpp;hftengine/core/execution_engine/execution_engine.cpp;hftengine/core/orderbook/orderbook.cpp;hftengine/utils/logger/logger.cpp"
 )
 add_hft_test_executable(test_backtest_engine 
-  "tests/core/test_backtest_engine.cpp;hftengine/core/backtest_engine/backtest_engine.cpp;hftengine/core/execution_engine/execution_engine.cpp;hftengine/core/orderbook/orderbook.cpp;hftengine/core/market_data/market_data_feed.cpp;hftengine/core/market_data/readers/trade_stream_reader.cpp;hftengine/core/market_data/readers/book_stream_reader.cpp;hftengine/utils/logger/logger.cpp"
+  "tests/core/test_backtest_engine.cpp;hftengine/core/backtest_engine/backtest_engine.cpp;hftengine/core/execution_engine/execution_engine.cpp;hftengine/core/orderbook/orderbook.cpp;hftengine/core/market_data/market_data_feed.cpp;hftengine/core/market_data/readers/base_stream_reader.cpp;hftengine/core/market_data/readers/trade_stream_reader.cpp;hftengine/core/market_data/readers/book_stream_reader.cpp;hftengine/utils/logger/logger.cpp"
 )
 add_hft_test_executable(test_stat_utils 
   "tests/utils/test_stat_utils.cpp"
 )
 add_hft_test_executable(test_recorder 
-  "tests/core/test_recorder.cpp;hftengine/core/recorder/recorder.cpp;hftengine/core/backtest_engine/backtest_engine.cpp;hftengine/core/orderbook/orderbook.cpp;hftengine/core/execution_engine/execution_engine.cpp;hftengine/core/market_data/market_data_feed.cpp;hftengine/core/market_data/readers/trade_stream_reader.cpp;hftengine/core/market_data/readers/book_stream_reader.cpp;hftengine/utils/logger/logger.cpp"
+  "tests/core/test_recorder.cpp;hftengine/core/recorder/recorder.cpp;hftengine/core/backtest_engine/backtest_engine.cpp;hftengine/core/orderbook/orderbook.cpp;hftengine/core/execution_engine/execution_engine.cpp;hftengine/core/market_data/market_data_feed.cpp;hftengine/core/market_data/readers/base_stream_reader.cpp;hftengine/core/market_data/readers/trade_stream_reader.cpp;hftengine/core/market_data/readers/book_stream_reader.cpp;hftengine/utils/logger/logger.cpp"
 )
 add_hft_test_executable (test_grid_trading 
-  "tests/strategies/test_grid_trading.cpp;hftengine/core/strategy/grid_trading/grid_trading.cpp;hftengine/core/execution_engine/execution_engine.cpp;hftengine/core/backtest_engine/backtest_engine.cpp;hftengine/core/orderbook/orderbook.cpp;hftengine/core/market_data/market_data_feed.cpp;hftengine/core/market_data/readers/trade_stream_reader.cpp;hftengine/core/market_data/readers/book_stream_reader.cpp;hftengine/utils/logger/logger.cpp"
+  "tests/strategies/test_grid_trading.cpp;hftengine/core/strategy/grid_trading/grid_trading.cpp;hftengine/core/execution_engine/execution_engine.cpp;hftengine/core/backtest_engine/backtest_engine.cpp;hftengine/core/orderbook/orderbook.cpp;hftengine/core/market_data/market_data_feed.cpp;hftengine/core/market_data/readers/base_stream_reader.cpp;hftengine/core/market_data/readers/trade_stream_reader.cpp;hftengine/core/market_data/readers/book_stream_reader.cpp;hftengine/utils/logger/logger.cpp"
 )
 add_hft_test_executable (test_math_utils 
   "tests/utils/test_math_utils.cpp"

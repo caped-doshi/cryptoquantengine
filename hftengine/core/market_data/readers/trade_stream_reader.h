@@ -17,24 +17,15 @@
 #include "../../orderbook/orderbook.h"
 #include "../../types/aliases/usings.h"
 #include "../trade.h"
+#include "base_stream_reader.h"
 
 namespace core::market_data {
-class TradeStreamReader {
+class TradeStreamReader : public BaseStreamReader {
   public:
     TradeStreamReader();
     explicit TradeStreamReader(const std::string &filename);
 
-    void open(const std::string &filename);
+    void open(const std::string &filename) override;
     bool parse_next(core::market_data::Trade &trade);
-
-  private:
-    struct CSVReaderImpl {
-        io::CSVReader<6> reader;
-        std::unordered_map<std::string, size_t> column_map;
-
-        explicit CSVReaderImpl(const std::string &filename)
-            : reader(filename) {}
-    };
-    std::unique_ptr<CSVReaderImpl> csv_reader_;
 };
 } // namespace core::market_data

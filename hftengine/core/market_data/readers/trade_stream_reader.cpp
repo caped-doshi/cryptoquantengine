@@ -1,5 +1,5 @@
 /*
- * File: hft_bt_engine/core/market_data/readers/trade_stream_reader.h
+ * File: hftengine/core/market_data/readers/trade_stream_reader.h
  * Description: Class to read tardis trades from a csv.
  * Author: Arvind Rathnashyam
  * Date: 2025-06-24
@@ -20,6 +20,7 @@
 #include "trade_stream_reader.h"
 
 namespace core::market_data {
+
 TradeStreamReader::TradeStreamReader() = default;
 
 TradeStreamReader::TradeStreamReader(const std::string &filename) {
@@ -27,47 +28,33 @@ TradeStreamReader::TradeStreamReader(const std::string &filename) {
 }
 
 void TradeStreamReader::open(const std::string &filename) {
-    csv_reader_ = std::make_unique<CSVReaderImpl>(filename);
-    const char *cols[] = {"timestamp", "local_timestamp", "id",
-                          "side",      "price",           "amount"};
-    csv_reader_->reader.read_header(io::ignore_extra_column, cols[0], cols[1],
-                                    cols[2], cols[3], cols[4], cols[5]);
-    for (size_t i = 0; i < 6; ++i) {
-        if (csv_reader_->reader.has_column(cols[i])) {
-            csv_reader_->column_map[cols[i]] = i;
-        }
-    }
+    std::vector<std::string> cols = {"timestamp", "local_timestamp", "id",
+                                     "side",      "price",           "amount"};
+    init_csv_reader(filename, cols);
 }
 bool TradeStreamReader::parse_next(core::market_data::Trade &trade) {
-    if (!csv_reader_) {
-        return false;
-    }
+    if (!csv_reader_) return false;
     try {
-        // Temporary variables for parsing
-        Timestamp exch_timestamp = 1;
-        Timestamp local_timestamp = 1;
-        OrderId orderId = 1;
+        Timestamp exch_timestamp;
+        Timestamp local_timestamp;
+        OrderId orderId;
         std::string side_str;
-        double price = 0;
-        double quantity = 0;
-        // Read the next row
+        double price;
+        double quantity;
         if (!csv_reader_->reader.read_row(exch_timestamp, local_timestamp,
                                           orderId, side_str, price, quantity)) {
-            return false; // EOF or read error
+            return false;
         }
-        // Validate required fields
         if (side_str.empty()) {
             std::cerr << "Warning: Skipped row with missing required fields\n";
-            return parse_next(trade); // Try next row
+            return parse_next(trade);
         }
-        // Convert and populate the update
         trade.exch_timestamp_ = exch_timestamp;
         trade.local_timestamp_ = local_timestamp;
         trade.orderId_ = orderId;
         trade.side_ = (side_str == "buy") ? TradeSide::Buy : TradeSide::Sell;
         trade.price_ = price;
         trade.quantity_ = quantity;
-
         return true;
     } catch (const std::exception &e) {
         std::cerr << "Parsing error: " << e.what() << "\n";

@@ -195,12 +195,10 @@ TEST_CASE("[Recorder] - Max drawdown edge cases", "[recorder][drawdown]") {
 }
 
 TEST_CASE("[Recorder] - record(BacktestEngine, int) with limit orders",
-          "[recorder][backtest][limit_order]") {
-    using namespace core::recorder;
+          "[recorder][backtest-limit_order]") {
     using namespace core::trading;
     using namespace utils::logger;
     using namespace core::backtest;
-    // Create a minimal trade file
     const std::string trade_file = "test_recorder_trade.csv";
     std::ofstream tf(trade_file);
     tf << "timestamp,local_timestamp,id,side,price,amount\n"
@@ -209,7 +207,6 @@ TEST_CASE("[Recorder] - record(BacktestEngine, int) with limit orders",
        << "7000,7500,3,buy,105.0,1.1\n"
        << "8000,8500,4,sell,95.0,1.0\n";
     tf.close();
-    // Create a minimal book file (optional, but can help with price updates)
     const std::string book_file = "test_recorder_book.csv";
     std::ofstream bf(book_file);
     bf << "timestamp,local_timestamp,is_snapshot,side,price,amount\n"
@@ -217,7 +214,6 @@ TEST_CASE("[Recorder] - record(BacktestEngine, int) with limit orders",
        << "500,1000,false,ask,110.0,1.0\n";
     bf.close();
 
-    // Asset config
     int asset_id = 1;
     double tick_size = 0.01, lot_size = 0.01;
     std::unordered_map<int, AssetConfig> asset_configs = {
@@ -238,7 +234,7 @@ TEST_CASE("[Recorder] - record(BacktestEngine, int) with limit orders",
                                            LogLevel::Debug);
     BacktestEngine engine(asset_configs, backtest_engine_config, logger);
 
-    Recorder recorder(10'000, logger);
+    core::recorder::Recorder recorder(10'000, logger);
     // Submit a tighter market
     engine.submit_buy_order(asset_id, 95.0, 3.0, TimeInForce::GTC,
                             OrderType::LIMIT);
