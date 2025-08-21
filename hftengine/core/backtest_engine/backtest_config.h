@@ -1,10 +1,8 @@
 /*
- * File: hftengine/core/backtest_engine/backtest_config.h
- * Description: Configuration for backtest simulation, including elapse time
- * and number of iterations.
- * Author: Arvind Rathnashyam
- * Date: 2025-08-19
- * License: Proprietary
+ * Copyright (c) 2025 arvindkrv@protonmail.com
+ *
+ * Please see the LICENSE file for the terms and conditions
+ * associated with this software.
  */
 
 #pragma once

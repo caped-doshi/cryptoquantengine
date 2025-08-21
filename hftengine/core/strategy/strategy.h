@@ -1,9 +1,8 @@
 /*
- * File: hftengine/core/strategy/strategy.cpp
- * Description: Base class for strategies.
- * Author: Arvind Rathnashyam
- * Date: 2025-08-09
- * License: Proprietary
+ * Copyright (c) 2025 arvindkrv@protonmail.com
+ *
+ * Please see the LICENSE file for the terms and conditions
+ * associated with this software.
  */
 
 #pragma once

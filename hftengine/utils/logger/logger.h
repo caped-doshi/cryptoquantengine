@@ -1,10 +1,8 @@
 /*
- * File: hftengine/utils/logger/logger.h
- * Description: Thread-safe logger that writes log messages on a separate
- * thread.
- * Author: Arvind Rathnashyam
- * Date: 2025-08-14
- * License: Proprietary
+ * Copyright (c) 2025 Arvind Rathnashyam - arvindkrv@protonmail.com
+ *
+ * Please see the LICENSE file for the terms and conditions
+ * associated with this software.
  */
 
 #pragma once

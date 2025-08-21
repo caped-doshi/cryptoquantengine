@@ -1,9 +1,8 @@
 /*
- * File: hftengine/core/trading/depth.h
- * Description: Level two price data, tick size, and lot size for an asset.
- * Author: Arvind Rathnashyam
- * Date: 2025-07-01
- * License: Proprietary
+ * Copyright (c) 2025 arvindkrv@protonmail.com
+ *
+ * Please see the LICENSE file for the terms and conditions
+ * associated with this software.
  */
 
 #pragma once

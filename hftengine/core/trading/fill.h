@@ -1,10 +1,8 @@
 /*
- * File: hft_bt_engine/core/trading/fill.h
- * Description: Fill represents the execution details of a matched order.
- * associated order ID.
- * Author: Arvind Rathnashyam
- * Date: 2025-06-26
- * License: Proprietary
+ * Copyright (c) 2025 arvindkrv@protonmail.com
+ *
+ * Please see the LICENSE file for the terms and conditions
+ * associated with this software.
  */
 
 #pragma once

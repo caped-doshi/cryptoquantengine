@@ -1,16 +1,14 @@
 /*
- * File: hftengine/utils/logger/log_level.h
- * Description: Enum class defining log levels.
- * Author: Arvind Rathnashyam
- * Date: 2025-08-19
- * License: Proprietary
+ * Copyright (c) 2025 arvindkrv@protonmail.com
+ *
+ * Please see the LICENSE file for the terms and conditions
+ * associated with this software.
  */
 
 #pragma once
-namespace utils {
-namespace logger {
+
+namespace utils::logger {
 
 enum class LogLevel { Debug = 0, Info, Warning, Error, None };
 
-} // namespace logger
-} // namespace utils
+}

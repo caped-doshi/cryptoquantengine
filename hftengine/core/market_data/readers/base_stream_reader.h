@@ -1,9 +1,8 @@
 /*
- * File: hftengine/core/market_data/readers/bace_stream_reader.h
- * Description: Class for parsing and reading csv files with market data.
- * Author: Arvind Rathnashyam
- * Date: 2025-06-24
- * License: Proprietary
+ * Copyright (c) 2025 arvindkrv@protonmail.com
+ *
+ * Please see the LICENSE file for the terms and conditions
+ * associated with this software.
  */
 
 #pragma once

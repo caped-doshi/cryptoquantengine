@@ -1,9 +1,8 @@
 /*
- * File: hftengine/core/readers/trade_stream_reader.h
- * Description: Class to stream trade data from tardis.
- * Author: Arvind Rathnashyam
- * Date: 2025-06-25
- * License: Proprietary
+ * Copyright (c) 2025 arvindkrv@protonmail.com
+ *
+ * Please see the LICENSE file for the terms and conditions
+ * associated with this software.
  */
 
 #pragma once

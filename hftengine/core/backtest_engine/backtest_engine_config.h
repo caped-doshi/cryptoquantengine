@@ -1,10 +1,8 @@
 /*
- * File: hftengine/core/backtest_engine/backtest_engine_config.h
- * Description: Configuration for the backtest engine, including initial cash,
- * order entry latency, order response latency, and market feed latency.
- * Author: Arvind Rathnashyam
- * Date: 2025-08-18
- * License: Proprietary
+ * Copyright (c) 2025 arvindkrv@protonmail.com
+ *
+ * Please see the LICENSE file for the terms and conditions
+ * associated with this software.
  */
 
 #pragma once

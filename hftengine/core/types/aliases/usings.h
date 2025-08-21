@@ -1,8 +1,8 @@
 /*
- * File: hft_bt_engine/core/market_data/usings.h
- * Description: Type aliases for price, quantity, timestamp, and IDs used in the
- * order book and trade system. Author: Arvind Rathnashyam Date: 2025-06-23
- * License: Proprietary
+ * Copyright (c) 2025 arvindkrv@protonmail.com
+ *
+ * Please see the LICENSE file for the terms and conditions
+ * associated with this software.
  */
 
 #pragma once

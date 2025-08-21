@@ -1,9 +1,8 @@
 /*
- * File: hftengine/core/trading/orderId_generator.h
- * Description: Class to generate unique orderIds.
- * Author: Arvind Rathnashyam
- * Date: 2025-06-26
- * License: Proprietary
+ * Copyright (c) 2025 arvindkrv@protonmail.com
+ *
+ * Please see the LICENSE file for the terms and conditions
+ * associated with this software.
  */
 
 #include <atomic>

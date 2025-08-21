@@ -1,9 +1,8 @@
 /*
- * File: hft_bt_engine/core/market_data/core/time_in_force.h
- * Description: Enum class defining the different time in force types, GTC, GTX, FOK, IOC.
- * Author: Arvind Rathnashyam
- * Date: 2025-06-27
- * License: Proprietary
+ * Copyright (c) 2025 arvindkrv@protonmail.com
+ *
+ * Please see the LICENSE file for the terms and conditions
+ * associated with this software.
  */
 
 #pragma once
@@ -12,6 +11,6 @@ enum class TimeInForce
 {
     GTC, // good till cancel
     GTX, // good till crossing
-    FOK, // fill or cancel
+    FOK, // fill or kill
     IOC  // immediate or cancel
 };

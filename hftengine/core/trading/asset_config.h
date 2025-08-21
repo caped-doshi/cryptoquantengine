@@ -1,10 +1,8 @@
 /*
- * File: hftengine/hftengine/core/trading/asset_config.h
- * Description: Struct that holds all per-asset simulation parameters including 
- *              data paths, tick/lot sizes, latency model, fee structure, and fill behavior settings.
- * Author: Arvind Rathnashyam
- * Date: 2025-06-24
- * License: Proprietary
+ * Copyright (c) 2025 arvindkrv@protonmail.com
+ *
+ * Please see the LICENSE file for the terms and conditions
+ * associated with this software.
  */
 
 # pragma once
