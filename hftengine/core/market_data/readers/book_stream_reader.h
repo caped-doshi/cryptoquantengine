@@ -1,10 +1,8 @@
 /*
- * File: hftengine/core/market_data/readers/book_stream_reader.h
- * Description: Class to read L2 data from tardis incremental_book_update csv
- * files.
- * Author: Arvind Rathnashyam
- * Date: 2025-06-24
- * License: Proprietary
+ * Copyright (c) 2025 arvindkrv@protonmail.com
+ *
+ * Please see the LICENSE file for the terms and conditions
+ * associated with this software.
  */
 
 #pragma once

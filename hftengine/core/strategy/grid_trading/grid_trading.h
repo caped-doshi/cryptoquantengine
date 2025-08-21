@@ -1,9 +1,8 @@
 /*
- * File: hftengine/core/strategy/grid_trading/grid_trading.h
- * Description: Basic grid market making strategy with no alpha.
- * Author: Arvind Rathnashyam
- * Date: 2025-08-10
- * License: Proprietary
+ * Copyright (c) 2025 arvindkrv@protonmail.com
+ *
+ * Please see the LICENSE file for the terms and conditions
+ * associated with this software.
  */
 
 #pragma once

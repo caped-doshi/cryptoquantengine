@@ -1,11 +1,8 @@
 /*
- * File: hftengine/core/trading/order.h
- * Description: Defines the Order struct representing an order placed in the
- * market. Includes timestamp, book side (bid/ask), price, quantity, 
- * associated order ID, and order status.
- * Author: Arvind Rathnashyam
- * Date: 2025-06-26
- * License: Proprietary
+ * Copyright (c) 2025 arvindkrv@protonmail.com
+ *
+ * Please see the LICENSE file for the terms and conditions
+ * associated with this software.
  */
 
 #pragma once

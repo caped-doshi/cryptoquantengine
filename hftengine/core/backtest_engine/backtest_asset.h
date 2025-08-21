@@ -1,11 +1,8 @@
 /*
- * File: hftengine/hftengine/core/backtest_engine/backtest_asset.h
- * Description: BacktestAsset encapsulates all per-instrument simulation
- * parameters, data sources, and execution models used in the
- * backtest engine.
- * Author: Arvind Rathnashyam
- * Date: 2025-06-26
- * License: Proprietary
+ * Copyright (c) 2025 arvindkrv@protonmail.com
+ *
+ * Please see the LICENSE file for the terms and conditions
+ * associated with this software.
  */
 
 #pragma once

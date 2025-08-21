@@ -1,9 +1,8 @@
 /*
- * File: hftengine/utils/logger/logger.cpp
- * Description: Implementation of thread-safe logger.
- * Author: Arvind Rathnashyam
- * Date: 2025-08-14
- * License: Proprietary
+ * Copyright (c) 2025 arvindkrv@protonmail.com
+ *
+ * Please see the LICENSE file for the terms and conditions
+ * associated with this software.
  */
 
 #include <atomic>

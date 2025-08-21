@@ -1,9 +1,8 @@
 /*
- * File: hftengine/core/types/enums/order_status.h
- * Description: Enum class defining the order status types.
- * Author: Arvind Rathnashyam
- * Date: 2025-08-11
- * License: Proprietary
+ * Copyright (c) 2025 arvindkrv@protonmail.com
+ *
+ * Please see the LICENSE file for the terms and conditions
+ * associated with this software.
  */
 
 #pragma once

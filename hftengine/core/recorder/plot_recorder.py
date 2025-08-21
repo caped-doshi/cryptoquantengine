@@ -1,13 +1,18 @@
+'''
+Copyright (c) 2025 arvindkrv@protonmail.com
+
+Please see the LICENSE file for the terms and conditions
+associated with this software.
+'''
+
 import sys
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# Check Python version
 if sys.version_info < (3, 7):
     print("Python 3.7 or higher is required.")
     sys.exit(1)
 
-# Check required packages
 required = ['matplotlib', 'pandas']
 missing = []
 for pkg in required:

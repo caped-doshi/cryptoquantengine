@@ -1,10 +1,8 @@
 /*
- * File: hftengine/utils/math/math_utils.h
- * Description: Math utility functions for HFT engine, including price/tick
- * conversions. 
- * Author: Arvind Rathnashyam
- * Date: 2025-08-13 
- * License: Proprietary
+ * Copyright (c) 2025 Arvind Rathnashyam - arvindkrv@protonmail.com
+ *
+ * Please see the LICENSE file for the terms and conditions
+ * associated with this software.
  */
 
 #pragma once

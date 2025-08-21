@@ -1,10 +1,10 @@
 /*
- * File: config_reader.hpp
- * Description: Contains header functions for config_reader.cpp.
- * Author: Arvind Rathnashyam
- * Date: 2025-06-23
- * License: Proprietary
+ * Copyright (c) 2025 arvindkrv@protonmail.com
+ *
+ * Please see the LICENSE file for the terms and conditions
+ * associated with this software.
  */
+
 #pragma once
 
 #include <string>

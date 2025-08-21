@@ -1,10 +1,8 @@
 /*
- * File: hftengine/core/recorder/state_snapshot.h
- * Description: Defines the StateSnapshot struct. Contains a timestamp,
- * equity, and position.
- * Author: Arvind Rathnashyam
- * Date: 2025-08-14
- * License: Proprietary
+ * Copyright (c) 2025 arvindkrv@protonmail.com
+ *
+ * Please see the LICENSE file for the terms and conditions
+ * associated with this software.
  */
 
 #pragma once

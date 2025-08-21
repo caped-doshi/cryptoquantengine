@@ -1,12 +1,9 @@
 /*
- * File: hftengine/core/recorder/recorder.h
- * Description: Class to record equities and return performance metrics
- * such as annualized Sharpe, Sortino, and max drawdown.
- * Author: Arvind Rathnashyam
- * Date: 2025-07-07
- * License: Proprietary
+ * Copyright (c) 2025 arvindkrv@protonmail.com
+ *
+ * Please see the LICENSE file for the terms and conditions
+ * associated with this software.
  */
-
 #pragma once
 
 #include <memory>

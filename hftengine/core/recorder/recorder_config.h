@@ -1,9 +1,8 @@
 /*
- * File: hftengine/core/recorder/recorder_config.h
- * Description: Configuration struct for the Recorder component.
- * Author: Arvind Rathnashyam
- * Date: 2025-08-19
- * License: Proprietary
+ * Copyright (c) 2025 arvindkrv@protonmail.com
+ *
+ * Please see the LICENSE file for the terms and conditions
+ * associated with this software.
  */
 
 #pragma once

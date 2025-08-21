@@ -1,12 +1,12 @@
 /*
- * File: hftengine/backtest_main.cpp
- * Description: Loads configurations and runs the backtest engine.
- * Author: Arvind Rathnashyam
- * Date: 2025-08-15
- * License: Proprietary
- */
+ * Copyright (c) 2025 Arvind Rathnashyam - arvindkrv@protonmail.com
+ *
+ * Please see the LICENSE file for the terms and conditions
+ * associated with this software.
+*/
 
 #include <chrono>
+#include <iomanip>
 #include <iostream>
 #include <memory>
 #include <unordered_map>

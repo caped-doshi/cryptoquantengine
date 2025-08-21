@@ -1,13 +1,9 @@
 /*
- * File: hftengine/core/execution_engine/execution_engine.cpp
- * Description: Class for execution engine to take orders, fill
- * orders.
- * Author: Arvind Rathnashyam
- * Date: 2025-06-26
- * License: Proprietary
+ * Copyright (c) 2025 arvindkrv@protonmail.com
+ *
+ * Please see the LICENSE file for the terms and conditions
+ * associated with this software.
  */
-
-/* MULTIPLE gtc_book NEEDS UNIT TESTS*/
 
 #include <algorithm>
 #include <cmath>
