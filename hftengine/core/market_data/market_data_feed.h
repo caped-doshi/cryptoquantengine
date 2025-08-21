@@ -36,6 +36,7 @@ class MarketDataFeed {
                     core::market_data::BookUpdate &book_update,
                     core::market_data::Trade &trade);
     std::optional<Timestamp> peek_timestamp();
+    void set_market_feed_latency(Microseconds latency_us);
 
   private:
     struct StreamState {
@@ -49,5 +50,6 @@ class MarketDataFeed {
         bool advance_trade();
     };
     std::map<int, StreamState> asset_streams_;
+    Microseconds market_feed_latency_us_ = 10'000;
 };
 } // namespace core::market_data

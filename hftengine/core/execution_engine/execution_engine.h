@@ -62,7 +62,7 @@ class ExecutionEngine {
     void clear_fills();
     void clear_order_updates();
 
-    constexpr double f(const double x);
+    constexpr double f(double x);
 
     void set_order_entry_latency_us(const Microseconds latency_us);
     void set_order_response_latency_us(const Microseconds latency_us);

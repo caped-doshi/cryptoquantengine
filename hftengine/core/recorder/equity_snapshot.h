@@ -1,9 +1,9 @@
 /*
  * File: hftengine/core/recorder/equity_snapshot.h
- * Description: Defines the EquitySnapshot struct. Contains a timestamp 
- * and an equity. 
- * Author: Arvind Rathnashyam 
- * Date: 2025-07-08 
+ * Description: Defines the EquitySnapshot struct. Contains a timestamp
+ * and an equity. Used for testing/debugging purposes.
+ * Author: Arvind Rathnashyam
+ * Date: 2025-07-08
  * License: Proprietary
  */
 

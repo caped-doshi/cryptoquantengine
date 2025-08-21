@@ -38,17 +38,17 @@ int main() {
         {asset_id, asset_config}};
     auto logger = nullptr;
 
-    BacktestEngine hbt(asset_configs, backtest_engine_config, logger);
+    BacktestEngine engine(asset_configs, backtest_engine_config, logger);
     core::recorder::Recorder recorder(recorder_config.interval_us, logger);
     core::strategy::GridTrading grid_trading(asset_id, grid_trading_config, logger);
 
     const auto start = std::chrono::high_resolution_clock::now();
 
     std::uint64_t iter = backtest_config.iterations;
-    while (hbt.elapse(backtest_config.elapse_us) && iter-- > 0) {
-        hbt.clear_inactive_orders();
-        grid_trading.on_elapse(hbt);
-        recorder.record(hbt, asset_id);
+    while (engine.elapse(backtest_config.elapse_us) && iter-- > 0) {
+        engine.clear_inactive_orders();
+        grid_trading.on_elapse(engine);
+        recorder.record(engine, asset_id);
     }
 
     const auto end = std::chrono::high_resolution_clock::now();
@@ -56,9 +56,9 @@ int main() {
     std::cout << "Backtest wall time: " << elapsed.count() << " seconds\n";
 
     std::cout << "Final equity: " << std::fixed << std::setprecision(2)
-              << hbt.equity() << "\n";
+              << engine.equity() << "\n";
     recorder.print_performance_metrics();
-    hbt.print_trading_stats(asset_id);
+    engine.print_trading_stats(asset_id);
 
     recorder.plot(asset_id);
 

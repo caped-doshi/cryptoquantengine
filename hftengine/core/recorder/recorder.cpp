@@ -24,8 +24,7 @@
 #include "../types/aliases/usings.h"
 #include "recorder.h"
 
-namespace core {
-namespace recorder {
+namespace core::recorder {
 
 /**
  * @brief Constructs a Recorder with a specified interval.
@@ -37,7 +36,8 @@ namespace recorder {
  * snapshots.
  * @param logger Optional shared pointer to a Logger instance for logging
  */
-Recorder::Recorder(Microseconds interval_us, std::shared_ptr<utils::logger::Logger> logger)
+Recorder::Recorder(Microseconds interval_us,
+                   std::shared_ptr<utils::logger::Logger> logger)
     : interval_us_(interval_us), logger_(logger) {
     if (logger_) {
         logger_->log("[Recorder] - Initialized with interval: " +
@@ -79,18 +79,19 @@ void Recorder::record(Timestamp timestamp, double equity) {
  * @param asset_id The ID of the asset to record.
  */
 void Recorder::record(const core::backtest::BacktestEngine &hbt, int asset_id) {
-    using namespace core::trading;
     const Timestamp current_time = hbt.current_time();
     const double equity = hbt.equity();
     const Quantity position = hbt.position(asset_id);
-    const Depth depth = hbt.depth(asset_id);
+    const core::trading::Depth depth = hbt.depth(asset_id);
     const double tick_size = depth.tick_size_;
-    Price mid_price = (utils::math::ticks_to_price(depth.best_bid_, tick_size) +
-                       utils::math::ticks_to_price(depth.best_ask_, tick_size)) /
-                      2.0;
+    Price mid_price =
+        (utils::math::ticks_to_price(depth.best_bid_, tick_size) +
+         utils::math::ticks_to_price(depth.best_ask_, tick_size)) /
+        2.0;
     if (!std::isfinite(mid_price)) mid_price = 0.0;
 
-    records_.emplace_back(EquitySnapshot{current_time, equity});
+    records_.emplace_back(
+        EquitySnapshot{current_time, equity});
     state_records_.emplace_back(
         StateSnapshot{current_time, equity, position, mid_price});
 
@@ -117,8 +118,8 @@ std::vector<double> Recorder::interval_returns() const {
     std::vector<double> returns;
     if (records_.size() < 2) return returns;
 
-    Timestamp start_time = records_.front().timestamp_;
-    Timestamp end_time = records_.back().timestamp_;
+    const Timestamp start_time = records_.front().timestamp_;
+    const Timestamp end_time = records_.back().timestamp_;
     double last_value = records_.front().equity_;
     double current_value = records_.front().equity_;
     std::size_t i = 0;
@@ -152,23 +153,20 @@ std::vector<double> Recorder::interval_returns() const {
  * deviation is zero.
  */
 double Recorder::sharpe() const {
-    std::vector<double> returns = interval_returns();
-
+    const std::vector<double> returns = interval_returns();
     if (returns.empty()) {
         throw std::runtime_error(
             "Cannot calculate Sharpe ratio: no returns data");
     }
-
-    long double ann_factor =
+    const long double ann_factor =
         sqrt((365 * 24 * 60 * 60) / (interval_us_ / 1'000'000.0));
-    double ret_mean = utils::stat::mean(returns);
-    double ret_stddev = utils::stat::stddev(returns);
-
+    const double ret_mean = utils::stat::mean(returns);
+    const double ret_stddev = utils::stat::stddev(returns);
     if (std::abs(ret_stddev) <= 1e-9) {
         throw std::runtime_error("Cannot calculate Sharpe ratio: standard "
                                  "deviation too close to zero");
     }
-    return ann_factor * utils::stat::mean(returns) / utils::stat::stddev(returns);
+    return ann_factor * ret_mean / ret_stddev;
 }
 
 /**
@@ -182,7 +180,7 @@ double Recorder::sharpe() const {
  * or if downside deviation is zero.
  */
 double Recorder::sortino() const {
-    std::vector<double> returns = interval_returns();
+    const std::vector<double> returns = interval_returns();
     std::vector<double> returns_neg;
     std::copy_if(returns.begin(), returns.end(),
                  std::back_inserter(returns_neg),
@@ -193,17 +191,17 @@ double Recorder::sortino() const {
             "Cannot calculate Sortino ratio : no positive returns");
     }
 
-    long double ann_factor =
+    const long double ann_factor =
         sqrt((365 * 24 * 60 * 60) / (interval_us_ / 1'000'000.0));
-    double ret_mean = utils::stat::mean(returns);
-    double ret_stddev_neg = utils::stat::stddev(returns_neg);
+    const double ret_mean = utils::stat::mean(returns);
+    const double ret_stddev_neg = utils::stat::stddev(returns_neg);
 
     if (std::abs(ret_stddev_neg) <= 1e-9) {
         throw std::runtime_error(
             "Cannot calculate Sortino ratio : downside deviation is zero");
     }
 
-    return ann_factor * utils::stat::mean(returns) / utils::stat::stddev(returns_neg);
+    return ann_factor * ret_mean / ret_stddev_neg;
 }
 
 /**
@@ -291,8 +289,22 @@ void Recorder::plot(int asset_id) const {
     std::string command =
         "python ../hftengine/core/recorder/plot_recorder.py " + csv_filename +
         " " + std::to_string(asset_id);
-    std::system(command.c_str());
+    int ret = std::system(command.c_str());
+    if (ret != 0) {
+        if (logger_) {
+            logger_->log("[Recorder] - Failed to execute plot command: " +
+                             command,
+                         utils::logger::LogLevel::Error);
+        } else {
+            std::cerr << "[Recorder] - Failed to execute plot command: "
+                      << command << std::endl;
+        }
+    } else {
+        if (logger_) {
+            logger_->log("[Recorder] - Plot generated successfully: " +
+                             csv_filename,
+                         utils::logger::LogLevel::Info);
+        }
+    }
 }
-
-} // namespace recorder
-} // namespace core
+} // namespace core::recorder

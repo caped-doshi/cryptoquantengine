@@ -54,11 +54,11 @@ class BacktestEngine {
 
     // local state access methods
     const std::vector<core::trading::Order> orders(int asset_id) const;
-    const double cash() const;
-    const double equity() const;
-    const Quantity position(int asset_id) const;
+    double cash() const;
+    double equity() const;
+    Quantity position(int asset_id) const;
     const core::trading::Depth depth(int asset_id) const;
-    const Timestamp current_time() const;
+    Timestamp current_time() const;
 
     void print_trading_stats(int asset_id) const;
 
@@ -68,9 +68,9 @@ class BacktestEngine {
     void set_order_response_latency(Microseconds latency_us);
     void set_market_feed_latency(Microseconds latency_us);
 
-    const Microseconds order_entry_latency() const;
-    const Microseconds order_response_latency() const;
-    const Microseconds market_feed_latency() const;
+    Microseconds order_entry_latency() const;
+    Microseconds order_response_latency() const;
+    Microseconds market_feed_latency() const;
 
   private:
     Microseconds order_entry_latency_us = 25000;
