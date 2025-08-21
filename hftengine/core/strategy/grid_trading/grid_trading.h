@@ -1,5 +1,5 @@
 /*
- * File: hftengine/core/strategy/grid_trading.h
+ * File: hftengine/core/strategy/grid_trading/grid_trading.h
  * Description: Basic grid market making strategy with no alpha.
  * Author: Arvind Rathnashyam
  * Date: 2025-08-10
@@ -12,12 +12,12 @@
 #include <memory>
 #include <vector>
 
-#include "../../utils/logger/logger.h"
-#include "../backtest_engine/backtest_engine.h"
-#include "../trading/depth.h"
-#include "../types/aliases/usings.h"
+#include "../../../utils/logger/logger.h"
+#include "../../backtest_engine/backtest_engine.h"
+#include "../../trading/depth.h"
+#include "../../types/aliases/usings.h"
+#include "../strategy.h"
 #include "grid_trading_config.h"
-#include "strategy.h"
 
 namespace core::strategy {
 class GridTrading : public Strategy {

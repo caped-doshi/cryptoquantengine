@@ -11,7 +11,7 @@
 #include <fstream>
 
 #include "core/recorder/recorder_config.h"
-#include "core/strategy/grid_trading_config.h"
+#include "core/strategy/grid_trading/grid_trading_config.h"
 #include "core/trading/asset_config.h"
 #include "core/backtest_engine/backtest_config.h"
 #include "core/backtest_engine/backtest_engine_config.h"

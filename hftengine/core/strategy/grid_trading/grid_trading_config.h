@@ -1,5 +1,5 @@
 /*
- * File: hftengine/hftengine/core/strategy/gridtrading_config.h
+ * File: hftengine/hftengine/core/strategy/grid_trading/gridtrading_config.h
  * Description:  
  * Author: Arvind Rathnashyam
  * Date: 2025-06-24 
@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "../types/aliases/usings.h" 
+#include "../../types/aliases/usings.h" 
 
 namespace core::strategy {
 struct GridTradingConfig {
