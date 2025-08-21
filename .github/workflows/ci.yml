@@ -1,0 +1,23 @@
+name: Windows C++ CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Build and test
+      run: |
+        mkdir build
+        cd build
+        cmake ..
+        cmake --build . --config Debug
+        ctest
