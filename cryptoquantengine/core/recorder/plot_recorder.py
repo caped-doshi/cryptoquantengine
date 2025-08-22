@@ -27,22 +27,19 @@ if missing:
     sys.exit(1)
 
 if len(sys.argv) < 3:
-    print("Usage: python plot_recorder.py <csv_filename> <asset_id>")
+    print("Usage: python plot_recorder.py <csv_filename> <asset_name>")
     sys.exit(1)
 
 csv_filename = sys.argv[1]
-asset_id = sys.argv[2]
+asset_name = sys.argv[2]
 
 # Load data
 df = pd.read_csv(csv_filename)
-
-# Convert timestamp to a readable format if needed (optional)
 df['timestamp'] = pd.to_datetime(df['timestamp'], unit='us')
 
 fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, figsize=(14, 8))
 
 # --- Top plot: Equity ---
-color_equity = 'tab:blue'
 color_mid = 'tab:gray'
 
 ax1.plot(df['timestamp'], df['equity'], label='Equity')
@@ -73,6 +70,6 @@ ax2b.tick_params(axis='y')
 ax2b.legend(loc='upper right')
 
 plt.xlabel('Timestamp')
-plt.suptitle(f'Asset {asset_id} Equity and Position Over Time')
+plt.suptitle(f'{asset_name}. Equity and Position Over Time')
 plt.tight_layout()
 plt.show()

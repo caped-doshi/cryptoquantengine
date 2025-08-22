@@ -50,6 +50,41 @@ TEST_CASE("[ConfigReader] - get_asset_config returns correct AssetConfig",
     std::filesystem::remove(config_file);
 }
 
+TEST_CASE("[ConfigReader] - AssetConfig uses defaults for missing keys",
+          "[config][asset_config-defaults]") {
+    using namespace utils::config;
+    using namespace core::trading;
+
+    const std::string config_file = "test_asset_config_defaults.tmp";
+    {
+        std::ofstream out(config_file);
+        out << "book_update_file=test_book.csv\n"
+            << "trade_file=test_trade.csv\n"
+            << "tick_size=0.01\n"
+            << "lot_size=0.001\n"
+            // contract_multiplier missing
+            << "is_inverse=0\n"
+            << "maker_fee=0.0001\n"
+            << "taker_fee=0.0002\n";
+        // name missing
+    }
+
+    ConfigReader reader;
+    const auto config = reader.get_asset_config(config_file);
+
+    REQUIRE(config.book_update_file_ == "test_book.csv");
+    REQUIRE(config.trade_file_ == "test_trade.csv");
+    REQUIRE(config.tick_size_ == 0.01);
+    REQUIRE(config.lot_size_ == 0.001);
+    REQUIRE(config.contract_multiplier_ == 1.0); // default
+    REQUIRE(config.is_inverse_ == false);
+    REQUIRE(config.maker_fee_ == 0.0001);
+    REQUIRE(config.taker_fee_ == 0.0002);
+    REQUIRE(config.name_ == "UNKNOWN_ASSET"); // default
+
+    std::filesystem::remove(config_file);
+}
+
 TEST_CASE("[ConfigReader] - get_grid_trading_config returns correct "
           "GridTradingConfig",
           "[config][grid_trading_config]") {

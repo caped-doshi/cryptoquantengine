@@ -30,7 +30,7 @@ class Recorder {
     double max_drawdown() const;
 
     void print_performance_metrics() const;
-    void plot(int asset_id) const;
+    void plot(const std::string& asset_name) const;
 
     std::vector<double> interval_returns() const;
 

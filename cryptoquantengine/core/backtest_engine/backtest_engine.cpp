@@ -641,7 +641,8 @@ void BacktestEngine::print_trading_stats(int asset_id) const {
     auto trading_value_it = trading_value_.find(asset_id);
     auto realized_pnl_it = realized_pnl_.find(asset_id);
 
-    std::cout << "=== Trading Statistics for Asset ID: " << asset_id
+    std::cout << "=== Trading Statistics for : "
+              << assets_.at(asset_id).config().name_
               << " ===\n";
     std::cout << "Number of Trades   : "
               << (num_trades_it != num_trades_.end() ? num_trades_it->second
@@ -657,7 +658,7 @@ void BacktestEngine::print_trading_stats(int asset_id) const {
                       ? trading_value_it->second
                       : 0.0)
               << " USDT\n";
-    std::cout << "==========================================\n";
+    std::cout << "=============================================\n";
 }
 
 /**
@@ -673,6 +674,15 @@ Timestamp BacktestEngine::current_time() const {
     return current_time_us_;
 }
 
+/**
+ * @brief Sets the cash balance for the backtest portfolio.
+ *
+ * This method updates the internal cash balance used for trading and
+ * position management. It does not affect existing positions or orders.
+ *
+ * @param cash The new cash balance to set (must be non-negative).
+ * @throws std::invalid_argument If the provided cash amount is negative.
+ */
 void BacktestEngine::set_cash(double cash) {
     if (cash < 0.0) {
         throw std::invalid_argument("Cash balance cannot be negative");
