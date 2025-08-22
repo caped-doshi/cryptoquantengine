@@ -1,6 +1,6 @@
 # Recorder API Reference
 
-The `Recorder` class in **CryptoQuantLab** is responsible for tracking portfolio performance, recording equity and position snapshots, calculating risk metrics, and generating output for analysis and plotting.
+The `Recorder` class in **CryptoQuantEngine** is responsible for tracking portfolio performance, recording equity and position snapshots, calculating risk metrics, and generating output for analysis and plotting.
 
 ---
 

@@ -1,6 +1,6 @@
 # Configuration Guide
 
-This document explains the configuration files used by **CryptoQuantLab**. Each config file is located in the `config/` directory and controls different aspects of the backtest engine, strategies, and output.
+This document explains the configuration files used by **CryptoQuantEngine**. Each config file is located in the `config/` directory and controls different aspects of the backtest engine, strategies, and output.
 
 ---
 

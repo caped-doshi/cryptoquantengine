@@ -1,6 +1,6 @@
 # Example Strategy: Grid Trading
 
-This example demonstrates how to implement, configure, and run a grid trading strategy using **CryptoQuantLab**.
+This example demonstrates how to implement, configure, and run a grid trading strategy using **CryptoQuantEngine**.
 
 ---
 

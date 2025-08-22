@@ -1,6 +1,6 @@
 # ConfigReader API Reference
 
-The `ConfigReader` class in **CryptoQuantLab** is responsible for loading, parsing, and providing access to configuration parameters from text files. It supports reading key-value pairs, type conversion, and structured config objects for all major modules.
+The `ConfigReader` class in **CryptoQuantEngine** is responsible for loading, parsing, and providing access to configuration parameters from text files. It supports reading key-value pairs, type conversion, and structured config objects for all major modules.
 
 ---
 

@@ -1,6 +1,6 @@
 # Usage Guide
 
-This guide explains how to run backtests, interpret results, and use the main features of **CryptoQuantLab**.
+This guide explains how to run backtests, interpret results, and use the main features of **CryptoQuantEngine**.
 
 ---
 
