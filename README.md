@@ -2,10 +2,10 @@
 
 ## High-Frequency Level 2 Trading Backtesting Engine
 
-**CryptoQuantLab** is a high-performance C++ framework for backtesting high-frequency trading (HFT) strategies on Level 2 crypto market data.  
+**CryptoQuantLab** is a high-performance C++ framework for backtesting high-frequency trading (HFT) strategies on Level 2 crypto market data.    
 It supports full order book reconstruction, queue position tracking, and realistic order matching with configurable latency models.
 
-This engine is designed for research and development of market-making and latency-sensitive strategies on tick-level data.
+This engine is designed for research and development of market-making, liquidity-taking, and latency-sensitive strategies on orderbook data.
 
 ---
 
@@ -13,7 +13,7 @@ This engine is designed for research and development of market-making and latenc
 
 - **C++20 implementation** for speed and low-level control.
 - **Full depth-of-book simulation** from market-by-price Level 2 feeds.
-- **Configurable latency simulation** for orders and market data.
+- **Configurable latency simulation** for order management and market data.
 - **Queue position estimation** for passive order fills.
 - **Modular, extensible architecture** for custom strategies.
 - **Comprehensive performance metrics** (Sharpe, Sortino, max drawdown).
@@ -65,23 +65,6 @@ Run the backtest engine
 
 ---
 
-## License
-
-MIT License. See [LICENSE](LICENSE) for details.
-
----
-
-## Further Reading
-
-- [Configuration Guide](docs/configuration.md)
-- [Usage Guide](docs/usage.md)
-- [Strategies Guide](docs/strategies.md)
-- [Examples](docs/examples.md)
-- [API Reference](docs/api/)
-- [FAQ](docs/faq.md)
-
----
-
 This will:
 - Load configuration files
 - Run the backtest engine for the specified number of iterations
@@ -113,11 +96,28 @@ See [Strategies Guide](docs/strategies.md) for instructions.
 ## Performance Metrics
 
 After each run, the engine reports:
-- **Sharpe Ratio** — risk-adjusted return
-- **Sortino Ratio** — downside risk-adjusted return
-- **Max Drawdown** — largest peak-to-trough loss
-- **Trading statistics** — number of trades, volume, value
+- **Sharpe Ratio** â€” risk-adjusted return
+- **Sortino Ratio** â€” downside risk-adjusted return
+- **Max Drawdown** â€” largest peak-to-trough loss
+- **Trading statistics** â€” number of trades, volume, value
 
 Plots are generated as CSV and visualized using Python.
 
+
 ---
+
+## License
+
+MIT License. See [LICENSE](LICENSE) for details.
+
+---
+
+## Further Reading
+
+- [Configuration Guide](docs/configuration.md)
+- [Usage Guide](docs/usage.md)
+- [Strategies Guide](docs/strategies.md)
+- [Examples](docs/examples.md)
+- [API Reference](docs/api/)
+- [FAQ](docs/faq.md)
+
