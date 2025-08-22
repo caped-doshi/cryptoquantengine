@@ -54,11 +54,11 @@ void GridTrading::initialize() {
     }
 }
 
-void GridTrading::on_elapse(core::backtest::BacktestEngine &hbt) {
+void GridTrading::on_elapse(core::backtest::BacktestEngine &engine) {
     using namespace core::trading;
-    Depth depth = hbt.depth(asset_id_);
-    Quantity position = hbt.position(asset_id_);
-    const std::vector<Order> orders = hbt.orders(asset_id_);
+    Depth depth = engine.depth(asset_id_);
+    Quantity position = engine.position(asset_id_);
+    const std::vector<Order> orders = engine.orders(asset_id_);
 
     double tick_size = depth.tick_size_;
     double lot_size = depth.lot_size_;
@@ -129,7 +129,7 @@ void GridTrading::on_elapse(core::backtest::BacktestEngine &hbt) {
                 (order.side_ == BookSide::Ask &&
                  new_ask_prices.find(order_price_ticks) ==
                      new_ask_prices.end())) {
-                hbt.cancel_order(asset_id_, order.orderId_);
+                engine.cancel_order(asset_id_, order.orderId_);
                 if (logger_) {
                     if (order.side_ == BookSide::Bid) {
                         logger_->log(
@@ -184,7 +184,7 @@ void GridTrading::on_elapse(core::backtest::BacktestEngine &hbt) {
                                  ", qty=" + std::to_string(order_qty),
                              utils::logger::LogLevel::Info);
             }
-            hbt.submit_buy_order(asset_id_, bid_price, order_qty,
+            engine.submit_buy_order(asset_id_, bid_price, order_qty,
                                  TimeInForce::GTC, OrderType::LIMIT);
         }
     }
@@ -214,7 +214,7 @@ void GridTrading::on_elapse(core::backtest::BacktestEngine &hbt) {
                 }
                 continue;
             }
-            hbt.submit_sell_order(asset_id_, ask_price, order_qty,
+            engine.submit_sell_order(asset_id_, ask_price, order_qty,
                                   TimeInForce::GTC, OrderType::LIMIT);
             if (logger_) {
                 logger_->log("[GridTrading] - Submitted buy order : asset_id=" +

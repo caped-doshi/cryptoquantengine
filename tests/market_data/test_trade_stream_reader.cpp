@@ -1,9 +1,8 @@
 /*
- * File: tests/test_trade_stream_reader.cpp
- * Description: Unit tests for hftengine/core/market_data/readers/trade_stream_reader.cpp.
- * Author: Arvind Rathnashyam
- * Date: 2025-06-25
- * License: Proprietary
+ * Copyright (c) 2025 arvindkrv@protonmail.com
+ *
+ * Please see the LICENSE file for the terms and conditions
+ * associated with this software.
  */
 
 # include <catch2/catch_test_macros.hpp>

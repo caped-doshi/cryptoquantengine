@@ -23,7 +23,7 @@ class Recorder {
 
     void record(const EquitySnapshot &snapshot);
     void record(Timestamp timestamp, double equity);
-    void record(const core::backtest::BacktestEngine &hbt, int asset_id);
+    void record(const core::backtest::BacktestEngine &engine, int asset_id);
 
     double sharpe() const;
     double sortino() const;

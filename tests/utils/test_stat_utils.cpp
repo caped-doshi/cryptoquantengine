@@ -15,7 +15,7 @@
 #include <cmath>
 #include <numeric>
 
-#include "../hftengine/utils/stat/stat_utils.h"
+#include "../cryptoquantengine/utils/stat/stat_utils.h"
 
 TEST_CASE("[StatUtils] - mean() computes arithmetic mean", "[statutils][mean]") {
     using namespace utils::stat;
