@@ -1,5 +1,7 @@
 # CryptoQuantEngine
-https://github.com/caped-doshi/cryptoquantengine/actions/workflows/ci.yml/badge.svg
+
+<img src="https://github.com/caped-doshi/cryptoquantengine/actions/workflows/ci.yml/badge.svg">
+
 ## High-Frequency Level 2 Trading Backtesting Engine
 
 **CryptoQuantEngine** is a high-performance C++ framework for backtesting high-frequency trading (HFT) strategies on Level 2 crypto market data. It supports full order book reconstruction, queue position tracking, and realistic order matching with configurable latency models. This engine is designed for research and development of market-making, liquidity-taking, and latency-sensitive strategies on orderbook data.
