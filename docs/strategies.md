@@ -11,7 +11,7 @@ Strategies in CryptoQuantLab are implemented as C++ classes derived from the abs
 class Strategy { 
   public: 
     virtual void initialize() = 0; 
-    virtual void on_elapse(corebacktestBacktestEngine &hbt) = 0; 
+    virtual void on_elapse(corebacktestBacktestEngine &engine) = 0; 
     virtual ~Strategy() = default; 
 };
 

@@ -121,17 +121,17 @@ TEST_CASE("[BacktestEngine] - rejects invalid orders",
                              .market_feed_latency_us_ = 1000};
     auto logger = std::make_shared<utils::logger::Logger>("test_backtest_engine_invalid.log",
                                            utils::logger::LogLevel::Debug);
-    BacktestEngine hbt(asset_configs, backtest_engine_config, logger);
+    BacktestEngine engine(asset_configs, backtest_engine_config, logger);
 
     // Invalid price (0 or negative)
-    REQUIRE_THROWS_AS(hbt.submit_buy_order(asset_id, 0.0, 1.0, TimeInForce::GTC,
+    REQUIRE_THROWS_AS(engine.submit_buy_order(asset_id, 0.0, 1.0, TimeInForce::GTC,
                                            OrderType::LIMIT),
                       std::invalid_argument);
-    REQUIRE_THROWS_AS(hbt.submit_sell_order(asset_id, -1.0, 1.0,
+    REQUIRE_THROWS_AS(engine.submit_sell_order(asset_id, -1.0, 1.0,
                                             TimeInForce::GTC, OrderType::LIMIT),
                       std::invalid_argument);
     // Invalid quantity
-    REQUIRE_THROWS_AS(hbt.submit_buy_order(asset_id, 50000.0, 0.0,
+    REQUIRE_THROWS_AS(engine.submit_buy_order(asset_id, 50000.0, 0.0,
                                            TimeInForce::GTC, OrderType::LIMIT),
                       std::invalid_argument);
     // Cleanup
@@ -172,24 +172,24 @@ TEST_CASE("[BacktestEngine] - elapse", "[backtest-engine][elapse]") {
     SECTION("Current timestamp elapses correctly") {
         auto logger = std::make_shared<utils::logger::Logger>(
             "test_backtest_engine_elapse_correct.log", utils::logger::LogLevel::Debug);
-        BacktestEngine hbt(asset_configs, backtest_engine_config, logger);
+        BacktestEngine engine(asset_configs, backtest_engine_config, logger);
 
-        REQUIRE(hbt.elapse(100) == true);
-        REQUIRE(hbt.current_time() == 100);
-        REQUIRE(hbt.elapse(100) == true);
-        REQUIRE(hbt.current_time() == 200);
+        REQUIRE(engine.elapse(100) == true);
+        REQUIRE(engine.current_time() == 100);
+        REQUIRE(engine.elapse(100) == true);
+        REQUIRE(engine.current_time() == 200);
         // Cleanup
         logger->flush();
     }
     SECTION("local orderbook updated with latency") {
         auto logger = std::make_shared<utils::logger::Logger>(
             "test_backtest_engine_elapse_latency.log", utils::logger::LogLevel::Debug);
-        BacktestEngine hbt(asset_configs, backtest_engine_config, logger);
+        BacktestEngine engine(asset_configs, backtest_engine_config, logger);
 
-        REQUIRE(hbt.elapse(50000) == true);
-        REQUIRE(hbt.current_time() == 50000);
+        REQUIRE(engine.elapse(50000) == true);
+        REQUIRE(engine.current_time() == 50000);
 
-        depth = hbt.depth(asset_id);
+        depth = engine.depth(asset_id);
         REQUIRE(depth.best_ask_ == utils::math::price_to_ticks(50001.0, tick_size));
         REQUIRE(depth.best_bid_ == utils::math::price_to_ticks(50000.5, tick_size));
         REQUIRE(depth.ask_qty_ == 1.5);
@@ -197,10 +197,10 @@ TEST_CASE("[BacktestEngine] - elapse", "[backtest-engine][elapse]") {
         REQUIRE(depth.bid_depth_[utils::math::price_to_ticks(50000.5, tick_size)] == 2.0);
         REQUIRE(depth.ask_depth_[utils::math::price_to_ticks(50001.0, tick_size)] == 1.5);
 
-        REQUIRE(hbt.elapse(2000) == true);
-        REQUIRE(hbt.current_time() == 52000);
+        REQUIRE(engine.elapse(2000) == true);
+        REQUIRE(engine.current_time() == 52000);
 
-        depth = hbt.depth(asset_id);
+        depth = engine.depth(asset_id);
         REQUIRE(depth.ask_qty_ == 2.5);
         // Cleanup
         logger->flush();
@@ -208,28 +208,28 @@ TEST_CASE("[BacktestEngine] - elapse", "[backtest-engine][elapse]") {
     SECTION("Market order executed in correct schedule") {
         auto logger = std::make_shared<utils::logger::Logger>(
             "test_backtest_engine_elapse_market_schedule.log", utils::logger::LogLevel::Debug);
-        BacktestEngine hbt(asset_configs, backtest_engine_config, logger);
+        BacktestEngine engine(asset_configs, backtest_engine_config, logger);
 
-        REQUIRE(hbt.elapse(29500));
-        REQUIRE(hbt.current_time() == 29500);
+        REQUIRE(engine.elapse(29500));
+        REQUIRE(engine.current_time() == 29500);
 
-        depth = hbt.depth(asset_id);
+        depth = engine.depth(asset_id);
         REQUIRE(depth.best_bid_ == utils::math::price_to_ticks(50000.0, tick_size));
         REQUIRE(depth.bid_qty_ == 2.0);
         // Submit a buy order that will be delayed and scheduled
-        OrderId order_id = hbt.submit_sell_order(
+        OrderId order_id = engine.submit_sell_order(
             asset_id, 0.0, 1.0, TimeInForce::GTC, OrderType::MARKET);
 
         // Initially, no fills processed yet
-        REQUIRE(hbt.position(asset_id) == 0.0);
+        REQUIRE(engine.position(asset_id) == 0.0);
 
         REQUIRE(
-            hbt.elapse(5000)); // Enough to trigger the trade and delayed action
-        REQUIRE(hbt.current_time() == 34500);
+            engine.elapse(5000)); // Enough to trigger the trade and delayed action
+        REQUIRE(engine.current_time() == 34500);
 
         // Now the order should be filled
-        REQUIRE(hbt.position(asset_id) == -1.0);
-        REQUIRE(hbt.cash() ==
+        REQUIRE(engine.position(asset_id) == -1.0);
+        REQUIRE(engine.cash() ==
                 Catch::Approx(50000.5 * (1 - 0.00045)).margin(1e-8));
         // Cleanup
         logger->flush();
@@ -237,24 +237,24 @@ TEST_CASE("[BacktestEngine] - elapse", "[backtest-engine][elapse]") {
     SECTION("Limit order executed in correct schedule") {
         auto logger = std::make_shared<utils::logger::Logger>(
             "test_backtest_engine_elapse_limit_schedule.log", utils::logger::LogLevel::Debug);
-        BacktestEngine hbt(asset_configs, backtest_engine_config, logger);
+        BacktestEngine engine(asset_configs, backtest_engine_config, logger);
 
-        REQUIRE(hbt.elapse(5000));
-        REQUIRE(hbt.current_time() == 5000);
+        REQUIRE(engine.elapse(5000));
+        REQUIRE(engine.current_time() == 5000);
 
-        depth = hbt.depth(asset_id);
+        depth = engine.depth(asset_id);
         REQUIRE(depth.best_ask_ == utils::math::price_to_ticks(50001.0, tick_size));
 
-        OrderId order_id = hbt.submit_sell_order(
+        OrderId order_id = engine.submit_sell_order(
             asset_id, 50000.5, 1.0, TimeInForce::GTC, OrderType::LIMIT);
 
-        REQUIRE(hbt.elapse(6500));
-        REQUIRE(hbt.current_time() == 11500);
-        REQUIRE(hbt.position(asset_id) == 0.0);
+        REQUIRE(engine.elapse(6500));
+        REQUIRE(engine.current_time() == 11500);
+        REQUIRE(engine.position(asset_id) == 0.0);
 
-        REQUIRE(hbt.elapse(5000));
-        REQUIRE(hbt.current_time() == 16500);
-        REQUIRE(hbt.position(asset_id) == -1.0);
+        REQUIRE(engine.elapse(5000));
+        REQUIRE(engine.current_time() == 16500);
+        REQUIRE(engine.position(asset_id) == -1.0);
         // Cleanup
         logger->flush();
     }
@@ -263,57 +263,57 @@ TEST_CASE("[BacktestEngine] - elapse", "[backtest-engine][elapse]") {
             "cancellations") {
         auto logger = std::make_shared<utils::logger::Logger>(
             "test_backtest_engine_elapse_complex.log", utils::logger::LogLevel::Debug);
-        BacktestEngine hbt(asset_configs, backtest_engine_config, logger);
+        BacktestEngine engine(asset_configs, backtest_engine_config, logger);
 
-        REQUIRE(hbt.elapse(5000));
-        REQUIRE(hbt.current_time() == 5000);
+        REQUIRE(engine.elapse(5000));
+        REQUIRE(engine.current_time() == 5000);
 
-        OrderId order1 = hbt.submit_sell_order(
+        OrderId order1 = engine.submit_sell_order(
             asset_id, 50000.5, 1.0, TimeInForce::GTC, OrderType::LIMIT);
-        OrderId order2 = hbt.submit_sell_order(
+        OrderId order2 = engine.submit_sell_order(
             asset_id, 50001.0, 2.0, TimeInForce::GTC, OrderType::LIMIT);
 
         // Verify initial state
-        REQUIRE(hbt.elapse(3000));
-        REQUIRE(hbt.current_time() == 8000);
-        REQUIRE(hbt.position(asset_id) == 0.0);
-        REQUIRE(hbt.orders(asset_id).size() == 2);
+        REQUIRE(engine.elapse(3000));
+        REQUIRE(engine.current_time() == 8000);
+        REQUIRE(engine.position(asset_id) == 0.0);
+        REQUIRE(engine.orders(asset_id).size() == 2);
 
         // Partial fill: Best bid moves to 50000.5, fills 1.0 of order1
-        REQUIRE(hbt.elapse(10000)); // Advance to t=15000
-        REQUIRE(hbt.current_time() == 18000);
-        REQUIRE(hbt.position(asset_id) == -1.0); // Partially filled
-        hbt.clear_inactive_orders();
-        REQUIRE(hbt.orders(asset_id).size() ==
+        REQUIRE(engine.elapse(10000)); // Advance to t=15000
+        REQUIRE(engine.current_time() == 18000);
+        REQUIRE(engine.position(asset_id) == -1.0); // Partially filled
+        engine.clear_inactive_orders();
+        REQUIRE(engine.orders(asset_id).size() ==
                 1); // order1 fully filled and removed
 
         // Cancel order2 before it's filled
-        hbt.cancel_order(asset_id, order2);
-        REQUIRE(hbt.elapse(2100));
-        REQUIRE(hbt.current_time() == 20100);
-        REQUIRE(hbt.orders(asset_id).size() == 0);
+        engine.cancel_order(asset_id, order2);
+        REQUIRE(engine.elapse(2100));
+        REQUIRE(engine.current_time() == 20100);
+        REQUIRE(engine.orders(asset_id).size() == 0);
 
         // Verify cash balance after fills (assume maker fee 0.0000)
         double expected_cash = 50000.5;
-        REQUIRE(hbt.cash() == Catch::Approx(expected_cash).margin(1e-8));
+        REQUIRE(engine.cash() == Catch::Approx(expected_cash).margin(1e-8));
         // Cleanup
         logger->flush();
     }
     SECTION("Handles partial fills correctly") {
         auto logger = std::make_shared<utils::logger::Logger>(
             "test_backtest_engine_elapse_partial_fills.log", utils::logger::LogLevel::Debug);
-        BacktestEngine hbt(asset_configs, backtest_engine_config, logger);
+        BacktestEngine engine(asset_configs, backtest_engine_config, logger);
 
-        hbt.elapse(5000);
+        engine.elapse(5000);
         // Submit order larger than available liquidity
-        OrderId big_order = hbt.submit_sell_order(
+        OrderId big_order = engine.submit_sell_order(
             asset_id, 50000.5, 5.0, TimeInForce::GTC, OrderType::LIMIT);
 
-        hbt.elapse(7001);
+        engine.elapse(7001);
         // Should partially fill available quantity (2.0)
-        REQUIRE(hbt.position(asset_id) == -1.0);
-        REQUIRE(hbt.orders(asset_id).size() == 1); // Remainder still active
-        REQUIRE(hbt.orders(asset_id)[0].filled_quantity_ == 1.0);
+        REQUIRE(engine.position(asset_id) == -1.0);
+        REQUIRE(engine.orders(asset_id).size() == 1); // Remainder still active
+        REQUIRE(engine.orders(asset_id)[0].filled_quantity_ == 1.0);
         // Cleanup
         logger->flush();
     }

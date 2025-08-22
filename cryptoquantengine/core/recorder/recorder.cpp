@@ -74,14 +74,14 @@ void Recorder::record(Timestamp timestamp, double equity) {
  * This method captures the current equity and position of the specified asset
  * in the backtest engine and appends it to the internal state records vector.
  *
- * @param hbt The BacktestEngine instance containing the current state.
+ * @param engine The BacktestEngine instance containing the current state.
  * @param asset_id The ID of the asset to record.
  */
-void Recorder::record(const core::backtest::BacktestEngine &hbt, int asset_id) {
-    const Timestamp current_time = hbt.current_time();
-    const double equity = hbt.equity();
-    const Quantity position = hbt.position(asset_id);
-    const core::trading::Depth depth = hbt.depth(asset_id);
+void Recorder::record(const core::backtest::BacktestEngine &engine, int asset_id) {
+    const Timestamp current_time = engine.current_time();
+    const double equity = engine.equity();
+    const Quantity position = engine.position(asset_id);
+    const core::trading::Depth depth = engine.depth(asset_id);
     const double tick_size = depth.tick_size_;
     Price mid_price =
         (utils::math::ticks_to_price(depth.best_bid_, tick_size) +
@@ -286,7 +286,7 @@ void Recorder::plot(int asset_id) const {
     csv.close();
 
     std::string command =
-        "python ../hftengine/core/recorder/plot_recorder.py " + csv_filename +
+        "python ../cryptoquantengine/core/recorder/plot_recorder.py " + csv_filename +
         " " + std::to_string(asset_id);
     int ret = std::system(command.c_str());
     if (ret != 0) {

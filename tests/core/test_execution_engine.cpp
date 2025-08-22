@@ -1,10 +1,8 @@
 /*
- * File: tests/test_execution_engine.cpp
- * Description: Unit tests for
- * hftengine/core/execution_engine/execution_engine.cpp.
- * Author: Arvind Rathnashyam
- * Date: 2025-06-27
- * License: Proprietary
+ * Copyright (c) 2025 arvindkrv@protonmail.com
+ *
+ * Please see the LICENSE file for the terms and conditions
+ * associated with this software.
  */
 
 #include <catch2/catch_approx.hpp>
