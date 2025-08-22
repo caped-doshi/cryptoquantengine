@@ -15,12 +15,12 @@ It dynamically manages the grid, cancels and resubmits orders, and respects posi
 
 Grid trading parameters are set in `config/grid_trading_config.txt`:
 ```plaintext
-tick_size=0.0001
-lot_size=0.1 
-grid_num=5 
-grid_interval=10 
-half_spread=20 
-position_limit=10.0 
+tick_size=0.01
+lot_size=0.1
+grid_num=20
+grid_interval=10
+half_spread=10
+position_limit=400.0
 notional_order_qty=100.0
 ```
 
@@ -53,7 +53,34 @@ while (engine.elapse(backtest_config.elapse_us) && iter-- > 0) {
     recorder.record(engine, asset_id);
 }
 ```
+### Example Output: Equity and Position Over Time
 
+After running the grid trading strategy, you can visualize the results:
+```cpp
+recorder.plot(asset_config.name_);
+```
+![Equity and Position Over Time](images/gridtrading-XRPUSDCPERP.png)
+
+The plot shows the evolution of portfolio equity and position for the selected asset throughout the backtest.
+
+### Example Output: Statistics Summary
+After running the backtest, you can print a summary of statistics:
+```cpp
+recorder.print_performance_metrics();
+engine.print_trading_stats(asset_id);
+```
+```plaintext
+=== Performance Metrics ===
+Sharpe Ratio   : 0.4941
+Sortino Ratio  : 0.4205
+Max Drawdown   : 7.42%
+===========================
+=== Trading Statistics for : XRP-USDC-PERP ===
+Number of Trades   : 6183
+Trading Volume     : 117959.30
+Trading Value      : 294671.14 USDT
+==========================================
+```
 ## How GridTrading Works
 
 - On each step, the strategy:
