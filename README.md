@@ -1,11 +1,8 @@
-# CryptoQuantLab
+# CryptoQuantEngine
 
 ## High-Frequency Level 2 Trading Backtesting Engine
 
-**CryptoQuantLab** is a high-performance C++ framework for backtesting high-frequency trading (HFT) strategies on Level 2 crypto market data.    
-It supports full order book reconstruction, queue position tracking, and realistic order matching with configurable latency models.
-
-This engine is designed for research and development of market-making, liquidity-taking, and latency-sensitive strategies on orderbook data.
+**CryptoQuantEngine** is a high-performance C++ framework for backtesting high-frequency trading (HFT) strategies on Level 2 crypto market data. It supports full order book reconstruction, queue position tracking, and realistic order matching with configurable latency models. This engine is designed for research and development of market-making, liquidity-taking, and latency-sensitive strategies on orderbook data.
 
 ---
 
@@ -26,7 +23,7 @@ This engine is designed for research and development of market-making, liquidity
 
 ### Prerequisites
 
-- C++20-compatible compiler (GCC ? 10, Clang ? 11, MSVC ? 19.28)
+- C++20-compatible compiler 
 - [CMake](https://cmake.org/) version 3.12 or later
 - Python 3.7+ (for plotting)
 - Python packages: `matplotlib`, `pandas`
