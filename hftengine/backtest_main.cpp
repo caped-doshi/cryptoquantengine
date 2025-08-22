@@ -19,8 +19,6 @@
 #include "utils/logger/logger.h"
 
 int main() {
-    using namespace core::trading;
-    using namespace core::backtest;
 
     utils::config::ConfigReader config_reader;
     const auto asset_config =
@@ -34,11 +32,11 @@ int main() {
     const auto backtest_config =
         config_reader.get_backtest_config("../config/backtest_config.txt");
     const int asset_id = 1;
-    const std::unordered_map<int, AssetConfig> asset_configs = {
+    const std::unordered_map<int, core::trading::AssetConfig> asset_configs = {
         {asset_id, asset_config}};
     auto logger = nullptr;
 
-    BacktestEngine engine(asset_configs, backtest_engine_config, logger);
+    core::backtest::BacktestEngine engine(asset_configs, backtest_engine_config, logger);
     core::recorder::Recorder recorder(recorder_config.interval_us, logger);
     core::strategy::GridTrading grid_trading(asset_id, grid_trading_config, logger);
 
