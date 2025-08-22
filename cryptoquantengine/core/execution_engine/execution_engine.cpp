@@ -20,11 +20,11 @@
 #include "../../utils/math/math_utils.h"
 #include "../trading/fill.h"
 #include "../trading/order_update.h"
+#include "../types/aliases/usings.h"
 #include "../types/enums/book_side.h"
 #include "../types/enums/order_status.h"
 #include "../types/enums/order_type.h"
 #include "../types/enums/time_in_force.h"
-#include "../types/aliases/usings.h"
 #include "execution_engine.h"
 
 namespace core::execution_engine {
@@ -97,7 +97,8 @@ void ExecutionEngine::clear_from_container(
     Container &container,
     const std::function<bool(const std::shared_ptr<core::trading::Order> &)>
         &order_inactive) {
-    if constexpr (std::is_same_v<Container,
+    if constexpr (std::is_same_v<
+                      Container,
                       std::vector<std::shared_ptr<core::trading::Order>>>) {
         container.erase(
             std::remove_if(container.begin(), container.end(), order_inactive),
@@ -711,8 +712,8 @@ bool ExecutionEngine::execute_order(int asset_id, TradeSide side,
  * @param asset_id The ID of the asset this update pertains to.
  * @param book_update The update event (side, price, new quantity).
  */
-void ExecutionEngine::handle_book_update(int asset_id,
-                                         const core::market_data::BookUpdate &book_update) {
+void ExecutionEngine::handle_book_update(
+    int asset_id, const core::market_data::BookUpdate &book_update) {
     using namespace core::orderbook;
     using namespace core::market_data;
     Ticks book_update_price_ticks =
@@ -780,7 +781,8 @@ void ExecutionEngine::handle_book_update(int asset_id,
  * @param trade Incoming trade information (price, quantity, side, timestamp,
  * etc.).
  */
-void ExecutionEngine::handle_trade(int asset_id, const core::market_data::Trade &trade) {
+void ExecutionEngine::handle_trade(int asset_id,
+                                   const core::market_data::Trade &trade) {
     using namespace core::trading;
     using namespace core::market_data;
     const auto trade_price_ticks =
@@ -929,8 +931,7 @@ const std::vector<core::trading::Fill> &ExecutionEngine::fills() const {
  * @brief Clears all recorded fills from the execution engine.
  *
  * This method empties the internal `fills_` vector, removing all previously
- * recorded trade fills. Useful for resetting state between test cases or
- * simulations.
+ * recorded trade fills. 
  */
 void ExecutionEngine::clear_fills() { fills_.clear(); }
 
@@ -962,4 +963,4 @@ void ExecutionEngine::set_order_response_latency_us(
     const Microseconds latency_us) {
     order_response_latency_us_ = latency_us;
 }
-}
+} // namespace core::execution_engine

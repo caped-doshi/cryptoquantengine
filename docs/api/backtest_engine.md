@@ -1,6 +1,6 @@
 # BacktestEngine API Reference
 
-The `BacktestEngine` class is the core simulation engine in **CryptoQuantLab**. It manages market data, order submission, execution, latency modeling, and portfolio state for one or more assets.
+The `BacktestEngine` class is the core simulation engine in **CryptoQuantEngine**. It manages market data, order submission, execution, latency modeling, and portfolio state for one or more assets.
 
 ---
 

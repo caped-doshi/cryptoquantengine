@@ -273,9 +273,9 @@ void Recorder::print_performance_metrics() const {
  *
  * @param asset_id The ID of the asset to plot.
  */
-void Recorder::plot(int asset_id) const {
+void Recorder::plot(const std::string& asset_name) const {
     std::string csv_filename =
-        "recorder_plot_" + std::to_string(asset_id) + ".csv";
+        "recorder_plot_" + asset_name + ".csv";
     std::ofstream csv(csv_filename);
     csv << "timestamp,equity,position,mid_price\n";
     for (const auto &state : state_records_) {
@@ -287,7 +287,7 @@ void Recorder::plot(int asset_id) const {
 
     std::string command =
         "python ../cryptoquantengine/core/recorder/plot_recorder.py " + csv_filename +
-        " " + std::to_string(asset_id);
+        " " + asset_name;
     int ret = std::system(command.c_str());
     if (ret != 0) {
         if (logger_) {

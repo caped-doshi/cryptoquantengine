@@ -117,16 +117,18 @@ ConfigReader::get_asset_config(const std::string &filename) {
     config.trade_file_ = get_string("trade_file");
     config.tick_size_ = get_double("tick_size");
     config.lot_size_ = get_double("lot_size");
-    config.contract_multiplier_ = get_double("contract_multiplier");
+    config.contract_multiplier_ =
+        has("contract_multiplier") ? get_double("contract_multiplier") : 1.0;
     config.is_inverse_ = get_int("is_inverse") != 0;
     config.maker_fee_ = get_double("maker_fee");
     config.taker_fee_ = get_double("taker_fee");
+    config.name_ = has("name") ? get_string("name") : "UNKNOWN_ASSET";
     return config;
 }
 /*
  * @brief Reads the grid trading configuration from a file.
  */
-core::strategy::GridTradingConfig 
+core::strategy::GridTradingConfig
 ConfigReader::get_grid_trading_config(const std::string &filename) {
     clear();
     load(filename);

@@ -5,12 +5,11 @@
  * associated with this software.
  */
 
-# pragma once
+#pragma once
 
-# include <string>
+#include <string>
 
-namespace core {
-namespace trading {
+namespace core::trading {
 struct AssetConfig {
     std::string book_update_file_;
     std::string trade_file_;
@@ -22,6 +21,7 @@ struct AssetConfig {
 
     double maker_fee_;
     double taker_fee_;
+
+    std::string name_;
 };
-}
-}
+} // namespace core::trading

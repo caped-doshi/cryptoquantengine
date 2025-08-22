@@ -1,12 +1,12 @@
-# CryptoQuantLab Documentation
+# CryptoQuantEngine Documentation
 
-Welcome to the documentation for **CryptoQuantLab** – a high-performance C++ framework for backtesting and simulating high-frequency trading strategies on Level 2 crypto market data.
+Welcome to the documentation for **CryptoQuantEngine** – a high-performance light-weight C++ framework for backtesting and simulating high-frequency trading strategies on Level 2 crypto market data.
 
 ---
 
 ## Overview
 
-CryptoQuantLab provides realistic order book simulation, queue position tracking, and latency modeling for research and development of market-making and latency-sensitive strategies. The framework is modular, extensible, and designed for both backtesting and future live simulation.
+CryptoQuantEngine provides realistic order book simulation, queue position tracking, and latency modeling for research and development of market-making and latency-sensitive strategies. The framework is modular, extensible, and designed for both backtesting and future live simulation.
 
 ---
 
@@ -39,7 +39,7 @@ CryptoQuantLab provides realistic order book simulation, queue position tracking
 
 ## Quick Links
 
-- [Project Repository](https://github.com/your_username/cryptoquantlab)
+- [Project Repository](https://github.com/caped_doshi/cryptoquantengine)
 - [License](../LICENSE)
 
 ---
@@ -52,7 +52,7 @@ If you have questions, please check the [FAQ](faq.md) or open an issue on GitHub
 
 ## About
 
-CryptoQuantLab is developed and maintained by Arvind Rathnashyam.  
+CryptoQuantEngine is developed and maintained by Arvind Rathnashyam.  
 For inquiries, contact: arvindkrv@protonmail.com
 
 ---

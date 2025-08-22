@@ -50,7 +50,7 @@ void GridTrading::initialize() {
     if (logger_) {
         logger_->log("[GridTrading] - Strategy initialized for asset ID: " +
                          std::to_string(asset_id_),
-                     utils::logger::LogLevel::Debug);
+                     utils::logger::LogLevel::Info);
     }
 }
 
@@ -136,13 +136,13 @@ void GridTrading::on_elapse(core::backtest::BacktestEngine &engine) {
                             "[GridTrading] - Cancelled bid order at price: " +
                                 std::to_string(order.price_) +
                                 " for asset ID: " + std::to_string(asset_id_),
-                            utils::logger::LogLevel::Debug);
+                            utils::logger::LogLevel::Info);
                     } else {
                         logger_->log(
                             "[GridTrading] - Cancelled ask order at price: " +
                                 std::to_string(order.price_) +
                                 " for asset ID: " + std::to_string(asset_id_),
-                            utils::logger::LogLevel::Debug);
+                            utils::logger::LogLevel::Info);
                     }
                 }
             }
@@ -217,7 +217,7 @@ void GridTrading::on_elapse(core::backtest::BacktestEngine &engine) {
             engine.submit_sell_order(asset_id_, ask_price, order_qty,
                                   TimeInForce::GTC, OrderType::LIMIT);
             if (logger_) {
-                logger_->log("[GridTrading] - Submitted buy order : asset_id=" +
+                logger_->log("[GridTrading] - Submitted sell order : asset_id=" +
                                  std::to_string(asset_id_) +
                                  ", price=" + std::to_string(bid_price) +
                                  ", qty=" + std::to_string(order_qty),

@@ -85,7 +85,7 @@ class BacktestEngine {
     void
     process_book_update_local(int asset_id,
                               const core::market_data::BookUpdate &book_update);
-
+    // internal state
     Timestamp current_time_us_;
     core::execution_engine::ExecutionEngine execution_engine_;
     core::market_data::MarketDataFeed market_data_feed_;

@@ -1,6 +1,6 @@
 # Strategies Guide
 
-This guide describes how strategies work in **CryptoQuantLab**, how to use the built-in grid trading strategy, and how to implement your own.
+This guide describes how strategies work in **CryptoQuantEngine**, how to use the built-in grid trading strategy, and how to implement your own.
 
 ---
 
