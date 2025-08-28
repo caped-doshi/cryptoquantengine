@@ -1,6 +1,6 @@
 # CryptoQuantEngine
 
-<img src="https://github.com/caped-doshi/cryptoquantengine/actions/workflows/ci.yml/badge.svg">
+<img src="https://github.com/caped-doshi/cryptoquantengine/actions/workflows/ci.yml/badge.svg"> [![GitHub release](https://img.shields.io/github/v/release/caped-doshi/cryptoquantengine)](https://github.com/caped-doshi/cryptoquantengine/releases) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ## High-Frequency Level 2 Trading Backtesting Engine
 
