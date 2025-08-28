@@ -186,6 +186,10 @@ bool BacktestEngine::elapse(std::uint64_t microseconds) {
                     {book_update.local_timestamp_,
                      DelayedAction{.type_ = ActionType::LocalBookUpdate,
                                    .asset_id_ = asset_id,
+                                   .order_ = std::nullopt,
+                                   .orderId_ = std::nullopt,
+                                   .order_update_type_ = std::nullopt,
+                                   .fill_ = std::nullopt,
                                    .book_update_ = book_update,
                                    .execute_time_ =
                                        book_update.local_timestamp_}});
@@ -292,6 +296,10 @@ OrderId BacktestEngine::submit_buy_order(int asset_id, Price price,
          DelayedAction{.type_ = ActionType::SubmitBuy,
                        .asset_id_ = asset_id,
                        .order_ = buy_order,
+                       .orderId_ = std::nullopt,
+                       .order_update_type_ = std::nullopt,
+                       .fill_ = std::nullopt,
+                       .book_update_ = std::nullopt,
                        .execute_time_ = buy_order.exch_timestamp_}});
     return buy_order.orderId_;
 }
@@ -341,6 +349,10 @@ OrderId BacktestEngine::submit_sell_order(int asset_id, Price price,
          DelayedAction{.type_ = ActionType::SubmitSell,
                        .asset_id_ = asset_id,
                        .order_ = sell_order,
+                       .orderId_ = std::nullopt,
+                       .order_update_type_ = std::nullopt,
+                       .fill_ = std::nullopt,
+                       .book_update_ = std::nullopt,
                        .execute_time_ = sell_order.exch_timestamp_}});
 
     return sell_order.orderId_;
@@ -356,7 +368,11 @@ void BacktestEngine::cancel_order(int asset_id, OrderId orderId) {
         {current_time_us_ + order_response_latency_us,
          DelayedAction{.type_ = ActionType::Cancel,
                        .asset_id_ = asset_id,
+                       .order_ = std::nullopt,
                        .orderId_ = orderId,
+                       .order_update_type_ = std::nullopt,
+                       .fill_ = std::nullopt,
+                       .book_update_ = std::nullopt,
                        .execute_time_ =
                            current_time_us_ + order_entry_latency_us}});
 }
@@ -380,6 +396,8 @@ void BacktestEngine::process_exchange_order_updates() {
                            .order_ = *order_update.order_,
                            .orderId_ = order_update.orderId_,
                            .order_update_type_ = order_update.event_type_,
+                           .fill_ = std::nullopt,
+                           .book_update_ = std::nullopt,
                            .execute_time_ = order_update.local_timestamp_}});
     }
     execution_engine_.clear_order_updates();
@@ -461,7 +479,11 @@ void BacktestEngine::process_exchange_fills() {
             {fill.local_timestamp_,
              DelayedAction{.type_ = ActionType::LocalProcessFill,
                            .asset_id_ = fill.asset_id_,
+                           .order_ = std::nullopt,
+                           .orderId_ = std::nullopt,
+                           .order_update_type_ = std::nullopt,
                            .fill_ = fill,
+                           .book_update_ = std::nullopt,
                            .execute_time_ = fill.local_timestamp_}});
     }
     execution_engine_.clear_fills();
@@ -531,7 +553,7 @@ BacktestEngine::orders(int asset_id) const {
         logger_->log("[BacktestEngine] - " + std::to_string(current_time_us_) +
                          "us - retrieving " +
                          std::to_string(local_active_orders_.size()) +
-                         " local active orders",
+                         " local active orders for asset " + std::to_string(asset_id),
                      utils::logger::LogLevel::Debug);
     }
     std::vector<core::trading::Order> active_orders;
@@ -639,7 +661,6 @@ void BacktestEngine::print_trading_stats(int asset_id) const {
     auto num_trades_it = num_trades_.find(asset_id);
     auto trading_volume_it = trading_volume_.find(asset_id);
     auto trading_value_it = trading_value_.find(asset_id);
-    auto realized_pnl_it = realized_pnl_.find(asset_id);
 
     std::cout << "=== Trading Statistics for : "
               << assets_.at(asset_id).config().name_
