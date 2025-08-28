@@ -333,7 +333,7 @@ bool ExecutionEngine::execute_fok_order(
     int levels = (side == TradeSide::Buy)
                      ? orderbooks_.at(asset_id).ask_levels()
                      : orderbooks_.at(asset_id).bid_levels();
-    Quantity available_qty;
+    Quantity available_qty = 0.0;
     while (++level < levels && available_qty < order->quantity_) {
         Ticks level_price_ticks =
             (side == TradeSide::Buy)

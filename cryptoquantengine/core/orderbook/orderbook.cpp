@@ -22,8 +22,8 @@ namespace orderbook {
 
 OrderBook::OrderBook(double tick_size, double lot_size,
                      std::shared_ptr<utils::logger::Logger> logger)
-    : tick_size_(tick_size), lot_size_(lot_size), logger_(logger),
-      last_update_(UpdateType::Snapshot) {
+    : tick_size_(tick_size), lot_size_(lot_size), bid_book_(), ask_book_(),
+      last_update_(UpdateType::Snapshot), logger_(logger){
     if (tick_size <= 0.0) {
         throw std::invalid_argument("Tick size must be positive: " +
                                     std::to_string(tick_size));

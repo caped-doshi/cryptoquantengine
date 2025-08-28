@@ -34,12 +34,12 @@ void TradeStreamReader::open(const std::string &filename) {
 bool TradeStreamReader::parse_next(core::market_data::Trade &trade) {
     if (!csv_reader_) return false;
     try {
-        Timestamp exch_timestamp;
-        Timestamp local_timestamp;
-        OrderId orderId;
+        Timestamp exch_timestamp = 0;
+        Timestamp local_timestamp = 0;
+        OrderId orderId = 0;
         std::string side_str;
-        double price;
-        double quantity;
+        Price price = 0.0;
+        Quantity quantity = 0.0;
         if (!csv_reader_->reader.read_row(exch_timestamp, local_timestamp,
                                           orderId, side_str, price, quantity)) {
             return false;

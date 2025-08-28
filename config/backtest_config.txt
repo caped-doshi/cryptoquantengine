@@ -1,2 +1,2 @@
 elapse_us=1000000
-iterations=432000
+iterations=86400
