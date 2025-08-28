@@ -78,7 +78,7 @@ Max Drawdown   : 7.42%
 === Trading Statistics for : XRP-USDC-PERP ===
 Number of Trades   : 6183
 Trading Volume     : 117959.30
-Trading Value      : 294671.14 USDT
+Trading Value      : 294671.14 USDC
 ==========================================
 ```
 ## How GridTrading Works
