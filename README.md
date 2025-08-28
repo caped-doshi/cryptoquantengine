@@ -4,20 +4,35 @@
 
 ## High-Frequency Level 2 Trading Backtesting Engine
 
-**CryptoQuantEngine** is a high-performance C++ framework for backtesting high-frequency trading (HFT) strategies on Level 2 crypto market data. It supports full order book reconstruction, queue position tracking, and realistic order matching with configurable latency models. This engine is designed for research and development of market-making, liquidity-taking, and latency-sensitive strategies on orderbook data.
+**CryptoQuantEngine** is a high-performance C++ framework for backtesting high-frequency trading (HFT) strategies on Level 2 crypto market data.
 
 ---
 
 ## Features
 
-- **C++20 implementation** for speed and low-level control.
-- **Full depth-of-book simulation** from market-by-price Level 2 feeds.
-- **Configurable latency simulation** for order management and market data.
-- **Queue position estimation** for passive order fills.
-- **Modular, extensible architecture** for custom strategies.
-- **Comprehensive performance metrics** (Sharpe, Sortino, max drawdown).
-- **Automated plotting** of equity and position (Python required).
-- **Unit tests** with Catch2 for reliability.
+- **Full Depth-of-Book Simulation**  
+  Accurately reconstructs and simulates the entire order book from Level 2 market data, supporting market-by-price feeds.
+
+- **Realistic Latency Modeling**  
+  Simulates order entry, order response, and market data feed latencies for robust evaluation of latency-sensitive strategies.
+
+- **Queue Position Tracking**  
+  Estimates queue position for passive orders, enabling realistic fill probability and execution modeling.
+
+- **Flexible Order Matching Engine**  
+  Provides configurable and extensible order matching logic for both market-making and liquidity-taking strategies.
+
+- **Modular Strategy Framework**  
+  Easily implement custom strategies by inheriting from the abstract strategy class and accessing market/order management APIs.
+
+- **Comprehensive Performance Analytics**  
+  Reports key metrics such as Sharpe ratio, Sortino ratio, max drawdown, and detailed trading statistics after each backtest run.
+
+- **Automated Visualization**  
+  Generates CSV outputs and Python-based plots for equity curves and position tracking.
+
+- **Robust Unit Testing**  
+  Includes a suite of unit tests to ensure reliability and correctness of core components.
 
 ---
 
@@ -102,7 +117,6 @@ After each run, the engine reports:
 
 Plots are generated as CSV and visualized using Python.
 
-
 ---
 
 ## License
@@ -118,5 +132,13 @@ MIT License. See [LICENSE](LICENSE) for details.
 - [Strategies Guide](docs/strategies.md)
 - [Examples](docs/examples.md)
 - [API Reference](docs/api/)
-- [FAQ](docs/faq.md)
 
+---
+
+## Planned Features
+
+- [ ] **Live Market Data Recording**  
+  Implement a module to connect to live market data streams via websockets (e.g., trades, incremental book updates). Received data will be written to CSV files in a format compatible with the backtest engine. This will include robust error handling, automatic reconnection logic, and comprehensive documentation.
+
+- [ ] **Support for Inverse Perpetuals**  
+  Extend the framework to support inverse perpetual contracts, enabling accurate backtesting and strategy development for these instrument types.
