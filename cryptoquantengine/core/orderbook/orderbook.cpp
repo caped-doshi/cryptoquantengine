@@ -17,13 +17,12 @@
 #include "../types/enums/book_side.h"
 #include "orderbook.h"
 
-namespace core {
-namespace orderbook {
+namespace core::orderbook {
 
 OrderBook::OrderBook(double tick_size, double lot_size,
                      std::shared_ptr<utils::logger::Logger> logger)
     : tick_size_(tick_size), lot_size_(lot_size), bid_book_(), ask_book_(),
-      last_update_(UpdateType::Snapshot), logger_(logger){
+      last_update_(UpdateType::Snapshot), logger_(logger) {
     if (tick_size <= 0.0) {
         throw std::invalid_argument("Tick size must be positive: " +
                                     std::to_string(tick_size));
@@ -41,7 +40,7 @@ OrderBook::OrderBook(double tick_size, double lot_size,
  *
  * @return A map of price levels (Ticks) to quantities (Quantity) for asks.
  */
-std::map<Ticks, Quantity, std::greater<>> OrderBook::bid_book() const {
+std::unordered_map<Ticks, Quantity> OrderBook::bid_book() const {
     return bid_book_;
 }
 
@@ -52,7 +51,9 @@ std::map<Ticks, Quantity, std::greater<>> OrderBook::bid_book() const {
  *
  * @return A map of price levels (Ticks) to quantities (Quantity) for asks.
  */
-std::map<Ticks, Quantity> OrderBook::ask_book() const { return ask_book_; }
+std::unordered_map<Ticks, Quantity> OrderBook::ask_book() const {
+    return ask_book_;
+}
 
 /**
  * @brief Clears the order book by removing all bids and asks.
@@ -106,9 +107,11 @@ void OrderBook::apply_book_update(const core::market_data::BookUpdate &update) {
  * @return The best bid price, or 0.0 if the bid book is empty.
  */
 Price OrderBook::best_bid() const {
-    return bid_book_.empty()
-               ? 0.0
-               : utils::math::ticks_to_price(bid_book_.begin()->first, tick_size_);
+    if (bid_book_.empty()) return 0.0;
+    auto it = std::max_element(
+        bid_book_.begin(), bid_book_.end(),
+        [](const auto &a, const auto &b) { return a.first < b.first; });
+    return utils::math::ticks_to_price(it->first, tick_size_);
 }
 
 /**
@@ -117,9 +120,11 @@ Price OrderBook::best_bid() const {
  * @return The best ask price, or 0.0 if the ask book is empty.
  */
 Price OrderBook::best_ask() const {
-    return ask_book_.empty()
-               ? 0.0
-               : utils::math::ticks_to_price(ask_book_.begin()->first, tick_size_);
+    if (ask_book_.empty()) return 0.0;
+    auto it = std::min_element(
+        ask_book_.begin(), ask_book_.end(),
+        [](const auto &a, const auto &b) { return a.first < b.first; });
+    return utils::math::ticks_to_price(it->first, tick_size_);
 }
 
 /**
@@ -147,7 +152,7 @@ Price OrderBook::mid_price() const {
  * @param price Price level
  * @return The quantity at the price level, or 0 if it does not exist
  */
-Quantity OrderBook::depth_at(const BookSide side, const Ticks price) const {
+Quantity OrderBook::depth_at(const BookSide side, Ticks price) const {
     auto it =
         (side == BookSide::Bid) ? bid_book_.find(price) : ask_book_.find(price);
     return (side == BookSide::Bid)
@@ -169,23 +174,11 @@ Quantity OrderBook::depth_at(const BookSide side, const Ticks price) const {
  * @param level 0-based index of the price level
  * @return The quantity at that level, or 0 if out of range
  */
-Quantity OrderBook::depth_at_level(const BookSide side, const int level) const {
+Quantity OrderBook::depth_at_level(const BookSide side, int level) const {
     if (level < 0) return 0.0;
-
-    // Choose which side of the book
-    if (side == BookSide::Bid) {
-        auto it = bid_book_.begin();
-        auto end = bid_book_.end();
-        for (int i = 0; it != end && i < level; ++it, ++i) {
-        }
-        return (it != end) ? it->second : 0.0;
-    } else {
-        auto it = ask_book_.begin();
-        auto end = ask_book_.end();
-        for (int i = 0; it != end && i < level; ++it, ++i) {
-        }
-        return (it != end) ? it->second : 0.0;
-    }
+    const auto &book = (side == BookSide::Bid) ? sorted_bids() : sorted_asks();
+    if (level >= static_cast<int>(book.size())) return 0.0;
+    return book[level].second;
 }
 
 /**
@@ -201,24 +194,39 @@ Quantity OrderBook::depth_at_level(const BookSide side, const int level) const {
  * @param level 0-based index of the price level
  * @return The price at that level, or 0.0 if it does not exist
  */
-Ticks OrderBook::price_at_level(const BookSide side,
-                                const int level) const { // NEEDS TESTS
+Ticks OrderBook::price_at_level(const BookSide side, int level) const {
     if (level < 0) return 0.0;
+    const auto &book = (side == BookSide::Bid) ? sorted_bids() : sorted_asks();
+    if (level >= static_cast<int>(book.size())) return 0.0;
+    return book[level].first;
+}
 
-    // Choose which side of the book
-    if (side == BookSide::Bid) {
-        auto it = bid_book_.begin();
-        auto end = bid_book_.end();
-        for (int i = 0; it != end && i < level; ++it, ++i) {
-        }
-        return (it != end) ? it->first : 0.0;
-    } else {
-        auto it = ask_book_.begin();
-        auto end = ask_book_.end();
-        for (int i = 0; it != end && i < level; ++it, ++i) {
-        }
-        return (it != end) ? it->first : 0.0;
-    }
+/**
+ * @brief Returns a vector of all bids sorted in descending order of price.
+ *
+ * @return A vector of pairs, where each pair contains a price level (Ticks)
+ * and the corresponding quantity (Quantity) at that level.
+ */
+std::vector<std::pair<Ticks, Quantity>> OrderBook::sorted_bids() const {
+    std::vector<std::pair<Ticks, Quantity>> bids(bid_book_.begin(),
+                                                 bid_book_.end());
+    std::sort(bids.begin(), bids.end(),
+              [](const auto &a, const auto &b) { return a.first > b.first; });
+    return bids;
+}
+
+/**
+ * @brief Returns a vector of all asks sorted in ascending order of price.
+ *
+ * @return A vector of pairs, where each pair contains a price level (Ticks)
+ * and the corresponding quantity (Quantity) at that level.
+ */
+std::vector<std::pair<Ticks, Quantity>> OrderBook::sorted_asks() const {
+    std::vector<std::pair<Ticks, Quantity>> asks(ask_book_.begin(),
+                                                 ask_book_.end());
+    std::sort(asks.begin(), asks.end(),
+              [](const auto &a, const auto &b) { return a.first < b.first; });
+    return asks;
 }
 
 /**
@@ -261,14 +269,16 @@ void OrderBook::print_top_levels(int depth) const {
     for (const auto &[price, qty] : bid_book_) {
         if (count++ >= depth) break;
         oss << "  " << std::fixed << std::setprecision(8)
-            << utils::math::ticks_to_price(price, tick_size_) << " : " << qty << "\n";
+            << utils::math::ticks_to_price(price, tick_size_) << " : " << qty
+            << "\n";
     }
     oss << "Asks:\n";
     count = 0;
     for (const auto &[price, qty] : ask_book_) {
         if (count++ >= depth) break;
         oss << "  " << std::fixed << std::setprecision(8)
-            << utils::math::ticks_to_price(price, tick_size_) << " : " << qty << "\n";
+            << utils::math::ticks_to_price(price, tick_size_) << " : " << qty
+            << "\n";
     }
     if (logger_) {
         logger_->log(oss.str(), utils::logger::LogLevel::Info);
@@ -276,6 +286,4 @@ void OrderBook::print_top_levels(int depth) const {
         std::cout << oss.str();
     }
 }
-
-} // namespace orderbook
-} // namespace core
+} // namespace core::orderbook

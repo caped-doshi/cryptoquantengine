@@ -26,8 +26,10 @@ target_include_directories(hftbacktest PRIVATE
 
 target_compile_options(hftbacktest PRIVATE
   $<$<CONFIG:Release>:-O3>
-  $<$<CONFIG:Debug>:-O3 -Wall -Wextra -Wpedantic>
+  $<$<CONFIG:Debug>:-O0 -Wall -Wextra -Wpedantic -g>
 )
+
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -O0")
 
 target_link_libraries(hftbacktest PRIVATE Threads::Threads)
 

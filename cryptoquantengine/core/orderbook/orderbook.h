@@ -9,7 +9,6 @@
 
 #include <cstdint>
 #include <limits>
-#include <map>
 #include <memory>
 #include <optional>
 #include <string>
@@ -36,15 +35,18 @@ class OrderBook {
     Price best_ask() const;
     Price mid_price() const;
 
-    Quantity depth_at(const BookSide side, const Ticks price) const;
-    Quantity depth_at_level(const BookSide side, const int level) const;
-    Ticks price_at_level(const BookSide side, const int level) const;
+    Quantity depth_at(const BookSide side, Ticks price) const;
+    Quantity depth_at_level(const BookSide side, int level) const;
+    Ticks price_at_level(const BookSide side, int level) const;
+
+    std::vector<std::pair<Ticks, Quantity>> sorted_bids() const;
+    std::vector<std::pair<Ticks, Quantity>> sorted_asks() const;
 
     int bid_levels() const;
     int ask_levels() const;
 
-    std::map<Ticks, Quantity, std::greater<>> bid_book() const;
-    std::map<Ticks, Quantity> ask_book() const;
+    std::unordered_map<Ticks, Quantity> bid_book() const;
+    std::unordered_map<Ticks, Quantity> ask_book() const;
 
     void clear();
 
@@ -54,8 +56,8 @@ class OrderBook {
   private:
     double tick_size_;
     double lot_size_;
-    std::map<Ticks, Quantity, std::greater<>> bid_book_;
-    std::map<Ticks, Quantity> ask_book_;
+    std::unordered_map<Ticks, Quantity> bid_book_;
+    std::unordered_map<Ticks, Quantity> ask_book_;
     UpdateType last_update_;
 
     std::shared_ptr<utils::logger::Logger> logger_;

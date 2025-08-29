@@ -21,7 +21,7 @@
 
 int main(int argc, char *argv[]) {
     try {
-        // Configurable paths (default or command line)
+        // Configurable paths
         std::string asset_cfg =
             (argc > 1) ? argv[1] : "../config/asset_config.txt";
         std::string grid_cfg =
