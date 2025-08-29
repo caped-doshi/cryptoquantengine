@@ -56,8 +56,15 @@ class OrderBook {
   private:
     double tick_size_;
     double lot_size_;
+    
     std::unordered_map<Ticks, Quantity> bid_book_;
     std::unordered_map<Ticks, Quantity> ask_book_;
+
+    mutable std::vector<std::pair<Ticks, Quantity>> cached_sorted_bids_;
+    mutable std::vector<std::pair<Ticks, Quantity>> cached_sorted_asks_;
+    mutable bool bids_cache_valid_ = false;
+    mutable bool asks_cache_valid_ = false;
+
     UpdateType last_update_;
 
     std::shared_ptr<utils::logger::Logger> logger_;

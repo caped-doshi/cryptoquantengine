@@ -98,6 +98,8 @@ void OrderBook::apply_book_update(const core::market_data::BookUpdate &update) {
             ? bid_book_[price_ticks] = update.quantity_
             : ask_book_[price_ticks] = update.quantity_;
     }
+    (update.side_ == BookSide::Bid) ? bids_cache_valid_ = false
+                                    : asks_cache_valid_ = false;
     last_update_ = update.update_type_;
 }
 
@@ -108,6 +110,9 @@ void OrderBook::apply_book_update(const core::market_data::BookUpdate &update) {
  */
 Price OrderBook::best_bid() const {
     if (bid_book_.empty()) return 0.0;
+    if (bids_cache_valid_)
+        return utils::math::ticks_to_price(cached_sorted_bids_.front().first,
+                                           tick_size_);
     auto it = std::max_element(
         bid_book_.begin(), bid_book_.end(),
         [](const auto &a, const auto &b) { return a.first < b.first; });
@@ -121,6 +126,9 @@ Price OrderBook::best_bid() const {
  */
 Price OrderBook::best_ask() const {
     if (ask_book_.empty()) return 0.0;
+    if (asks_cache_valid_)
+        return utils::math::ticks_to_price(cached_sorted_asks_.front().first,
+                                           tick_size_);
     auto it = std::min_element(
         ask_book_.begin(), ask_book_.end(),
         [](const auto &a, const auto &b) { return a.first < b.first; });
@@ -208,11 +216,12 @@ Ticks OrderBook::price_at_level(const BookSide side, int level) const {
  * and the corresponding quantity (Quantity) at that level.
  */
 std::vector<std::pair<Ticks, Quantity>> OrderBook::sorted_bids() const {
-    std::vector<std::pair<Ticks, Quantity>> bids(bid_book_.begin(),
-                                                 bid_book_.end());
-    std::sort(bids.begin(), bids.end(),
+    if (bids_cache_valid_) return cached_sorted_bids_;
+    cached_sorted_bids_.assign(bid_book_.begin(), bid_book_.end());
+    std::sort(cached_sorted_bids_.begin(), cached_sorted_bids_.end(),
               [](const auto &a, const auto &b) { return a.first > b.first; });
-    return bids;
+    bids_cache_valid_ = true;
+    return cached_sorted_bids_;
 }
 
 /**
@@ -222,11 +231,12 @@ std::vector<std::pair<Ticks, Quantity>> OrderBook::sorted_bids() const {
  * and the corresponding quantity (Quantity) at that level.
  */
 std::vector<std::pair<Ticks, Quantity>> OrderBook::sorted_asks() const {
-    std::vector<std::pair<Ticks, Quantity>> asks(ask_book_.begin(),
-                                                 ask_book_.end());
-    std::sort(asks.begin(), asks.end(),
+    if (asks_cache_valid_) return cached_sorted_asks_;
+    cached_sorted_asks_.assign(ask_book_.begin(), ask_book_.end());
+    std::sort(cached_sorted_asks_.begin(), cached_sorted_asks_.end(),
               [](const auto &a, const auto &b) { return a.first < b.first; });
-    return asks;
+    asks_cache_valid_ = true;
+    return cached_sorted_asks_;
 }
 
 /**

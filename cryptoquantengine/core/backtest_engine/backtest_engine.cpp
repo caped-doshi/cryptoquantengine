@@ -132,7 +132,6 @@ bool BacktestEngine::elapse(std::uint64_t microseconds) {
         // Get all delayed actions scheduled between now and next market event
         auto it = delayed_actions_.lower_bound(current_time_us_);
         Timestamp interval_end_us = std::min(next_event_us, next_interval_us);
-
         while (it != delayed_actions_.end() && it->first < interval_end_us) {
             const DelayedAction &action = it->second;
             current_time_us_ = action.execute_time_;
