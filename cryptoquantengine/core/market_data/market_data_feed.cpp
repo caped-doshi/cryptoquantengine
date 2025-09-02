@@ -5,7 +5,9 @@
  * associated with this software.
  */
 
+#include <chrono>
 #include <future>
+#include <iostream>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -119,7 +121,7 @@ bool MarketDataFeed::next_event(int &asset_id, EventType &event_type,
     Timestamp min_time = std::numeric_limits<Timestamp>::max();
 
     for (auto &[id, stream] : asset_streams_) {
-        // Ensure both streams are preloaded
+        // Ensure both streams are preloaded (happens only once)
         if (!stream.next_book_update.has_value()) stream.advance_book();
         if (!stream.next_trade.has_value()) stream.advance_trade();
 

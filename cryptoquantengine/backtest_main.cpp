@@ -34,8 +34,9 @@ int main(int argc, char *argv[]) {
             (argc > 5) ? argv[5] : "../config/backtest_config.txt";
 
         // Initialize logger
-        auto logger = std::make_shared<utils::logger::Logger>(
-            "backtest.log", utils::logger::LogLevel::Info);
+        /* auto logger = std::make_shared<utils::logger::Logger>(
+            "backtest.log", utils::logger::LogLevel::Info); */
+        auto logger = nullptr;
 
         // Read configs
         utils::config::ConfigReader config_reader;
