@@ -1,6 +1,7 @@
 # CryptoQuantEngine
 
-<img src="https://github.com/caped-doshi/cryptoquantengine/actions/workflows/ci.yml/badge.svg"> [![GitHub release](https://img.shields.io/github/v/release/caped-doshi/cryptoquantengine)](https://github.com/caped-doshi/cryptoquantengine/releases) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+<img src="https://github.com/caped-doshi/cryptoquantengine/actions/workflows/ci.yml/badge.svg"> [![Python version](https://img.shields.io/badge/python-3.7+-blue)](https://www.python.org/downloads/release/python-370/)
+ [![GitHub release](https://img.shields.io/github/v/release/caped-doshi/cryptoquantengine)](https://github.com/caped-doshi/cryptoquantengine/releases) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ## High-Frequency Level 2 Trading Backtesting Engine
 
@@ -64,7 +65,7 @@ cmake -DCMAKE_BUILD_TYPE=Release ..
 
 Compile the engine
 ```bash
-cmake --build . --config Release
+cmake --build .
 ```
 
 Run unit tests
@@ -74,7 +75,7 @@ ctest --output-on-failure
 
 Run the backtest engine
 ```bash
-./hftbacktest
+./backtest
 ```
 
 ---

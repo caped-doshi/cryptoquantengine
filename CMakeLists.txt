@@ -4,7 +4,7 @@ project(cryptoquantengine LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_executable(hftbacktest
+add_executable(backtest
   cryptoquantengine/backtest_main.cpp
   cryptoquantengine/core/orderbook/orderbook.cpp
   cryptoquantengine/utils/config/config_reader.cpp
@@ -19,19 +19,38 @@ add_executable(hftbacktest
   cryptoquantengine/utils/logger/logger.cpp
 )
 
-target_include_directories(hftbacktest PRIVATE
+target_include_directories(backtest PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/cryptoquantengine
   ${CMAKE_CURRENT_SOURCE_DIR}/external 
+  ${CMAKE_CURRENT_SOURCE_DIR}/external/websocketpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/external/json
 )
 
-target_compile_options(hftbacktest PRIVATE
+target_compile_options(backtest PRIVATE
   $<$<CONFIG:Release>:-O3>
   $<$<CONFIG:Debug>:-O3 -Wall -Wextra -Wpedantic>
 )
 
-target_link_libraries(hftbacktest PRIVATE Threads::Threads)
+target_link_libraries(backtest PRIVATE Threads::Threads)
 
-# Catch2 test setup
+add_executable(stream
+  cryptoquantengine/wss_main.cpp
+  cryptoquantengine/core/market_data/readers/ws/binance_stream_reader.cc
+  cryptoquantengine/core/market_data/readers/ws/websocket_stream_reader.cc
+)
+
+target_include_directories(stream PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/cryptoquantengine
+  ${CMAKE_CURRENT_SOURCE_DIR}/external
+  ${CMAKE_CURRENT_SOURCE_DIR}/external/websocketpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/external/json
+)
+
+target_compile_options(stream PRIVATE
+  $<$<CONFIG:Release>:-O3>
+  $<$<CONFIG:Debug>:-O3 -Wall -Wextra -Wpedantic>
+)
+
 include(FetchContent)
 FetchContent_Declare(
   Catch2
@@ -46,6 +65,12 @@ include(CTest)
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
+find_package(OpenSSL REQUIRED)
+find_package(CURL REQUIRED)
+
+target_link_libraries(stream PRIVATE Threads::Threads)
+target_link_libraries(stream PRIVATE OpenSSL::SSL OpenSSL::Crypto)
+target_link_libraries(stream PRIVATE CURL::libcurl)
 
 function(add_hft_test_executable target_name source_files)
   add_executable(${target_name} ${source_files})
