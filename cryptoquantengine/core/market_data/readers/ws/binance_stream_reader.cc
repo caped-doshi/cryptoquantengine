@@ -67,7 +67,6 @@ void BinanceStreamReader::on_message(const std::string &msg) {
      */
     try {
         auto j = nlohmann::json::parse(msg);
-        //std::lock_guard<std::mutex> lock(queue_mutex_);
         if (j.contains("stream") && j.contains("data")) {
             const auto &data = j["data"];
             if (data.contains("e")) {

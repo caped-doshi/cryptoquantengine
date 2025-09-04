@@ -19,9 +19,11 @@ int main(int argc, char *argv[]) {
     const std::string book_csv = (argc > 2) ? argv[2] : "xrpusdc_book.csv";
     const std::string trade_csv = (argc > 3) ? argv[3] : "xrpusdc_trade.csv";
 
-    const std::string ws_uri =
+    /*const std::string ws_uri =
         "wss://fstream.binance.com/stream?streams=" + symbol + "@depth/" +
-        symbol + "@trade";
+        symbol + "@trade";*/
+    const std::string ws_uri =
+        "wss://fstream.binance.com/stream?streams=" + symbol + "@depth@0ms";
     const std::string rest_uri =
         "https://fapi.binance.com/fapi/v1/depth?symbol=" +
         symbol +

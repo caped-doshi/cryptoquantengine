@@ -26,10 +26,26 @@ void BaseWebSocketStreamReader::open(const std::string &uri) {
     connect(uri_);
 }
 
-/*
- * @brief Connects to the WebSocket server and sets up handlers.
- * 
- */ 
+/**
+ * @brief Establishes a WebSocket connection to the specified URI and sets up
+ * event handlers.
+ *
+ * This method initializes the WebSocket client, configures handlers for ping,
+ * open, message, close, and TLS initialization events, and starts the WebSocket
+ * event loop and message processing threads. Incoming messages are pushed to a
+ * thread-safe queue for further processing.
+ *
+ * @param uri The WebSocket URI to connect to (e.g., "wss://...").
+ *
+ * @note
+ * - If the connection fails, an error message is printed and the method
+ * returns.
+ * - The method is thread-safe and intended to be called once per reader
+ * instance.
+ * - Handlers update internal state flags (connected_, running_) and manage
+ * message flow.
+ * - The message queue is protected by a mutex and condition variable.
+ */
 void BaseWebSocketStreamReader::connect(const std::string &uri) {
     ws_client_ = std::make_unique<client_t>();
     ws_client_->init_asio();
@@ -76,7 +92,23 @@ void BaseWebSocketStreamReader::connect(const std::string &uri) {
     processing_thread_ =
         std::thread(&BaseWebSocketStreamReader::process_queue, this);
 }
-
+/**
+ * @brief Gracefully disconnects from the WebSocket server and stops all
+ * background threads.
+ *
+ * This method closes the active WebSocket connection, sets internal state flags
+ * to indicate disconnection, and joins all running threads (WebSocket event
+ * loop, message processing, and optional REST polling). It ensures that
+ * resources are released and no further messages are processed after
+ * disconnection.
+ *
+ * @note
+ * - If the connection is not active or the client is null, the method does
+ * nothing.
+ * - After calling this method, the reader instance cannot be reused for another
+ * connection.
+ * - All threads are joined to prevent resource leaks.
+ */
 void BaseWebSocketStreamReader::disconnect() {
     if (connected_ && ws_client_) {
         ws_client_->close(ws_hdl_, websocketpp::close::status::normal, "");
