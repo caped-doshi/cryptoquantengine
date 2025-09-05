@@ -62,6 +62,9 @@ void BinanceStreamReader::open(const std::string &uri) {
     }
 }
 
+/*
+ * 
+ */
 void BinanceStreamReader::on_message(const std::string &msg) {
     /*{"stream":"btcusdt@depth","data":{"e":"depthUpdate","E":1756875694535,"T":1756875694532,"s":"BTCUSDT","U":8503862928430,"u":8503862940039,"pu":8503862928383,"b":[["1000.00","13.213"],...,["110991.90","23.928"]],"a":[["110992.00","2.988"],...,["116541.40","0.002"]]}}
      */
@@ -133,9 +136,7 @@ void BinanceStreamReader::handle_book_message(const nlohmann::json &j) {
     BookUpdate update;
     update.exch_timestamp_ = 1000 * j.value("T", static_cast<std::uint64_t>(0));
     update.local_timestamp_ =
-        std::chrono::duration_cast<std::chrono::microseconds>(
-            std::chrono::system_clock::now().time_since_epoch())
-            .count();
+        1000 * j.value("E", static_cast<std::uint64_t>(0));
     if (j.contains("b") && !j["b"].empty()) {
         for (const auto &bid : j["b"]) {
             update.side_ = BookSide::Bid;
@@ -172,10 +173,7 @@ void BinanceStreamReader::handle_trade_message(const nlohmann::json &j) {
     }*/
     Trade trade;
     trade.exch_timestamp_ = 1000 * j.value("T", static_cast<std::uint64_t>(0));
-    trade.local_timestamp_ =
-        std::chrono::duration_cast<std::chrono::microseconds>(
-            std::chrono::system_clock::now().time_since_epoch())
-            .count();
+    trade.local_timestamp_ = 1000 * j.value("E", static_cast<std::uint64_t>(0));
     trade.orderId_ = j.value("t", static_cast<std::uint64_t>(0));
     trade.price_ = std::stod(j.value("p", "0"));
     trade.quantity_ = std::stod(j.value("q", "0"));
@@ -212,12 +210,14 @@ void BinanceStreamReader::poll_rest_snapshots(const std::string &rest_uri) {
                     std::chrono::system_clock::now().time_since_epoch())
                     .count();
             {
-                std::lock_guard<std::mutex> lock(queue_mutex_);
+                //std::lock_guard<std::mutex> lock(queue_mutex_);
                 if (snapshot.contains("bids")) {
                     for (const auto &bid : snapshot["bids"]) {
                         BookUpdate update;
-                        update.exch_timestamp_ = now;
-                        update.local_timestamp_ = now;
+                        update.exch_timestamp_ =
+                            1000 * snapshot.value("T", static_cast<std::uint64_t>(0));
+                        update.local_timestamp_ =
+                            1000 * snapshot.value("E", static_cast<std::uint64_t>(0));;
                         update.update_type_ = UpdateType::Snapshot;
                         update.side_ = BookSide::Bid;
                         update.price_ = std::stod(bid[0].get<std::string>());
@@ -229,8 +229,10 @@ void BinanceStreamReader::poll_rest_snapshots(const std::string &rest_uri) {
                 if (snapshot.contains("asks")) {
                     for (const auto &ask : snapshot["asks"]) {
                         BookUpdate update;
-                        update.exch_timestamp_ = now;
-                        update.local_timestamp_ = now;
+                        update.exch_timestamp_ =
+                            1000 * snapshot.value("T", static_cast<std::uint64_t>(0));
+                        update.local_timestamp_ =
+                            1000 * snapshot.value("E", static_cast<std::uint64_t>(0));
                         update.update_type_ = UpdateType::Snapshot;
                         update.side_ = BookSide::Ask;
                         update.price_ = std::stod(ask[0].get<std::string>());
