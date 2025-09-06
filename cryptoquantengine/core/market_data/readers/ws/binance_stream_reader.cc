@@ -22,13 +22,17 @@ BinanceStreamReader::BinanceStreamReader() = default;
 BinanceStreamReader::BinanceStreamReader(const std::string &ws_uri,
                                          const std::string &rest_uri,
                                          const std::string &book_csv,
-                                         const std::string &trade_csv) {
+                                         const std::string &trade_csv,
+                                         bool enable_csv_writer)
+    : enable_csv_writer_(enable_csv_writer) {
     std::cout << "[BinanceStreamReader] Constructor called" << std::endl;
     book_csv_.open(book_csv, std::ios::out | std::ios::app);
     trade_csv_.open(trade_csv, std::ios::out | std::ios::app);
     open(ws_uri);
     running_ = true;
-    csv_writer_thread_ = std::thread([this] { csv_write_loop(); });
+    if (enable_csv_writer) {
+        csv_writer_thread_ = std::thread([this] { csv_write_loop(); });
+    }
     rest_thread_ =
         std::thread([this, rest_uri] { poll_rest_snapshots(rest_uri); });
 }
@@ -39,6 +43,7 @@ BinanceStreamReader::~BinanceStreamReader() {
     book_cv_.notify_all();
     trade_cv_.notify_all();
     if (csv_writer_thread_.joinable()) csv_writer_thread_.join();
+    if (rest_thread_.joinable()) rest_thread_.join();
     if (book_csv_.is_open()) book_csv_.close();
     if (trade_csv_.is_open()) trade_csv_.close();
 }
@@ -46,6 +51,7 @@ BinanceStreamReader::~BinanceStreamReader() {
 void BinanceStreamReader::open(const std::string &uri) {
     std::cout << "[BinanceStreamReader] Opening WebSocket connection to: "
               << uri << std::endl;
+    if (!enable_csv_writer_) return;
     BaseWebSocketStreamReader::open(uri);
     std::cout << "[BinanceStreamReader] WebSocket connection opened"
               << std::endl;
@@ -63,7 +69,7 @@ void BinanceStreamReader::open(const std::string &uri) {
 }
 
 /*
- * 
+ *
  */
 void BinanceStreamReader::on_message(const std::string &msg) {
     /*{"stream":"btcusdt@depth","data":{"e":"depthUpdate","E":1756875694535,"T":1756875694532,"s":"BTCUSDT","U":8503862928430,"u":8503862940039,"pu":8503862928383,"b":[["1000.00","13.213"],...,["110991.90","23.928"]],"a":[["110992.00","2.988"],...,["116541.40","0.002"]]}}
@@ -210,14 +216,17 @@ void BinanceStreamReader::poll_rest_snapshots(const std::string &rest_uri) {
                     std::chrono::system_clock::now().time_since_epoch())
                     .count();
             {
-                //std::lock_guard<std::mutex> lock(queue_mutex_);
+                // std::lock_guard<std::mutex> lock(queue_mutex_);
                 if (snapshot.contains("bids")) {
                     for (const auto &bid : snapshot["bids"]) {
                         BookUpdate update;
                         update.exch_timestamp_ =
-                            1000 * snapshot.value("T", static_cast<std::uint64_t>(0));
+                            1000 *
+                            snapshot.value("T", static_cast<std::uint64_t>(0));
                         update.local_timestamp_ =
-                            1000 * snapshot.value("E", static_cast<std::uint64_t>(0));;
+                            1000 *
+                            snapshot.value("E", static_cast<std::uint64_t>(0));
+                        ;
                         update.update_type_ = UpdateType::Snapshot;
                         update.side_ = BookSide::Bid;
                         update.price_ = std::stod(bid[0].get<std::string>());
@@ -230,9 +239,11 @@ void BinanceStreamReader::poll_rest_snapshots(const std::string &rest_uri) {
                     for (const auto &ask : snapshot["asks"]) {
                         BookUpdate update;
                         update.exch_timestamp_ =
-                            1000 * snapshot.value("T", static_cast<std::uint64_t>(0));
+                            1000 *
+                            snapshot.value("T", static_cast<std::uint64_t>(0));
                         update.local_timestamp_ =
-                            1000 * snapshot.value("E", static_cast<std::uint64_t>(0));
+                            1000 *
+                            snapshot.value("E", static_cast<std::uint64_t>(0));
                         update.update_type_ = UpdateType::Snapshot;
                         update.side_ = BookSide::Ask;
                         update.price_ = std::stod(ask[0].get<std::string>());

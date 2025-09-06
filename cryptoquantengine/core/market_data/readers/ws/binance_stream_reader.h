@@ -28,7 +28,8 @@ class BinanceStreamReader : public BaseWebSocketStreamReader {
     explicit BinanceStreamReader(const std::string &ws_uri,
                                  const std::string &rest_uri,
                                  const std::string &book_csv,
-                                 const std::string &trade_csv);
+                                 const std::string &trade_csv,
+                                 bool enable_csv_writer);
 
     void open(const std::string &uri) override;
 
@@ -46,6 +47,7 @@ class BinanceStreamReader : public BaseWebSocketStreamReader {
     std::condition_variable book_cv_, trade_cv_;
     std::thread csv_writer_thread_;
     std::atomic<bool> running_{false};
+    bool enable_csv_writer_ = false;
 
     std::ofstream book_csv_;
     std::ofstream trade_csv_;
