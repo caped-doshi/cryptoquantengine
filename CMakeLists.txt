@@ -44,6 +44,8 @@ add_executable(stream
   cryptoquantengine/core/market_data/readers/ws/websocket_stream_reader.cc
 )
 
+set_target_properties(stream PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED YES)
+
 target_include_directories(stream PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/cryptoquantengine
   ${CMAKE_CURRENT_SOURCE_DIR}/external
