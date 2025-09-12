@@ -19,6 +19,12 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y g++ cmake make
 
+    - name: Install dependencies
+      run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev
+          sudo apt-get install -y libboost-all-dev
+
     - name: Verify G++ version
       run: g++ --version
 
