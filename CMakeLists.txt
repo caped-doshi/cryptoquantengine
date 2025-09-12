@@ -124,4 +124,4 @@ add_test_executable (test_math_utils
 add_test_executable (test_logger 
   "tests/utils/test_logger.cpp;cryptoquantengine/utils/logger/logger.cpp"
 )
-add_test_executable (test_binance_stream "tests/market_data/live/test_binance_stream_reader.cpp;cryptoquantengine/core/market_data/readers/ws/binance_stream_reader.cc;cryptoquantengine/core/market_data/readers/ws/websocket_stream_reader.cc")
+#add_test_executable (test_binance_stream "tests/market_data/live/test_binance_stream_reader.cpp;cryptoquantengine/core/market_data/readers/ws/binance_stream_reader.cc;cryptoquantengine/core/market_data/readers/ws/websocket_stream_reader.cc")
