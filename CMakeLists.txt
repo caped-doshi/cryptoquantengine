@@ -38,6 +38,34 @@ target_compile_options(backtest PRIVATE
 
 target_link_libraries(backtest PRIVATE Threads::Threads)
 
+add_executable(benchmark
+  cryptoquantengine/benchmark.cc
+  cryptoquantengine/core/orderbook/orderbook.cpp
+  cryptoquantengine/utils/config/config_reader.cpp
+  cryptoquantengine/core/execution_engine/execution_engine.cpp
+  cryptoquantengine/core/backtest_engine/backtest_engine.cpp
+  cryptoquantengine/core/market_data/market_data_feed.cpp
+  cryptoquantengine/core/market_data/readers/base_stream_reader.cpp
+  cryptoquantengine/core/market_data/readers/book_stream_reader.cpp
+  cryptoquantengine/core/market_data/readers/trade_stream_reader.cpp
+  cryptoquantengine/core/recorder/recorder.cpp
+  cryptoquantengine/utils/logger/logger.cpp
+)
+
+target_include_directories(benchmark PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/cryptoquantengine
+  ${CMAKE_CURRENT_SOURCE_DIR}/external 
+  ${CMAKE_CURRENT_SOURCE_DIR}/external/websocketpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/external/json
+)
+
+target_compile_options(benchmark PRIVATE
+  $<$<CONFIG:Release>:-O3>
+  $<$<CONFIG:Debug>:-O3 -Wall -Wextra -Wpedantic>
+)
+
+target_link_libraries(benchmark PRIVATE Threads::Threads)
+
 add_executable(stream
   cryptoquantengine/wss_main.cc
   cryptoquantengine/core/market_data/readers/ws/binance_stream_reader.cc
